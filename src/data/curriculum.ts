@@ -9,6 +9,8 @@ export interface Lesson {
   demos?: { label: string; cue: AudioCue; timbre?: 'piano' | 'guitar' }[];
   /** [generator id, how many] */
   drills: [string, number][];
+  /** Microphone-only lessons don't block the next level (the instrument may not be at hand). */
+  optional?: boolean;
 }
 
 export const UNIT_TITLES: Record<Domain, string[]> = {
@@ -251,7 +253,7 @@ export const LESSONS: Lesson[] = [
     drills: [['gt.openStrings', 3], ['gt.chordShapes', 7]],
   },
   {
-    id: 'gt1b', domain: 'guitar', level: 1, title: 'תרגול עם הגיטרה – מיקרופון',
+    id: 'gt1b', domain: 'guitar', level: 1, title: 'תרגול עם הגיטרה – מיקרופון', optional: true,
     intro: [
       'קח את הגיטרה! האפליקציה תקשיב דרך המיקרופון ותבדוק שניגנת נכון.',
       'מומלץ לכוון את הגיטרה קודם (יש מכוון בלשונית "כלים"). אם אין גיטרה כרגע – אפשר לדלג.',
@@ -327,7 +329,7 @@ export const LESSONS: Lesson[] = [
     drills: [['pn.layout', 3], ['pn.findNatural', 7]],
   },
   {
-    id: 'pn1b', domain: 'piano', level: 1, title: 'לפסנתר! (מיקרופון)',
+    id: 'pn1b', domain: 'piano', level: 1, title: 'לפסנתר! (מיקרופון)', optional: true,
     intro: ['ניגש לפסנתר האמיתי. האפליקציה תקשיב ותבדוק. אין פסנתר זמין? אפשר לדלג.'],
     drills: [['pn.micNote', 6]],
   },

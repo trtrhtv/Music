@@ -82,3 +82,46 @@ describe('dsp', () => {
     expect(chromaMatchesChord(c, [0, 3, 7]).ok).toBe(false);
   });
 });
+
+describe('review fixes', () => {
+  it('spells altered chord tones on the right letters', async () => {
+    const { spellChord } = await import('./util');
+    expect(spellChord('B', [0, 3, 6, 10]).join(' ')).toBe('B D F A');
+    expect(spellChord('E', [0, 3, 6]).join(' ')).toBe('E G Bb');
+    expect(spellChord('A', [0, 4, 8]).join(' ')).toBe('A C# E#');
+    expect(spellChord('Eb', [0, 4, 7, 10]).join(' ')).toBe('Eb G Bb Db');
+    expect(spellChord('F#', [0, 3, 7]).join(' ')).toBe('F# A C#');
+  });
+  it('orders numeric options but still shuffles chord names', async () => {
+    const { choice } = await import('./util');
+    expect(choice('q', 'סריג 5', ['סריג 7', 'סריג 3', 'סריג 4']).options).toEqual(['סריג 3', 'סריג 4', 'סריג 5', 'סריג 7']);
+    const firsts = new Set(Array.from({ length: 40 }, () => choice('q', 'Dm7 – G7 – Cmaj7', ['Am7 – D7 – Gmaj7', 'Em7 – A7 – Dmaj7', 'Gm7 – C7 – Fmaj7']).answer));
+    expect(firsts.size).toBeGreaterThan(1);
+  });
+  it('no exercise has fret-12 barre answers or a correct option that is always first', () => {
+    for (const id of ['gt.barre', 'gt.pentaPosition', 'gt.cagedA'])
+      for (let i = 0; i < 200; i++) {
+        const e = GEN_BY_ID[id].make();
+        if (e.kind === 'choice') expect(e.options[e.answer], id).not.toBe('סריג 12');
+      }
+  });
+  it('placement staircase reaches the extremes', () => {
+    const run = (start: number, right: boolean, n = 7) => {
+      let t = start; const a = [];
+      for (let i = 0; i < n; i++) { a.push({ tier: t, right }); t = nextTier(t, right); }
+      return estimateLevel(a);
+    };
+    expect(run(1, true)).toBe(5);
+    expect(run(3, false)).toBe(1);
+    expect(run(5, false)).toBe(1);
+  });
+  it('mic-only lessons are optional and do not block levelling up', async () => {
+    const { recordLesson, getState, finishPlacement } = await import('../state/store');
+    finishPlacement({} as never, { theory: 1, ear: 1, guitar: 1, piano: 1 });
+    for (const l of LESSONS.filter((x) => x.domain === 'piano' && x.level === 1 && !x.optional)) recordLesson(l.id, 'piano', 1);
+    expect(getState().levels.piano).toBe(2);
+    recordLesson('th1a', 'theory', 0.5);
+    expect(getState().lessons.th1a.passed).toBe(false);
+    expect(getState().levels.theory).toBe(1);
+  });
+});

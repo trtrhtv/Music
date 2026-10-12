@@ -35,7 +35,8 @@ export function LessonRunner({ id }: { id: string }) {
     if (i + 1 < queue.length) setI(i + 1);
     else {
       const graded = next.right + next.wrong;
-      recordLesson(lesson.id, lesson.domain, graded ? next.right / graded : 1);
+      // Skipping every exercise (e.g. no instrument at hand) doesn't count as completing the lesson.
+      if (graded) recordLesson(lesson.id, lesson.domain, next.right / graded);
       setPhase('done');
     }
   };
@@ -61,8 +62,18 @@ export function LessonRunner({ id }: { id: string }) {
 
   if (phase === 'done') {
     const graded = score.right + score.wrong;
-    const pct = graded ? score.right / graded : 1;
+    const pct = graded ? score.right / graded : 0;
     const passed = pct >= PASS;
+    if (!graded) {
+      return (
+        <div className="screen center">
+          <div className="hero">⏭️</div>
+          <h1>דילגת על כל התרגילים</h1>
+          <p className="muted">אפשר לחזור לשיעור הזה כשהכלי יהיה בהישג יד.</p>
+          <button className="btn primary" onClick={() => go('track/' + lesson.domain)}>חזרה למסלול</button>
+        </div>
+      );
+    }
     return (
       <div className="screen center">
         <div className="hero">{passed ? (pct >= 0.9 ? '🏆' : '⭐') : '💪'}</div>

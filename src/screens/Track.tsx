@@ -21,7 +21,7 @@ export function Track({ domain }: { domain: Domain }) {
             return (
               <button key={l.id} className={`lesson-row ${st}`} disabled={st === 'locked'} onClick={() => go('lesson/' + l.id)}>
                 <span className="lr-badge">{BADGE[st]}</span>
-                <span className="lr-title">{l.title}</span>
+                <span className="lr-title">{l.title}{l.optional && <small className="muted"> · רשות</small>}</span>
                 <span className="lr-meta small muted">
                   {st === 'known' && !best ? 'ידוע לפי המבחן' : best !== undefined ? `${Math.round(best * 100)}%` : ''}
                 </span>

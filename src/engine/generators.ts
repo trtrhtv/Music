@@ -457,9 +457,11 @@ gen('gt.fretAny', 'guitar', 3, 'תווים על כל הצוואר', () => {
 });
 
 const barreFret = (rootPc: number, stringOpenPc: number) => ((rootPc - stringOpenPc + 12) % 12) || 12;
+// Roots whose E-shape / A-shape barre would sit at fret 12 are really open-position chords; skip them.
+const rootsFor = (roots: string[], openPc: number) => roots.filter((r) => barreFret(pcAny(r), openPc) < 12);
 gen('gt.barre', 'guitar', 3, 'אקורדי הברה', () => {
   const eShape = Math.random() < 0.5;
-  const root = pick(['F', 'G', 'A', 'B', 'C', 'D', 'Bb', 'F#']);
+  const root = pick(rootsFor(['F', 'G', 'A', 'B', 'C', 'D', 'Bb', 'F#'], eShape ? 4 : 9));
   const q = pick(['', 'm']);
   const f = barreFret(pcAny(root), eShape ? 4 : 9);
   return choice(
@@ -470,7 +472,7 @@ gen('gt.barre', 'guitar', 3, 'אקורדי הברה', () => {
 });
 
 gen('gt.pentaPosition', 'guitar', 3, 'פנטטוני על הצוואר', () => {
-  const root = pick(['A', 'E', 'G', 'C', 'D', 'B', 'F#']);
+  const root = pick(['A', 'G', 'C', 'D', 'B', 'F#', 'F']);
   const f = barreFret(pcAny(root), 4);
   return choice(`תיבה 1 של פנטטוני ${root} מינור (שורש על מיתר 6) – באיזה סריג היא מתחילה?`, `סריג ${f}`,
     [f - 2, f - 1, f + 1, f + 2, f + 3].filter((x) => x > 0 && x <= 12).map((x) => `סריג ${x}`), {
@@ -516,9 +518,9 @@ gen('gt.modeForChord', 'guitar', 5, 'מודוס לאלתור', () => {
 });
 
 gen('gt.cagedA', 'guitar', 5, 'צורות A ו-E', () => {
-  const root = pick(ACC_ROOTS);
   const q = pick(['m7', '7', 'maj7', 'm']);
   const eShape = Math.random() < 0.5;
+  const root = pick(rootsFor(ACC_ROOTS, eShape ? 4 : 9));
   const f = barreFret(pcAny(root), eShape ? 4 : 9);
   return choice(`${root}${q} בצורת ${eShape ? 'E' : 'A'} – באיזה סריג השורש?`, `סריג ${f}`,
     [f - 1, f + 1, f + 2, f - 2, barreFret(pcAny(root), eShape ? 9 : 4)].filter((x) => x > 0 && x <= 12).map((x) => `סריג ${x}`));

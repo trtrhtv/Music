@@ -107,7 +107,7 @@ export function recordLesson(id: string, domain: Domain, score: number) {
     const lessons = { ...s.lessons, [id]: { best: Math.max(prev.best, score), passed: prev.passed || score >= PASS, attempts: prev.attempts + 1 } };
     // Level up when every lesson of the current level is passed.
     let lvl = s.levels[domain];
-    while (lvl < 5 && lessonsFor(domain).filter((l) => l.level === lvl).every((l) => lessons[l.id]?.passed || l.level < s.placedLevels[domain])) lvl++;
+    while (lvl < 5 && lessonsFor(domain).filter((l) => l.level === lvl && !l.optional).every((l) => lessons[l.id]?.passed || l.level < s.placedLevels[domain])) lvl++;
     return { ...s, lessons, levels: { ...s.levels, [domain]: lvl } };
   });
 }

@@ -125,14 +125,14 @@ h3 { font-size: 1.05rem; }
 .key.black.hint { background: linear-gradient(#4aa8ff, #1f6cb8); }
 
 /* Fretboard */
-.fretboard-wrap { overflow-x: auto; margin: 12px -16px; padding: 0 16px; }
-.fretboard { display: grid; min-width: 520px; background: linear-gradient(#5b3a22, #4a2e1b); border-radius: 8px; padding: 4px 0; }
+.fretboard-wrap { overflow-x: auto; margin: 12px -12px; padding: 0 4px; }
+.fretboard { display: grid; min-width: 340px; background: linear-gradient(#5b3a22, #4a2e1b); border-radius: 8px; padding: 4px 0; }
 .fb-cell { position: relative; height: 36px; border: none; border-left: 2px solid #c9c2b0; background: transparent; padding: 0; display: flex; align-items: center; justify-content: center; }
 .fb-cell.open { background: var(--bg); border-left: none; border-right: 5px solid #eee6d0; }
 .fb-cell.hl { background-color: #ffffff14; }
 .fb-cell.open.hl { background: #2c2840; }
 .string-line { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); background: #d9d2c0; pointer-events: none; }
-.fb-dot { position: relative; z-index: 1; min-width: 26px; height: 26px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; color: white; padding: 0 3px; }
+.fb-dot { position: relative; z-index: 1; min-width: 22px; height: 22px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; color: white; padding: 0 3px; }
 .fb-dot.mark { background: var(--accent); }
 .fb-dot.ok { background: var(--ok); }
 .fb-dot.bad { background: var(--bad); }

@@ -22,7 +22,10 @@ export function choice(
 ): ChoiceEx {
   const n = extra.n ?? 4;
   const uniq = shuffle([...new Set(distractors.filter((d) => d !== correct))]).slice(0, n - 1);
-  const options = shuffle([correct, ...uniq]);
+  // Numeric answers (frets, degrees, fingers, counts) read better in order than shuffled.
+  const num = (o: string) => Number(/^(?:סריג )?(\d+)/.exec(o)?.[1]);
+  const all = [correct, ...uniq];
+  const options = all.every((o) => !Number.isNaN(num(o))) ? all.sort((a, b) => num(a) - num(b)) : shuffle(all);
   return {
     kind: 'choice',
     prompt,
@@ -60,4 +63,10 @@ export function pcAny(name: string): number {
   return ((v % 12) + 12) % 12;
 }
 
-export const spellChord = (rootName: string, steps: number[]) => steps.map((s) => spellAbove(rootName, s));
+// Letter offset of each chord tone above the root: thirds, fifths and sevenths keep their letter
+// even when altered (Bdim = B D F, Caug = C E G#, Bm7b5 = B D F A).
+const CHORD_LETTER = [0, 1, 1, 2, 2, 3, 4, 4, 4, 5, 6, 6];
+
+/** Correctly spelled chord tones, e.g. ('E', [0, 3, 6]) → ['E', 'G', 'Bb']. */
+export const spellChord = (rootName: string, steps: number[]) =>
+  steps.map((s) => spellWithLetter(NATURALS[(NATURALS.indexOf(rootName[0]) + CHORD_LETTER[s % 12]) % 7], (pcAny(rootName) + s) % 12));

@@ -15,7 +15,7 @@ export function Fretboard({
   const markAt = (s: number, f: number) => marks.find((m) => m.s === s && m.f === f);
   return (
     <div className="fretboard-wrap" dir="ltr">
-      <div className="fretboard" style={{ gridTemplateColumns: `34px repeat(${maxFret}, 1fr)` }}>
+      <div className="fretboard" style={{ gridTemplateColumns: `28px repeat(${maxFret}, minmax(0, 1fr))` }}>
         {[5, 4, 3, 2, 1, 0].map((s) => (
           <div key={s} className={`fb-row ${highlightString === s ? 'hl' : ''}`} style={{ display: 'contents' }}>
             {frets.map((f) => {
