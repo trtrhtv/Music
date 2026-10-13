@@ -23,6 +23,7 @@ export function Placement({ profile, onDone }: { profile: Profile; onDone: (leve
   const [answers, setAnswers] = useState<Record<Domain, Answer[]>>({ theory: [], ear: [], guitar: [], piano: [] });
   const [counter, setCounter] = useState(0);
   const [result, setResult] = useState<Record<Domain, number> | null>(null);
+  const [skipped, setSkipped] = useState<Domain[]>([]);
 
   const domain = DOMAINS[di];
   const item: Item | null = useMemo(() => {
@@ -50,6 +51,11 @@ export function Placement({ profile, onDone }: { profile: Profile; onDone: (leve
       setTier(t);
       return;
     }
+    nextSection(a, skipped);
+  };
+
+  // Move to the next domain, or finish. Skipped domains (or ones with no graded answers) keep the questionnaire estimate.
+  const nextSection = (a: Record<Domain, Answer[]>, sk: Domain[]) => {
     if (di + 1 < DOMAINS.length) {
       const nd = DOMAINS[di + 1];
       setDi(di + 1);
@@ -58,7 +64,12 @@ export function Placement({ profile, onDone }: { profile: Profile; onDone: (leve
       setIntro(true);
       return;
     }
-    setResult(Object.fromEntries(DOMAINS.map((d) => [d, estimateLevel(a[d])])) as Record<Domain, number>);
+    setResult(Object.fromEntries(DOMAINS.map((d) => [d, sk.includes(d) || !a[d].length ? prior[d] : estimateLevel(a[d])])) as Record<Domain, number>);
+  };
+  const skipSection = () => {
+    const sk = [...skipped, domain];
+    setSkipped(sk);
+    nextSection(answers, sk);
   };
 
   if (result) {
@@ -72,6 +83,7 @@ export function Placement({ profile, onDone }: { profile: Profile; onDone: (leve
               <div className="rc-icon">{DOMAIN_ICON[d]}</div>
               <div className="rc-name">{DOMAIN_LABEL[d]}</div>
               <div className="rc-level">רמה {result[d]} · {LEVEL_LABEL[result[d]]}</div>
+              {skipped.includes(d) && <div className="muted small">לפי השאלון (דילגת)</div>}
               <div className="dots">{[1, 2, 3, 4, 5].map((k) => <span key={k} className={k <= result[d] ? 'on' : ''} />)}</div>
               <div className="muted small">מתחילים ב: {UNIT_TITLES[d][result[d]]}</div>
             </div>
@@ -92,6 +104,7 @@ export function Placement({ profile, onDone }: { profile: Profile; onDone: (leve
           <h1>{DOMAIN_LABEL[domain]}</h1>
           <p className="lead">{SECTION_INTRO[domain]}</p>
           <button className="btn primary big" onClick={() => setIntro(false)}>התחל</button>
+          <button className="btn ghost wide" onClick={skipSection}>דלג על החלק הזה (הרמה תיקבע לפי השאלון)</button>
         </div>
       ) : item && (
         <ExerciseView key={item.n} ex={item.ex} onDone={advance} />

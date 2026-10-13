@@ -116,6 +116,11 @@ export function finishPlacement(profile: Profile, levels: Record<Domain, number>
   update((s) => ({ ...s, placed: true, profile, levels: { ...levels }, placedLevels: { ...levels } }));
 }
 
+/** Manually chosen levels: lessons below them count as known, like after the placement test. */
+export function setLevels(levels: Record<Domain, number>) {
+  update((s) => ({ ...s, placed: true, levels: { ...levels }, placedLevels: { ...levels } }));
+}
+
 export function resetAll() {
   update(() => fresh());
 }

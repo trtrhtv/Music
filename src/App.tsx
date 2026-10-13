@@ -3,17 +3,32 @@ import { DOMAINS, type Domain } from './engine/types';
 import { go, useRoute } from './router';
 import { Home } from './screens/Home';
 import { LessonRunner } from './screens/LessonRunner';
-import { Onboarding } from './screens/Onboarding';
+import { Onboarding, type StartMode } from './screens/Onboarding';
 import { Placement } from './screens/Placement';
 import { Practice } from './screens/Practice';
 import { Tools } from './screens/Tools';
 import { Track } from './screens/Track';
-import { finishPlacement, resetAll, useStore, type Profile } from './state/store';
+import { finishPlacement, resetAll, setLevels, useStore, type Profile } from './state/store';
+import { LevelPicker } from './screens/LevelPicker';
+import { priorTiers } from './engine/placement';
+
+const DEFAULT_PROFILE: Profile = { guitarExp: 0, pianoExp: 0, readsNotes: 0, knowsTheory: 0, goal: '', hasGuitar: false, hasPiano: false };
 
 function PlacementFlow() {
   const [profile, setProfile] = useState<Profile | null>(null);
-  if (!profile) return <Onboarding onDone={setProfile} />;
-  return <Placement profile={profile} onDone={(lv) => { finishPlacement(profile, lv); go(''); }} />;
+  const [mode, setMode] = useState<StartMode>('test');
+  const done = (p: Profile, lv: Record<Domain, number>) => { finishPlacement(p, lv); go(''); };
+  if (!profile) {
+    return <Onboarding onDone={(p, m) => { setProfile(p); setMode(m); }} onScratch={() => { setProfile(DEFAULT_PROFILE); setMode('pick'); }} />;
+  }
+  if (mode === 'pick') {
+    return (
+      <LevelPicker initial={priorTiers(profile)} title="בחירת רמות" cta="יאללה, למסלול שלי"
+        lead="בלי מבחן: זו ההערכה לפי מה שסיפרת. תקן את הרמה של כל מסלול אם צריך."
+        onSave={(lv) => done(profile, lv)} onCancel={() => setProfile(null)} />
+    );
+  }
+  return <Placement profile={profile} onDone={(lv) => done(profile, lv)} />;
 }
 
 function Settings() {
@@ -21,6 +36,7 @@ function Settings() {
     <div className="screen">
       <h1>⚙️ הגדרות</h1>
       <button className="btn ghost wide" onClick={() => go('retest')}>לעשות את מבחן הרמה מחדש</button>
+      <button className="btn ghost wide" onClick={() => go('levels')}>לשנות רמות ידנית</button>
       <p className="muted small">ההתקדמות בשיעורים נשמרת; הרמות יתעדכנו לפי המבחן החדש.</p>
       <button className="btn danger wide" onClick={() => { if (confirm('למחוק את כל ההתקדמות?')) { resetAll(); go(''); } }}>איפוס מלא</button>
       <p className="muted small">כל הנתונים נשמרים רק במכשיר הזה.</p>
@@ -35,6 +51,14 @@ export default function App() {
   const [page, arg] = useRoute();
 
   if (!s.placed || page === 'retest') return <main className="app"><PlacementFlow /></main>;
+  if (page === 'levels') {
+    return (
+      <main className="app">
+        <LevelPicker initial={s.levels} title="שינוי רמות" cta="שמור" lead="קבע מאיזו רמה מתחיל כל מסלול."
+          onSave={(lv) => { setLevels(lv); go(''); }} onCancel={() => go('settings')} />
+      </main>
+    );
+  }
 
   let body;
   if (page === 'track' && DOMAINS.includes(arg as Domain)) body = <Track key={arg} domain={arg as Domain} />;
