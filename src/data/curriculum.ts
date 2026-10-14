@@ -1,4 +1,6 @@
 import type { AudioCue, Domain } from '../engine/types';
+import type { Block } from './blocks';
+import { INTRO_LESSONS, LESSON_EXTRAS } from './lessonExtras';
 
 export interface Lesson {
   id: string;
@@ -9,8 +11,12 @@ export interface Lesson {
   demos?: { label: string; cue: AudioCue; timbre?: 'piano' | 'guitar' }[];
   /** [generator id, how many] */
   drills: [string, number][];
-  /** Microphone-only lessons don't block the next level (the instrument may not be at hand). */
+  /** Microphone-only and orientation lessons don't block the next level. */
   optional?: boolean;
+  /** Visual explanation shown after the intro text (keyboard, staff, diagram, tables…). */
+  extra?: Block[];
+  /** Related glossary entries. */
+  see?: string[];
 }
 
 export const UNIT_TITLES: Record<Domain, string[]> = {
@@ -21,7 +27,7 @@ export const UNIT_TITLES: Record<Domain, string[]> = {
 };
 
 const C4 = 60;
-export const LESSONS: Lesson[] = [
+const BASE_LESSONS: Lesson[] = [
   /* ───────── THEORY ───────── */
   {
     id: 'th1a', domain: 'theory', level: 1, title: 'שמות התווים',
@@ -389,6 +395,12 @@ export const LESSONS: Lesson[] = [
     drills: [['pn.modeTap', 8]],
   },
 ];
+
+/** Base lessons + their visual extras, with an optional orientation lesson first in each track. */
+export const LESSONS: Lesson[] = [...INTRO_LESSONS, ...BASE_LESSONS].map((l) => {
+  const x = LESSON_EXTRAS[l.id];
+  return x ? { ...l, intro: [...l.intro, ...(x.more ?? [])], extra: [...(l.extra ?? []), ...(x.extra ?? [])], see: x.see ?? l.see } : l;
+});
 
 export const lessonsFor = (d: Domain) => LESSONS.filter((l) => l.domain === d);
 export const LESSON_BY_ID = Object.fromEntries(LESSONS.map((l) => [l.id, l]));

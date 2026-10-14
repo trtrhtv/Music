@@ -18,14 +18,31 @@ const qualityNames = (ids: string[]) => ids.map((q) => CHORDS[q].name);
 const DIAT_IDX = (letter: string, oct: number) => oct * 7 + NATURALS.indexOf(letter);
 const fromDiat = (i: number) => NATURALS[i % 7] + Math.floor(i / 7);
 const ROOT_MIDI = (name: string, base = 60) => base + pcAny(name); // C4..B4
+const semisLabel = (n: number) => (n === 1 ? 'חצי טון אחד' : `${n} חצאי טונים`);
+// Familiar song openings for each ascending interval (semitones → song).
+const SONGS: Record<number, string> = {
+  1: 'מלתעות', 2: 'Happy Birthday', 3: 'Greensleeves', 4: 'When the Saints', 5: 'Here Comes the Bride', 6: 'The Simpsons',
+  7: 'Star Wars', 8: 'The Entertainer', 9: 'My Bonnie', 10: 'Star Trek', 12: 'Somewhere Over the Rainbow',
+};
+const FEEL: Record<string, string> = {
+  maj: 'בהיר ויציב', min: 'כהה ועצוב', dim: 'מתוח ולחוץ', aug: 'מרחף ולא פתור',
+  maj7: 'רך וחלומי', dom7: 'בלוזי, מתח שרוצה להיפתר', min7: 'מינור רך וג\'אזי', m7b5: 'כהה ולא יציב',
+};
+// Where each natural note sits relative to the black-key groups.
+const KEY_HINT: Record<string, string> = {
+  C: 'משמאל לזוג הקלידים השחורים', D: 'בין שני השחורים של הזוג', E: 'מימין לזוג השחורים',
+  F: 'משמאל לשלישיית השחורים', G: 'הלבן הראשון בתוך השלישייה', A: 'הלבן השני בתוך השלישייה', B: 'מימין לשלישיית השחורים',
+};
+/** Note names counted up from an open string, e.g. ('E', 3) → 'F F# G'. */
+const countUp = (openMidi: number, frets: number) => Array.from({ length: frets }, (_, i) => PC_SHARP[pc(openMidi + i + 1)]).join(' ');
 
 /* ───────────────────────────── THEORY ───────────────────────────── */
 
 gen('th.solfege', 'theory', 1, 'שמות התווים', () => {
   const letter = pick(NATURALS);
   return Math.random() < 0.5
-    ? choice(`מה שם האות של התו "${SOLFEGE[letter]}"?`, letter, NATURALS)
-    : choice(`איך קוראים בסולפג' לתו ${letter}?`, SOLFEGE[letter], Object.values(SOLFEGE));
+    ? choice(`מה שם האות של התו "${SOLFEGE[letter]}"?`, letter, NATURALS, { explain: `${SOLFEGE[letter]} = **${letter}**. הסדר: דו C · רה D · מי E · פה F · סול G · לה A · סי B.` })
+    : choice(`איך קוראים בסולפג' לתו ${letter}?`, SOLFEGE[letter], Object.values(SOLFEGE), { explain: `**${letter}** = ${SOLFEGE[letter]}. הסדר: דו C · רה D · מי E · פה F · סול G · לה A · סי B.` });
 });
 
 gen('th.nextNote', 'theory', 1, 'סדר התווים', () => {
@@ -106,6 +123,9 @@ gen('th.majorPattern', 'theory', 2, 'תבנית הסולם', () => {
     `מהי תבנית הטונים (ט) וחצאי הטונים (ח) בסולם ${kind === 'major' ? 'מז\'ור' : 'מינור טבעי'}?`,
     opts[kind],
     [opts.major, opts.minor, 'ט ט ט ח ט ט ח', 'ח ט ט ט ח ט ט'],
+    { explain: kind === 'major'
+      ? 'מז\'ור: ט ט ח ט ט ט ח. ב-C: חצאי הטונים נופלים בין E–F ובין B–C.'
+      : 'מינור טבעי: ט ח ט ט ח ט ט. ב-A מינור: חצאי הטונים בין B–C ובין E–F.' },
   );
 });
 
@@ -209,7 +229,9 @@ gen('th.cadence', 'theory', 4, 'מהלכים נפוצים', () => {
   const sev = kind === 'ii-V-I';
   const prog = (k: string) => degs.map((d) => diatonicChord(k, d, sev)).join(' – ');
   const others = ['C', 'G', 'D', 'F', 'Bb', 'A', 'E'].filter((k) => k !== key).map(prog);
-  return choice(`מה האקורדים במהלך ${kind} בסולם ${key} מז'ור?`, prog(key), others);
+  return choice(`מה האקורדים במהלך ${kind} בסולם ${key} מז'ור?`, prog(key), others, {
+    explain: `ב-${key} מז'ור: ${degs.map((d) => `${ROMAN[d - 1]} = ${diatonicChord(key, d, sev)}`).join(' · ')}`,
+  });
 });
 
 const MODES = [
@@ -223,19 +245,25 @@ const MODES = [
 ];
 gen('th.modeFromDegree', 'theory', 5, 'מודוסים', () => {
   const m = pick(MODES.slice(1));
-  return choice(`איזה מודוס מתחיל מהדרגה ה-${m.deg} של סולם מז'ור?`, m.name, MODES.map((x) => x.name));
+  return choice(`איזה מודוס מתחיל מהדרגה ה-${m.deg} של סולם מז'ור?`, m.name, MODES.map((x) => x.name), {
+    explain: `${m.name} = דרגה ${m.deg}. על הקלידים הלבנים: מ-${NATURALS[m.deg - 1]} עד ${NATURALS[m.deg - 1]}. הסדר: יוני, דורי, פריגי, לידי, מיקסולידי, איולי, לוקרי.`,
+  });
 });
 
 gen('th.modeChar', 'theory', 5, 'אופי המודוסים', () => {
   const m = pick(MODES.filter((x) => x.deg !== 1 && x.deg !== 6));
-  return choice(`מה מאפיין את המודוס ה${m.name}?`, m.char, MODES.filter((x) => x.deg !== 1 && x.deg !== 6).map((x) => x.char));
+  return choice(`מה מאפיין את המודוס ה${m.name}?`, m.char, MODES.filter((x) => x.deg !== 1 && x.deg !== 6).map((x) => x.char), {
+    explain: 'דורי – 6 גדולה במינור · פריגי – b2 · לידי – #4 · מיקסולידי – b7 · לוקרי – b2 ו-b5.',
+  });
 });
 
 gen('th.modeSpell', 'theory', 5, 'תווי המודוסים', () => {
   const m = pick(MODES.filter((x) => x.deg !== 1));
   const root = pick(['D', 'E', 'G', 'A', 'C', 'F']);
   const fmt = (id: string) => spellScale(root, id).join(' ');
-  return choice(`מה התווים של ${root} ${m.name}?`, fmt(m.id), ['major', 'minor', 'dorian', 'mixolydian', 'lydian', 'phrygian'].map(fmt));
+  return choice(`מה התווים של ${root} ${m.name}?`, fmt(m.id), ['major', 'minor', 'dorian', 'mixolydian', 'lydian', 'phrygian'].map(fmt), {
+    explain: `${root} ${m.name}: **${fmt(m.id)}** – ${m.char}.`,
+  });
 });
 
 gen('th.secDom', 'theory', 5, 'דומיננטות משניות', () => {
@@ -267,6 +295,7 @@ gen('ear.highLow', 'ear', 1, 'גבוה / נמוך', () => {
   const b = a + (up ? 1 : -1) * (2 + rand(6));
   return choice('הצליל השני – גבוה או נמוך מהראשון?', up ? 'גבוה יותר' : 'נמוך יותר', ['גבוה יותר', 'נמוך יותר'], {
     n: 2, audio: { type: 'seq', notes: [a, b], gap: 0.8 },
+    explain: `הצליל השני ${up ? 'גבוה' : 'נמוך'} ב-${semisLabel(Math.abs(b - a))}.`,
   });
 });
 
@@ -276,6 +305,7 @@ gen('ear.sameDiff', 'ear', 1, 'זהה / שונה', () => {
   const b = same ? a : a + pick([-2, -1, 1, 2]);
   return choice('שני הצלילים זהים או שונים?', same ? 'זהים' : 'שונים', ['זהים', 'שונים'], {
     n: 2, audio: { type: 'seq', notes: [a, b], gap: 0.8 },
+    explain: same ? 'אותו צליל בדיוק.' : `ההפרש היה ${semisLabel(Math.abs(b - a))} – קרוב מאוד, ולכן קשה לשמוע.`,
   });
 });
 
@@ -286,8 +316,10 @@ gen('ear.contour', 'ear', 1, 'כיוון מנגינה', () => {
   const [name, steps] = pick(shapes);
   const base = 57 + rand(10);
   const scale = [0, 2, 4, 5, 7];
+  const word = (x: number) => (x === 0 ? 'נמוך' : x === 2 ? 'אמצע' : 'גבוה');
   return choice('איך נעה המנגינה?', name, shapes.map((s) => s[0]), {
     audio: { type: 'seq', notes: steps.map((s) => base + scale[s]), gap: 0.55 },
+    explain: `${name}: ${steps.map(word).join(' → ')}.`,
   });
 });
 
@@ -297,6 +329,7 @@ const intervalEx = (pool: number[], harmonic: boolean) => () => {
   const wrong = pool.filter((x) => x !== s);
   return choice(harmonic ? 'איזה מרווח שמעת (שני הצלילים יחד)?' : 'איזה מרווח שמעת?', intervalName(s), wrong.map(intervalName), {
     audio: harmonic ? { type: 'chord', notes: [a, a + s] } : { type: 'seq', notes: [a, a + s], gap: 0.7 },
+    explain: `${intervalName(s)} = ${semisLabel(s)}${SONGS[s] && !harmonic ? ` · לזכירה: ${SONGS[s]}` : ''}.`,
   });
 };
 gen('ear.intervalsBasic', 'ear', 2, 'מרווחים בסיסיים', intervalEx([3, 4, 5, 7, 12], false));
@@ -315,7 +348,7 @@ gen('ear.intervalsAll', 'ear', 3, 'כל המרווחים', () => {
   const near = [s - 2, s - 1, s + 1, s + 2, s + 5].filter((x) => x >= 1 && x <= 12);
   return choice('איזה מרווח שמעת?', intervalName(s), near.map(intervalName), {
     audio: { type: 'seq', notes: [a, a + s], gap: 0.7 },
-    explain: 'טריק: חבר כל מרווח לפתיחה של שיר מוכר (למשל קווינטה זכה – "מלחמת הכוכבים").',
+    explain: `${intervalName(s)} = ${semisLabel(s)}${SONGS[s] ? ` · לזכירה: ${SONGS[s]}` : ''}.`,
   });
 });
 
@@ -323,6 +356,7 @@ gen('ear.triadQuality', 'ear', 3, 'סוגי אקורדים', () => {
   const q = pick(triadQs);
   const r = 53 + rand(10);
   return choice('איזה סוג אקורד שמעת?', CHORDS[q].name, qualityNames(triadQs), {
+    explain: `${CHORDS[q].name} (${CHORDS[q].steps.join('-')}) – ${FEEL[q]}.`,
     audio: { type: 'twoParts', first: { type: 'seq', notes: chordNotes(r, q), gap: 0.35 }, second: { type: 'chord', notes: chordNotes(r, q) }, pause: 1.2 },
   });
 });
@@ -332,8 +366,13 @@ gen('ear.scaleType', 'ear', 3, 'סוגי סולמות', () => {
   const id = pick(ids);
   const r = 55 + rand(7);
   const notes = [...scaleNotes(r, id), r + 12];
+  const why: Record<string, string> = {
+    major: 'ט ט ח ט ט ט ח – בהיר.', minor: 'ט ח ט ט ח ט ט – כהה.',
+    harmMinor: 'מינור עם 7 מוגבהת – הקפיצה ה"מזרחית" בין 6 ל-7.', minPent: 'רק 5 תווים, בלי חצאי טונים – נשמע "רוק/בלוז".',
+  };
   return choice('איזה סולם שמעת?', SCALES[id].name, ids.map((x) => SCALES[x].name), {
     audio: { type: 'seq', notes, gap: 0.32 },
+    explain: `${SCALES[id].name}: ${why[id]}`,
   });
 });
 
@@ -343,6 +382,7 @@ gen('ear.sevenths', 'ear', 4, 'אקורדי ספטימה', () => {
   const q = pick(seventhQs);
   const r = 50 + rand(10);
   return choice('איזה אקורד ספטימה שמעת?', CHORDS[q].name, qualityNames(seventhQs), {
+    explain: `${CHORDS[q].name} (${CHORDS[q].steps.join('-')}) – ${FEEL[q]}.`,
     audio: { type: 'twoParts', first: { type: 'seq', notes: chordNotes(r, q), gap: 0.3 }, second: { type: 'chord', notes: chordNotes(r, q) }, pause: 1.4 },
   });
 });
@@ -381,6 +421,7 @@ gen('ear.progression', 'ear', 5, 'זיהוי מהלכים', () => {
   const [name, degs] = pick(PROGS);
   return choice('איזה מהלך אקורדים שמעת?', name, PROGS.map((p) => p[0]), {
     audio: { type: 'prog', chords: voiceProg(55 + rand(6), degs) },
+    explain: `${name} – למשל ב-C: ${degs.map((d) => diatonicChord('C', d)).join(' – ')}.`,
   });
 });
 
@@ -408,13 +449,18 @@ const shapeId = (tier: number) => () => {
   const pool = tier === 1 ? shapesAt(1) : shapesUpTo(tier);
   const s = pick(tier === 1 ? pool : shapesAt(tier));
   const sameRoot = CHORD_SHAPES.filter((x) => x.root === s.root).map((x) => x.symbol);
-  return choice('איזה אקורד מוצג בדיאגרמה?', s.symbol, [...sameRoot, ...pool.map((x) => x.symbol)], { diagram: s.frets });
+  const tab = s.frets.map((f) => (f < 0 ? '×' : f)).join(' ');
+  return choice('איזה אקורד מוצג בדיאגרמה?', s.symbol, [...sameRoot, ...pool.map((x) => x.symbol)], {
+    diagram: s.frets,
+    explain: `**${s.symbol}** = ${spellChord(s.root, CHORDS[s.q].steps).join(' ')}. סריגים ממיתר 6 עד 1: **${tab}**.`,
+  });
 };
 gen('gt.chordShapes', 'guitar', 1, 'אקורדים פתוחים', shapeId(1));
 
 gen('gt.micOpenString', 'guitar', 1, 'נגן מיתר פתוח', () => {
   const s = rand(6);
-  return { kind: 'micNote', instrument: 'guitar', prompt: `נגן את מיתר ${6 - s} הפתוח (${OPEN[s]})`, pc: pc(GUITAR_TUNING[s]) };
+  return { kind: 'micNote', instrument: 'guitar', prompt: `נגן את מיתר ${6 - s} הפתוח (${OPEN[s]})`, pc: pc(GUITAR_TUNING[s]),
+    explain: `מיתר ${6 - s} פתוח = ${OPEN[s]}. אם הוא לא מזוהה – כוון את הגיטרה בלשונית "כלים".` };
 });
 
 const micChord = (shapes: () => typeof CHORD_SHAPES) => (): Exercise => {
@@ -423,6 +469,7 @@ const micChord = (shapes: () => typeof CHORD_SHAPES) => (): Exercise => {
     kind: 'micChord', instrument: 'guitar', prompt: `נגן את האקורד ${s.symbol} ותן לו לצלצל`,
     symbol: s.symbol, diagram: s.frets, pcs: CHORDS[s.q].steps.map((x) => (pcAny(s.root) + x) % 12),
     names: spellChord(s.root, CHORDS[s.q].steps),
+    explain: `${s.symbol} = ${spellChord(s.root, CHORDS[s.q].steps).join(' ')}. ודא שכל מיתר מצלצל נקי ושלא מנגנים מיתרים עם ×.`,
   };
 };
 gen('gt.micOpenChord', 'guitar', 1, 'נגן אקורד פתוח', micChord(() => shapesAt(1)));
@@ -439,21 +486,27 @@ gen('gt.fretName', 'guitar', 2, 'איזה תו בסריג?', () => {
   const s = rand(2);
   const f = 1 + rand(11);
   const p = pc(GUITAR_TUNING[s] + f);
-  return choice(`איזה תו נמצא על מיתר ${6 - s} בסריג ${f}?`, PC_SHARP[p], [PC_SHARP[(p + 1) % 12], PC_SHARP[(p + 11) % 12], PC_SHARP[(p + 2) % 12], PC_SHARP[(p + 10) % 12]]);
+  return choice(`איזה תו נמצא על מיתר ${6 - s} בסריג ${f}?`, PC_SHARP[p], [PC_SHARP[(p + 1) % 12], PC_SHARP[(p + 11) % 12], PC_SHARP[(p + 2) % 12], PC_SHARP[(p + 10) % 12]], {
+    explain: `מיתר ${6 - s} פתוח = ${OPEN[s]}. סופרים ${f} סריגים: ${countUp(GUITAR_TUNING[s], f)} → **${PC_SHARP[p]}**.`,
+  });
 });
 
 gen('gt.chordShapes7', 'guitar', 2, 'אקורדי ספטימה פתוחים', shapeId(2));
 
 gen('gt.micNote', 'guitar', 2, 'נגן תו', () => {
   const p = pick(naturalPcs);
-  return { kind: 'micNote', instrument: 'guitar', prompt: `נגן את התו ${heLabel(PC_SHARP[p])} – בכל מקום על הצוואר`, pc: p };
+  const f6 = (p - 4 + 12) % 12, f5 = (p - 9 + 12) % 12;
+  return { kind: 'micNote', instrument: 'guitar', prompt: `נגן את התו ${heLabel(PC_SHARP[p])} – בכל מקום על הצוואר`, pc: p,
+    explain: `${PC_SHARP[p]} נמצא למשל במיתר 6 סריג ${f6} ובמיתר 5 סריג ${f5}.` };
 });
 gen('gt.micChord7', 'guitar', 2, 'נגן אקורד ספטימה', micChord(() => shapesAt(2)));
 
 gen('gt.fretAny', 'guitar', 3, 'תווים על כל הצוואר', () => {
   const s = rand(6);
   const p = rand(12);
-  return { kind: 'fret', prompt: `סמן את התו ${PC_SHARP[p]}${PC_FLAT[p] !== PC_SHARP[p] ? '/' + PC_FLAT[p] : ''} על מיתר ${STRING_LABEL[s]}`, pc: p, string: s, maxFret: 12 };
+  const f = (p - pc(GUITAR_TUNING[s]) + 12) % 12;
+  return { kind: 'fret', prompt: `סמן את התו ${PC_SHARP[p]}${PC_FLAT[p] !== PC_SHARP[p] ? '/' + PC_FLAT[p] : ''} על מיתר ${STRING_LABEL[s]}`, pc: p, string: s, maxFret: 12,
+    explain: `מיתר ${6 - s} פתוח = ${OPEN[s]}, ולכן ${PC_SHARP[p]} בסריג ${f}${f + 12 <= 12 ? ` (וגם ${f + 12})` : ''}.` };
 });
 
 const barreFret = (rootPc: number, stringOpenPc: number) => ((rootPc - stringOpenPc + 12) % 12) || 12;
@@ -490,7 +543,10 @@ const markRel = (semisSet: number[], label: (s: number) => string) => (): Exerci
   return {
     kind: 'fret', prompt: `התו המסומן הוא ${PC_SHARP[pc(base)]}. סמן ${label(semis)} מעליו (על מיתר אחר)`,
     midis: [base + semis], mark: { s, f }, maxFret: 12,
-    explain: 'אוקטבה: שני מיתרים למעלה ושני סריגים קדימה (שלושה, אם עוברים את מיתר B).',
+    explain: `${INTERVALS[semis].name} = ${semisLabel(semis)} מעל ${PC_SHARP[pc(base)]} → **${PC_SHARP[pc(base + semis)]}**. ${semis === 12
+      ? 'צורת אוקטבה: שני מיתרים למעלה ושני סריגים ימינה (שלושה אם עוברים את מיתר B).'
+      : semis === 7 ? 'צורת קווינטה: מיתר אחד למעלה ושני סריגים ימינה (שלושה אם עוברים למיתר B).'
+        : 'כל מיתר גבוה ב-5 חצאי טונים מקודמו (B רק ב-4) – חשב כמה סריגים לזוז.'}`,
   };
 };
 gen('gt.octaves', 'guitar', 4, 'אוקטבות וקווינטות', markRel([12, 7], (s) => (s === 12 ? 'את האוקטבה' : 'קווינטה זכה')));
@@ -501,7 +557,10 @@ gen('gt.chordTone', 'guitar', 4, 'צלילי אקורד על הצוואר', () =
   const which = pick([1, 2]);
   const p = (pcAny(root) + CHORDS[q].steps[which]) % 12;
   const s = 1 + rand(5);
-  return { kind: 'fret', prompt: `סמן את ה${which === 1 ? 'טרצה' : 'קווינטה'} של ${root}${CHORDS[q].symbol} על מיתר ${STRING_LABEL[s]}`, pc: p, string: s, maxFret: 12 };
+  const tone = spellChord(root, CHORDS[q].steps)[which];
+  const f = (p - pc(GUITAR_TUNING[s]) + 12) % 12;
+  return { kind: 'fret', prompt: `סמן את ה${which === 1 ? 'טרצה' : 'קווינטה'} של ${root}${CHORDS[q].symbol} על מיתר ${STRING_LABEL[s]}`, pc: p, string: s, maxFret: 12,
+    explain: `${root}${CHORDS[q].symbol} = ${spellChord(root, CHORDS[q].steps).join(' ')}. ה${which === 1 ? 'טרצה' : 'קווינטה'} היא **${tone}**, ובמיתר ${6 - s} היא בסריג ${f}${f + 12 <= 12 ? ` (וגם ${f + 12})` : ''}.` };
 });
 
 gen('gt.modeForChord', 'guitar', 5, 'מודוס לאלתור', () => {
@@ -514,7 +573,14 @@ gen('gt.modeForChord', 'guitar', 5, 'מודוס לאלתור', () => {
     ['מהלך E – F (צבע ספרדי/פלמנקו)', 'פריגי'],
   ];
   const [q, a] = pick(items);
-  return choice(`איזה מודוס הכי מתאים לאלתור על: ${q}?`, a, ['דורי', 'מיקסולידי', 'לידי', 'פריגי', 'לוקרי']);
+  const why: Record<string, string> = {
+    מיקסולידי: 'מיקסולידי = מז\'ור עם b7 – בדיוק התווים של אקורד דומיננט 7.',
+    דורי: 'דורי = מינור עם 6 גדולה. ב-ii של מז\'ור (או i–IV) זה הסולם שמתאים לכל האקורדים.',
+    לידי: 'לידי = מז\'ור עם #4 (= #11) – הצליל ה"מרחף" שמעל maj7.',
+    לוקרי: 'לוקרי = מינור עם b2 ו-b5 – ה-b5 הוא בדיוק הקווינטה של m7b5.',
+    פריגי: 'פריגי = מינור עם b2 – ה-F מעל E נותן את הצבע הספרדי.',
+  };
+  return choice(`איזה מודוס הכי מתאים לאלתור על: ${q}?`, a, ['דורי', 'מיקסולידי', 'לידי', 'פריגי', 'לוקרי'], { explain: why[a] });
 });
 
 gen('gt.cagedA', 'guitar', 5, 'צורות A ו-E', () => {
@@ -523,7 +589,9 @@ gen('gt.cagedA', 'guitar', 5, 'צורות A ו-E', () => {
   const root = pick(rootsFor(ACC_ROOTS, eShape ? 4 : 9));
   const f = barreFret(pcAny(root), eShape ? 4 : 9);
   return choice(`${root}${q} בצורת ${eShape ? 'E' : 'A'} – באיזה סריג השורש?`, `סריג ${f}`,
-    [f - 1, f + 1, f + 2, f - 2, barreFret(pcAny(root), eShape ? 9 : 4)].filter((x) => x > 0 && x <= 12).map((x) => `סריג ${x}`));
+    [f - 1, f + 1, f + 2, f - 2, barreFret(pcAny(root), eShape ? 9 : 4)].filter((x) => x > 0 && x <= 12).map((x) => `סריג ${x}`), {
+      explain: `בצורת ${eShape ? 'E' : 'A'} השורש על מיתר ${eShape ? 6 : 5} (${eShape ? 'E' : 'A'} פתוח). ${root} נמצא שם בסריג ${f}: ${countUp(eShape ? 40 : 45, f)}.`,
+    });
 });
 
 gen('gt.intervalsNeck', 'guitar', 5, 'מרווחים על הצוואר', markRel([3, 4, 7, 10, 11, 12], (s) => INTERVALS[s].name));
@@ -533,30 +601,32 @@ gen('gt.intervalsNeck', 'guitar', 5, 'מרווחים על הצוואר', markRel
 gen('pn.findNatural', 'piano', 1, 'מציאת תווים', () => {
   const p = pick(naturalPcs);
   return { kind: 'keys', prompt: `לחץ על התו ${heLabel(PC_SHARP[p])}`, pcs: [p],
-    explain: 'C נמצא תמיד משמאל לקבוצה של שני קלידים שחורים; F משמאל לקבוצה של שלושה.' };
+    explain: `${PC_SHARP[p]} – ${KEY_HINT[PC_SHARP[p]]}.` };
 });
 
 gen('pn.layout', 'piano', 1, 'מבנה המקלדת', () => {
-  const facts: [string, string, string[]][] = [
-    ['איזה תו נמצא מיד משמאל לקבוצה של שני קלידים שחורים?', 'C', ['F', 'D', 'B']],
-    ['איזה תו נמצא מיד משמאל לקבוצה של שלושה קלידים שחורים?', 'F', ['C', 'G', 'E']],
-    ['בין אילו שני תווים לבנים אין קליד שחור?', 'E ו-F', ['C ו-D', 'G ו-A', 'A ו-B']],
-    ['כמה קלידים (לבנים ושחורים) יש באוקטבה אחת?', '12', ['7', '8', '10']],
-    ['מה ההבדל בין שני קלידים צמודים (כולל שחורים)?', 'חצי טון', ['טון שלם', 'טרצה', 'אוקטבה']],
+  const facts: [string, string, string[], string][] = [
+    ['איזה תו נמצא מיד משמאל לקבוצה של שני קלידים שחורים?', 'C', ['F', 'D', 'B'], 'C (דו) תמיד משמאל לזוג השחורים – זו נקודת ההתמצאות הכי חשובה.'],
+    ['איזה תו נמצא מיד משמאל לקבוצה של שלושה קלידים שחורים?', 'F', ['C', 'G', 'E'], 'F (פה) תמיד משמאל לשלישיית השחורים.'],
+    ['בין אילו שני תווים לבנים אין קליד שחור?', 'E ו-F', ['C ו-D', 'G ו-A', 'A ו-B'], 'בין E–F ובין B–C אין קליד שחור, ולכן המרחק ביניהם רק חצי טון.'],
+    ['כמה קלידים (לבנים ושחורים) יש באוקטבה אחת?', '12', ['7', '8', '10'], '7 לבנים + 5 שחורים = 12 – והתבנית חוזרת.'],
+    ['מה ההבדל בין שני קלידים צמודים (כולל שחורים)?', 'חצי טון', ['טון שלם', 'טרצה', 'אוקטבה'], 'כל קליד לקליד הצמוד אליו (לבן או שחור) = חצי טון.'],
   ];
-  const [q, a, w] = pick(facts);
-  return choice(q, a, w);
+  const [q, a, w, why] = pick(facts);
+  return choice(q, a, w, { explain: why });
 });
 
 gen('pn.micNote', 'piano', 1, 'נגן תו בפסנתר', () => {
   const p = pick(naturalPcs);
-  return { kind: 'micNote', instrument: 'piano', prompt: `נגן בפסנתר את התו ${heLabel(PC_SHARP[p])}`, pc: p };
+  return { kind: 'micNote', instrument: 'piano', prompt: `נגן בפסנתר את התו ${heLabel(PC_SHARP[p])}`, pc: p,
+    explain: `${PC_SHARP[p]} – ${KEY_HINT[PC_SHARP[p]]}.` };
 });
 
 gen('pn.findAccidental', 'piano', 2, 'קלידים שחורים', () => {
   const p = pick([1, 3, 6, 8, 10]);
   const name = Math.random() < 0.5 ? PC_SHARP[p] : PC_FLAT[p];
-  return { kind: 'keys', prompt: `לחץ על ${heLabel(name)}`, pcs: [p] };
+  return { kind: 'keys', prompt: `לחץ על ${heLabel(name)}`, pcs: [p],
+    explain: `${PC_SHARP[p]} = ${PC_FLAT[p]}: הקליד השחור בין ${PC_SHARP[p - 1]} ל-${PC_SHARP[p + 1]}.` };
 });
 
 const triadTap = (roots: string[], qs: string[]) => (): Exercise => {
@@ -583,7 +653,8 @@ gen('pn.micTriad', 'piano', 2, 'נגן אקורד בפסנתר', () => {
   const root = pick(['C', 'F', 'G', 'D', 'A']);
   const q = pick(['maj', 'min']);
   return { kind: 'micChord', instrument: 'piano', prompt: `נגן בפסנתר את ${root}${CHORDS[q].symbol}`, symbol: root + CHORDS[q].symbol,
-    pcs: CHORDS[q].steps.map((s) => (pcAny(root) + s) % 12), names: spellChord(root, CHORDS[q].steps) };
+    pcs: CHORDS[q].steps.map((s) => (pcAny(root) + s) % 12), names: spellChord(root, CHORDS[q].steps),
+    explain: `${root}${CHORDS[q].symbol} = ${spellChord(root, CHORDS[q].steps).join(' ')}. לחץ את שלושתם יחד והחזק.` };
 });
 
 gen('pn.triads', 'piano', 3, 'מינור, מוקטן, מוגדל', triadTap(COMMON_ROOTS, ['min', 'min', 'dim', 'aug']));
@@ -618,7 +689,8 @@ gen('pn.shells', 'piano', 5, 'Shell voicings', () => {
   const root = pick(ACC_ROOTS);
   const q = pick(['maj7', 'dom7', 'min7']);
   const st = CHORDS[q].steps;
-  return { kind: 'keys', prompt: `נגן shell voicing ל-${root}${CHORDS[q].symbol}: שורש בבס + טרצה + ספטימה`, pcs: [0, st[1], st[3]].map((s) => (pcAny(root) + s) % 12), bassPc: pcAny(root) };
+  return { kind: 'keys', prompt: `נגן shell voicing ל-${root}${CHORDS[q].symbol}: שורש בבס + טרצה + ספטימה`, pcs: [0, st[1], st[3]].map((s) => (pcAny(root) + s) % 12), bassPc: pcAny(root),
+    explain: `${root}${CHORDS[q].symbol}: שורש **${root}**, טרצה **${spellChord(root, [st[1]])[0]}**, ספטימה **${spellChord(root, [st[3]])[0]}** (בלי הקווינטה).` };
 });
 
 gen('pn.modeTap', 'piano', 5, 'מודוסים על המקלדת', () => {

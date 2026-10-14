@@ -12,13 +12,16 @@ function parse(n: string) {
   return { idx: Number(m[3]) * 7 + NATURALS.indexOf(m[1]), acc: m[2] ?? '' };
 }
 
-export function Staff({ spec }: { spec: StaffSpec }) {
+/** `labels` (optional) are printed under each note — used in explanations. */
+export function Staff({ spec, labels }: { spec: StaffSpec; labels?: string[] }) {
   const bottomY = TOP + 4 * GAP;
   const yOf = (idx: number) => bottomY - (idx - BOTTOM[spec.clef]) * (GAP / 2);
   const notes = spec.notes.map(parse);
-  const W = 220;
+  const STEP = 34;
+  const W = spec.chord ? 220 : Math.max(220, 110 + notes.length * STEP);
+  const H = labels ? 150 : 130;
   return (
-    <svg className="staff" viewBox={`0 0 ${W} 130`} role="img" aria-label="חמשה">
+    <svg className="staff" viewBox={`0 0 ${W} ${H}`} style={{ maxWidth: Math.max(320, W * 1.3) }} role="img" aria-label="חמשה">
       {[0, 1, 2, 3, 4].map((i) => (
         <line key={i} x1={10} x2={W - 10} y1={TOP + i * GAP} y2={TOP + i * GAP} />
       ))}
@@ -26,7 +29,7 @@ export function Staff({ spec }: { spec: StaffSpec }) {
         {spec.clef === 'treble' ? '𝄞' : '𝄢'}
       </text>
       {notes.map((n, i) => {
-        const x = spec.chord ? 130 : 110 + i * 40;
+        const x = spec.chord ? 130 : 105 + i * STEP;
         const y = yOf(n.idx);
         const rel = n.idx - BOTTOM[spec.clef];
         const ledgers: number[] = [];
@@ -44,6 +47,7 @@ export function Staff({ spec }: { spec: StaffSpec }) {
             )}
             <ellipse className="head" cx={x} cy={y} rx={7.5} ry={5.5} transform={`rotate(-20 ${x} ${y})`} />
             <line className="stem" x1={rel >= 4 ? x - 7 : x + 7} x2={rel >= 4 ? x - 7 : x + 7} y1={y} y2={rel >= 4 ? y + 34 : y - 34} />
+            {labels?.[i] && <text className="note-label" x={x} y={H - 8} textAnchor="middle" fontSize={13}>{labels[i]}</text>}
           </g>
         );
       })}

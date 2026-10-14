@@ -72,7 +72,7 @@ export function Practice() {
           <div className="progress grow"><div style={{ width: `${(i / queue.length) * 100}%` }} /></div>
           <span className="small muted">{DOMAIN_ICON[queue[i].domain]} {queue[i].title}</span>
         </div>
-        <ExerciseView key={`${round}-${i}`} ex={ex} onDone={onDone} />
+        <ExerciseView key={`${round}-${i}`} ex={ex} genId={queue[i].id} onDone={onDone} />
       </div>
     );
   }

@@ -8,16 +8,26 @@ import { Fretboard, type FretMark } from './Fretboard';
 import { Keyboard, type KeyMark } from './Keyboard';
 import { MicChordTask, MicNoteTask } from './MicTasks';
 import { Staff } from './Staff';
+import { Blocks } from './Blocks';
+import { rich } from './rich';
+import { HELP } from '../data/help';
+import { GLOSSARY_BY_ID } from '../data/glossary';
 
 export type Outcome = 'right' | 'wrong' | 'skip';
 
 /** Renders one exercise of any kind; calls onDone once the learner moves on. */
-export function ExerciseView({ ex, onDone }: { ex: Exercise; onDone: (o: Outcome) => void }) {
+export function ExerciseView({ ex, genId, onDone }: { ex: Exercise; genId?: string; onDone: (o: Outcome) => void }) {
   const [result, setResult] = useState<Outcome | null>(null);
+  const [help, setHelp] = useState(false);
   const finish = (o: Outcome) => setResult((r) => r ?? o);
+  const h = genId ? HELP[genId] : undefined;
   return (
     <div className="exercise">
-      <h2 className="prompt">{ex.prompt}</h2>
+      <div className="prompt-row">
+        <h2 className="prompt">{rich(ex.prompt)}</h2>
+        {h && <button className="help-btn" aria-label="מה זה?" onClick={() => setHelp(true)}>?</button>}
+      </div>
+      {help && h && <HelpSheet tip={h.tip} topics={h.topics} onClose={() => setHelp(false)} />}
       {ex.kind === 'choice' && <ChoiceBody ex={ex} result={result} finish={finish} />}
       {ex.kind === 'keys' && <KeysBody ex={ex} result={result} finish={finish} />}
       {ex.kind === 'fret' && <FretBody ex={ex} result={result} finish={finish} />}
@@ -39,10 +49,44 @@ export function ExerciseView({ ex, onDone }: { ex: Exercise; onDone: (o: Outcome
       {result && (
         <div className={`feedback ${result}`}>
           <div className="fb-title">{result === 'right' ? '✓ נכון!' : result === 'wrong' ? '✗ לא בדיוק' : ''}</div>
-          {ex.explain && <p className="explain">{ex.explain}</p>}
+          {ex.explain && <p className="explain">{rich(ex.explain)}</p>}
+          {h && result === 'wrong' && <button className="btn ghost small" onClick={() => setHelp(true)}>❓ הסבר מלא על הנושא</button>}
           <button className="btn primary" autoFocus onClick={() => onDone(result)}>המשך</button>
         </div>
       )}
+    </div>
+  );
+}
+
+/** Bottom sheet with a short tip and glossary entries that open in place (the exercise keeps its state). */
+function HelpSheet({ tip, topics, onClose }: { tip: string; topics: string[]; onClose: () => void }) {
+  const [topic, setTopic] = useState<string | null>(null);
+  const entry = topic ? GLOSSARY_BY_ID[topic] : null;
+  return (
+    <div className="sheet-backdrop" onClick={onClose}>
+      <div className="sheet" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+        <div className="sheet-head">
+          {entry ? <button className="back" onClick={() => setTopic(null)}>→ חזרה</button> : <b>❓ מה זה?</b>}
+          <button className="sheet-close" aria-label="סגור" onClick={onClose}>✕</button>
+        </div>
+        {entry ? (
+          <>
+            <h2>{entry.icon} {entry.title}</h2>
+            <Blocks blocks={entry.blocks} onTopic={setTopic} />
+          </>
+        ) : (
+          <>
+            <p className="b-tip">💡 {rich(tip)}</p>
+            <p className="muted small">רוצה להבין לעומק? פתח את ההסבר המלא:</p>
+            <div className="b-see">
+              {topics.filter((t) => GLOSSARY_BY_ID[t]).map((t) => (
+                <button key={t} className="chip" onClick={() => setTopic(t)}>{GLOSSARY_BY_ID[t].icon} {GLOSSARY_BY_ID[t].title}</button>
+              ))}
+            </div>
+          </>
+        )}
+        <button className="btn primary wide" onClick={onClose}>חזרה לתרגיל</button>
+      </div>
     </div>
   );
 }
@@ -78,7 +122,7 @@ function ChoiceBody({ ex, result, finish }: BodyProps<'choice'>) {
           return (
             <button key={i} className={`option ${cls}`} disabled={!!result}
               onClick={() => { setPicked(i); finish(i === ex.answer ? 'right' : 'wrong'); }}>
-              <bdi>{o}</bdi>
+              <span>{rich(o)}</span>
             </button>
           );
         })}

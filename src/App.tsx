@@ -7,6 +7,7 @@ import { Onboarding, type StartMode } from './screens/Onboarding';
 import { Placement } from './screens/Placement';
 import { Practice } from './screens/Practice';
 import { Tools } from './screens/Tools';
+import { Glossary } from './screens/Glossary';
 import { Track } from './screens/Track';
 import { finishPlacement, resetAll, setLevels, useStore, type Profile } from './state/store';
 import { LevelPicker } from './screens/LevelPicker';
@@ -44,7 +45,7 @@ function Settings() {
   );
 }
 
-const NAV: [string, string, string][] = [['', '🏠', 'בית'], ['practice', '⚡', 'תרגול'], ['tools', '🧰', 'כלים'], ['settings', '⚙️', 'הגדרות']];
+const NAV: [string, string, string][] = [['', '🏠', 'בית'], ['practice', '⚡', 'תרגול'], ['glossary', '📚', 'מילון'], ['tools', '🧰', 'כלים'], ['settings', '⚙️', 'הגדרות']];
 
 export default function App() {
   const s = useStore();
@@ -65,6 +66,7 @@ export default function App() {
   else if (page === 'lesson' && arg) body = <LessonRunner key={arg} id={arg} />;
   else if (page === 'practice') body = <Practice />;
   else if (page === 'tools') body = <Tools />;
+  else if (page === 'glossary') body = <Glossary key={arg ?? ''} id={arg} />;
   else if (page === 'settings') body = <Settings />;
   else body = <Home />;
 

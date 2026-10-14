@@ -107,7 +107,7 @@ export function Placement({ profile, onDone }: { profile: Profile; onDone: (leve
           <button className="btn ghost wide" onClick={skipSection}>דלג על החלק הזה (הרמה תיקבע לפי השאלון)</button>
         </div>
       ) : item && (
-        <ExerciseView key={item.n} ex={item.ex} onDone={advance} />
+        <ExerciseView key={item.n} ex={item.ex} genId={item.genId} onDone={advance} />
       )}
     </div>
   );

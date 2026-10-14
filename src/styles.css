@@ -233,3 +233,32 @@ h3 { font-size: 1.05rem; }
 .stepper button:disabled { opacity: 0.3; }
 .stepper span { font-weight: 800; font-size: 1.2rem; min-width: 1ch; text-align: center; }
 .option small { font-weight: 400; }
+.key span.kl { white-space: pre-line; text-align: center; line-height: 1.15; font-weight: 600; }
+.staff .note-label { fill: #5a4fa0; font-weight: 700; font-family: system-ui, sans-serif; }
+
+/* Explanation blocks */
+.blocks p { margin: 0.6em 0; }
+.blocks b.term, .b-tip b.term, .explain b.term { color: #cbbcff; unicode-bidi: isolate; }
+.b-h { margin: 20px 0 6px; }
+.b-tip { background: #2a2346; border-inline-start: 4px solid var(--accent); padding: 10px 12px; border-radius: 10px; margin: 12px 0; }
+.b-list { padding-inline-start: 20px; margin: 8px 0; }
+.b-list li { margin: 4px 0; }
+.b-table-wrap { overflow-x: auto; margin: 10px 0; }
+.b-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+.b-table th { text-align: start; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--line); padding: 6px; }
+.b-table td { border-bottom: 1px solid #2a2540; padding: 7px 6px; vertical-align: top; }
+.b-table td[dir="ltr"] { text-align: right; font-weight: 600; unicode-bidi: plaintext; }
+.b-fig { margin: 12px 0; }
+.b-fig figcaption { text-align: center; color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
+.b-see { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 12px 0; }
+
+/* Help button + sheet */
+.prompt-row { display: flex; align-items: flex-start; gap: 10px; }
+.prompt-row .prompt { flex: 1; }
+.help-btn { flex-shrink: 0; width: 34px; height: 34px; margin-top: 8px; border-radius: 50%; border: 1px solid var(--accent); background: transparent; color: var(--accent); font-weight: 800; font-size: 1.05rem; }
+.sheet-backdrop { position: fixed; inset: 0; background: #0009; z-index: 50; display: flex; align-items: flex-end; justify-content: center; animation: fade 0.15s; }
+.sheet { background: var(--bg); width: 100%; max-width: 640px; max-height: 88dvh; overflow-y: auto; border-radius: 20px 20px 0 0; padding: 14px 16px max(16px, env(safe-area-inset-bottom)); border-top: 1px solid var(--line); }
+.sheet-head { display: flex; justify-content: space-between; align-items: center; }
+.sheet-close { background: none; border: none; font-size: 1.2rem; color: var(--muted); padding: 6px; }
+.tabbar button { padding: 4px 8px; }
+.prompt bdi, .explain bdi, .option bdi, .b-tip bdi, .blocks bdi { white-space: nowrap; }

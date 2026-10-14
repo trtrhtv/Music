@@ -1,4 +1,6 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState } from 'react';
+import { Blocks } from '../components/Blocks';
+import { rich } from '../components/rich';
 import { playCue } from '../audio/cue';
 import { ExerciseView, type Outcome } from '../components/ExerciseView';
 import { LESSON_BY_ID } from '../data/curriculum';
@@ -6,11 +8,6 @@ import { GEN_BY_ID } from '../engine/generators';
 import { DOMAIN_ICON } from '../engine/types';
 import { go } from '../router';
 import { PASS, recordAnswer, recordLesson } from '../state/store';
-
-/** Renders **bold** inline markup. */
-function rich(text: string): ReactNode[] {
-  return text.split(/(\*\*[^*]+\*\*)/).map((p, i) => (p.startsWith('**') ? <b key={i} className="term">{p.slice(2, -2)}</b> : p));
-}
 
 export function LessonRunner({ id }: { id: string }) {
   const lesson = LESSON_BY_ID[id];
@@ -48,6 +45,7 @@ export function LessonRunner({ id }: { id: string }) {
         <p className="muted">{DOMAIN_ICON[lesson.domain]} רמה {lesson.level}</p>
         <h1>{lesson.title}</h1>
         <div className="lesson-text">{lesson.intro.map((p, k) => <p key={k}>{rich(p)}</p>)}</div>
+        {lesson.extra && <Blocks blocks={lesson.extra} />}
         {lesson.demos && (
           <div className="demos">
             {lesson.demos.map((d, k) => (
@@ -55,6 +53,7 @@ export function LessonRunner({ id }: { id: string }) {
             ))}
           </div>
         )}
+        {lesson.see && <Blocks blocks={[{ t: 'see', ids: lesson.see }]} />}
         <button className="btn primary big" onClick={() => setPhase('drill')}>לתרגול ({queue.length} תרגילים)</button>
       </div>
     );
@@ -95,7 +94,7 @@ export function LessonRunner({ id }: { id: string }) {
         <div className="progress grow"><div style={{ width: `${(i / queue.length) * 100}%` }} /></div>
         <span className="small muted">{i + 1}/{queue.length}</span>
       </div>
-      {ex && <ExerciseView key={i} ex={ex} onDone={onDone} />}
+      {ex && <ExerciseView key={i} ex={ex} genId={queue[i]} onDone={onDone} />}
     </div>
   );
 }
