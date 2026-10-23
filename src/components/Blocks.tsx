@@ -9,6 +9,7 @@ import { ChordDiagram } from './ChordDiagram';
 import { Fretboard } from './Fretboard';
 import { Keyboard } from './Keyboard';
 import { Staff } from './Staff';
+import { Metronome, StrumPattern, TabView } from './RhythmTools';
 
 /**
  * Renders explanation blocks. `onTopic` handles glossary links; by default they navigate
@@ -75,6 +76,28 @@ export function Blocks({ blocks, onTopic }: { blocks: Block[]; onTopic?: (id: st
                   <button key={k} className="btn demo" onClick={() => playCue(d.cue, d.timbre)}>🔊 {d.label}</button>
                 ))}
               </div>
+            );
+          case 'tab': return <TabView key={i} lines={b.lines} title={b.title} />;
+          case 'strum': return <StrumPattern key={i} name={b.name} rhythm={b.rhythm} bpm={b.bpm} chords={b.chords} chordNames={b.chordNames} note={b.note} />;
+          case 'metronome': return <Metronome key={i} initial={b.bpm} beats={b.beats} />;
+          case 'links':
+            return (
+              <div key={i} className="b-links">
+                {b.items.map((l, k) => <a key={k} className="chip" href={l.url} target="_blank" rel="noopener noreferrer">🔗 {l.label}</a>)}
+              </div>
+            );
+          case 'go':
+            return (
+              <div key={i} className="b-see">
+                {b.items.map((l, k) => <button key={k} className="chip" onClick={() => go(l.to)}>➜ {l.label}</button>)}
+              </div>
+            );
+          case 'chords':
+            return (
+              <figure key={i} className="b-fig">
+                <div className="chord-row">{b.items.map((ch, k) => <ChordDiagram key={k} frets={ch.frets} label={ch.name} />)}</div>
+                {b.caption && <figcaption>{b.caption}</figcaption>}
+              </figure>
             );
           case 'see':
             return (

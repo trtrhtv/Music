@@ -5,10 +5,11 @@ import { ChordDiagram } from '../components/ChordDiagram';
 import { Fretboard } from '../components/Fretboard';
 import { Keyboard } from '../components/Keyboard';
 import { MicDenied } from '../components/MicTasks';
+import { Metronome } from '../components/RhythmTools';
 import { CHORD_SHAPES } from '../engine/guitarChords';
 import { GUITAR_TUNING, freqToMidiFloat, noteNameOct } from '../theory/theory';
 
-type Tab = 'tuner' | 'piano' | 'neck' | 'chords';
+type Tab = 'tuner' | 'metro' | 'piano' | 'neck' | 'chords';
 
 export function Tools() {
   const [tab, setTab] = useState<Tab>('tuner');
@@ -16,11 +17,12 @@ export function Tools() {
     <div className="screen">
       <h1>🧰 כלים</h1>
       <div className="chips">
-        {([['tuner', 'מכוון'], ['piano', 'מקלדת'], ['neck', 'צוואר'], ['chords', 'אקורדים']] as [Tab, string][]).map(([t, l]) => (
+        {([['tuner', 'מכוון'], ['metro', 'מטרונום'], ['piano', 'מקלדת'], ['neck', 'צוואר'], ['chords', 'אקורדים']] as [Tab, string][]).map(([t, l]) => (
           <button key={t} className={`chip ${tab === t ? 'on' : ''}`} onClick={() => setTab(t)}>{l}</button>
         ))}
       </div>
       {tab === 'tuner' && <Tuner />}
+      {tab === 'metro' && <><Metronome initial={70} /><Metronome initial={60} beats={3} /></>}
       {tab === 'piano' && <FreePiano />}
       {tab === 'neck' && <FreeNeck />}
       {tab === 'chords' && <ChordLib />}

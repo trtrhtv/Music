@@ -2,6 +2,7 @@ import { LESSONS, UNIT_TITLES, lessonsFor } from '../data/curriculum';
 import { DOMAIN_ICON, DOMAIN_LABEL, LEVEL_LABEL, type Domain } from '../engine/types';
 import { go } from '../router';
 import { lessonStatus, streak, useStore, type State } from '../state/store';
+import { currentDay } from '../state/planProgress';
 
 function nextLesson(s: State, d: Domain) {
   return lessonsFor(d).find((l) => lessonStatus(s, l) === 'open');
@@ -10,6 +11,7 @@ function nextLesson(s: State, d: Domain) {
 export function Home() {
   const s = useStore();
   const st = streak(s.days);
+  const cd = currentDay(s);
   const order: Domain[] = ['theory', 'ear', 'guitar', 'piano'];
   const doneCount = LESSONS.filter((l) => s.lessons[l.id]?.passed).length;
   return (
@@ -19,8 +21,16 @@ export function Home() {
           <h1>שלום! 👋</h1>
           <p className="muted">{doneCount} שיעורים הושלמו · {s.xp} XP</p>
         </div>
-        <div className="streak" title="ימים ברצף">🔥 {st}</div>
+        <div className="row tight">
+          <div className="streak" title="ימים ברצף">🔥 {st}</div>
+          <button className="gear" aria-label="הגדרות" onClick={() => go('settings')}>⚙️</button>
+        </div>
       </header>
+
+      <button className="cta plan-cta" onClick={() => go('plan/' + cd.n)}>
+        <span className="cta-icon">🗓️</span>
+        <span><b>התוכנית – יום {cd.n}</b><br /><small>{cd.title}</small></span>
+      </button>
 
       <button className="cta" onClick={() => go('practice')}>
         <span className="cta-icon">⚡</span>

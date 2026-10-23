@@ -15,6 +15,12 @@ export function audio(): AudioContext {
   return ctx;
 }
 
+/** The shared output bus (for sounds built outside this module, e.g. metronome clicks). */
+export function output(): AudioNode {
+  audio();
+  return master!;
+}
+
 export type Timbre = 'piano' | 'guitar';
 
 const pluckCache = new Map<number, AudioBuffer>();
@@ -74,9 +80,10 @@ function playGuitar(c: AudioContext, midi: number, t: number, dur: number, vel: 
   src.stop(t + dur + 0.5);
 }
 
-export function playNote(midi: number, opts: { when?: number; dur?: number; timbre?: Timbre; vel?: number } = {}) {
+/** `at` is an absolute AudioContext time (for scheduled rhythms); `when` is relative to now. */
+export function playNote(midi: number, opts: { when?: number; at?: number; dur?: number; timbre?: Timbre; vel?: number } = {}) {
   const c = audio();
-  const t = c.currentTime + 0.03 + (opts.when ?? 0);
+  const t = opts.at ?? c.currentTime + 0.03 + (opts.when ?? 0);
   const dur = opts.dur ?? 1;
   (opts.timbre === 'guitar' ? playGuitar : playPiano)(c, midi, t, dur, opts.vel ?? 1);
 }

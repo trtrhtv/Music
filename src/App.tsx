@@ -8,8 +8,10 @@ import { Placement } from './screens/Placement';
 import { Practice } from './screens/Practice';
 import { Tools } from './screens/Tools';
 import { Glossary } from './screens/Glossary';
+import { PlanDayView, PlanOverview } from './screens/Plan';
+import { SongView, SongsList } from './screens/Songs';
 import { Track } from './screens/Track';
-import { finishPlacement, resetAll, setLevels, useStore, type Profile } from './state/store';
+import { finishPlacement, resetAll, resetPlan, setLevels, useStore, type Profile } from './state/store';
 import { LevelPicker } from './screens/LevelPicker';
 import { priorTiers } from './engine/placement';
 
@@ -39,13 +41,14 @@ function Settings() {
       <button className="btn ghost wide" onClick={() => go('retest')}>לעשות את מבחן הרמה מחדש</button>
       <button className="btn ghost wide" onClick={() => go('levels')}>לשנות רמות ידנית</button>
       <p className="muted small">ההתקדמות בשיעורים נשמרת; הרמות יתעדכנו לפי המבחן החדש.</p>
+      <button className="btn ghost wide" onClick={() => { if (confirm('לאפס את ההתקדמות בתוכנית (סימונים ו-BPM)?')) resetPlan(); }}>איפוס התוכנית</button>
       <button className="btn danger wide" onClick={() => { if (confirm('למחוק את כל ההתקדמות?')) { resetAll(); go(''); } }}>איפוס מלא</button>
       <p className="muted small">כל הנתונים נשמרים רק במכשיר הזה.</p>
     </div>
   );
 }
 
-const NAV: [string, string, string][] = [['', '🏠', 'בית'], ['practice', '⚡', 'תרגול'], ['glossary', '📚', 'מילון'], ['tools', '🧰', 'כלים'], ['settings', '⚙️', 'הגדרות']];
+const NAV: [string, string, string][] = [['', '🏠', 'בית'], ['plan', '🗓️', 'תוכנית'], ['practice', '⚡', 'תרגול'], ['glossary', '📚', 'מילון'], ['tools', '🧰', 'כלים']];
 
 export default function App() {
   const s = useStore();
@@ -67,6 +70,8 @@ export default function App() {
   else if (page === 'practice') body = <Practice />;
   else if (page === 'tools') body = <Tools />;
   else if (page === 'glossary') body = <Glossary key={arg ?? ''} id={arg} />;
+  else if (page === 'plan') body = arg ? <PlanDayView key={arg} n={Number(arg)} /> : <PlanOverview />;
+  else if (page === 'songs') body = arg ? <SongView key={arg} id={arg} /> : <SongsList />;
   else if (page === 'settings') body = <Settings />;
   else body = <Home />;
 
@@ -76,7 +81,7 @@ export default function App() {
       {page !== 'lesson' && (
         <nav className="tabbar">
           {NAV.map(([p, icon, label]) => (
-            <button key={p} className={(page ?? '') === p || (p === '' && page === 'track') ? 'on' : ''} onClick={() => go(p)}>
+            <button key={p} className={(page ?? '') === p || (p === '' && page === 'track') || (p === 'plan' && page === 'songs') ? 'on' : ''} onClick={() => go(p)}>
               <span>{icon}</span><small>{label}</small>
             </button>
           ))}

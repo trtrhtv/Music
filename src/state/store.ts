@@ -24,6 +24,8 @@ export interface State {
   genStats: Record<string, { right: number; total: number; last: number }>;
   days: string[];
   xp: number;
+  /** Practice plan: done blocks ("day:block") and BPM log per block key. */
+  plan: { done: Record<string, boolean>; bpm: Record<string, number[]> };
 }
 
 const KEY = 'music-trainer-v1';
@@ -37,6 +39,7 @@ const fresh = (): State => ({
   genStats: {},
   days: [],
   xp: 0,
+  plan: { done: {}, bpm: {} },
 });
 
 function load(): State {
@@ -119,6 +122,27 @@ export function finishPlacement(profile: Profile, levels: Record<Domain, number>
 /** Manually chosen levels: lessons below them count as known, like after the placement test. */
 export function setLevels(levels: Record<Domain, number>) {
   update((s) => ({ ...s, placed: true, levels: { ...levels }, placedLevels: { ...levels } }));
+}
+
+export const planKey = (day: number, block: string) => `${day}:${block}`;
+
+export function togglePlanBlock(day: number, block: string) {
+  update((s) => {
+    const k = planKey(day, block);
+    const days = s.days.includes(today()) ? s.days : [...s.days, today()];
+    return { ...s, days, plan: { ...s.plan, done: { ...s.plan.done, [k]: !s.plan.done[k] } } };
+  });
+}
+
+export function logPlanBpm(day: number, block: string, bpm: number) {
+  update((s) => {
+    const k = planKey(day, block);
+    return { ...s, plan: { ...s.plan, bpm: { ...s.plan.bpm, [k]: [...(s.plan.bpm[k] ?? []), bpm] } } };
+  });
+}
+
+export function resetPlan() {
+  update((s) => ({ ...s, plan: { done: {}, bpm: {} } }));
 }
 
 export function resetAll() {

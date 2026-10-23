@@ -1,3 +1,4 @@
+import type { Rhythm } from '../audio/rhythm';
 import type { AudioCue, StaffSpec } from '../engine/types';
 
 /** Building blocks for explanations (glossary entries, lesson intros, help sheets). */
@@ -14,7 +15,18 @@ export type Block =
   | { t: 'fretboard'; names?: boolean; marks?: { s: number; f: number; label?: string }[]; maxFret?: number; caption?: string }
   | { t: 'sounds'; items: { label: string; cue: AudioCue; timbre?: 'piano' | 'guitar' }[] }
   /** Links to glossary entries. */
-  | { t: 'see'; ids: string[] };
+  | { t: 'see'; ids: string[] }
+  /** Guitar tab, 6 lines from high e to low E. */
+  | { t: 'tab'; lines: string[]; title?: string }
+  /** Playable strum pattern; chords are fret voicings (6→1) cycled per bar. */
+  | { t: 'strum'; name: string; rhythm: Rhythm; bpm?: number; chords?: number[][]; chordNames?: string[]; note?: string }
+  | { t: 'metronome'; bpm?: number; beats?: number }
+  /** External links (sources, full tabs). */
+  | { t: 'links'; items: { label: string; url: string }[] }
+  /** Links inside the app (lessons, practice, glossary…). */
+  | { t: 'go'; items: { label: string; to: string }[] }
+  /** A row of chord diagrams. */
+  | { t: 'chords'; items: { name: string; frets: number[] }[]; caption?: string };
 
 // Small helpers to keep content files readable.
 export const p = (text: string): Block => ({ t: 'p', text });
