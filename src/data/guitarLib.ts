@@ -2,6 +2,7 @@ import type { Rhythm } from '../audio/rhythm';
 
 /** Standard open/barre voicings, frets from string 6 (low E) → 1; -1 = muted. */
 export const CH: Record<string, number[]> = {
+  A: [-1, 0, 2, 2, 2, 0],
   Am: [-1, 0, 2, 2, 1, 0],
   Am7: [-1, 0, 2, 0, 1, 0],
   'Am/G': [3, 0, 2, 2, 1, 0],
