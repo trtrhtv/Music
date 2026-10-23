@@ -91,7 +91,7 @@ export function StrumPattern({ name, rhythm, bpm: initialBpm = 70, chords, chord
         ))}
       </div>
       <div className="muted small">↓ למטה · ↑ למעלה · ✕ מיתרים מושתקים ("צ'יק") · · היד זזה בלי לפגוע · חץ גדול וצבעוני = חזק, קטן ושקוף = חלש</div>
-      {chordNames && <div className="small">אקורדים בלופ: <bdi>{chordNames.join(' → ')}</bdi> (אקורד לכל תיבה)</div>}
+      {chordNames && <div className="small">אקורדים בלופ: <bdi>{chordNames.join(' → ')}</bdi> (אקורד אחד לכל סבב של הטבלה)</div>}
       {note && <p className="small">{note}</p>}
       <BpmControl bpm={bpm} setBpm={setBpm} />
       <label className="toggle small"><input type="checkbox" checked={withChords} onChange={(e) => setWithChords(e.target.checked)} /> להשמיע גם את הגיטרה (לא רק קליק)</label>

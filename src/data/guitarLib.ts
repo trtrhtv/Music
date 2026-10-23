@@ -47,7 +47,7 @@ export const STRUMS: Record<string, { name: string; rhythm: Rhythm; desc: string
   backbeat: { name: 'פולק עם הדגשה על 2 ו-4', rhythm: { slots: 'D - >D U - U >D U', sub: 2, beats: 4 }, desc: 'אותו מקצב, אבל ההדגשות על 2 ו-4 (איפה שהתוף "סנר") – זה מה שנותן גרוב.' },
   rock8: { name: 'שמיניות רוק', rhythm: { slots: 'D u >D u D u >D u', sub: 2, beats: 4 }, desc: 'יד רצה כל הזמן למטה-למעלה; למעלה חלש, הדגשות על 2 ו-4.' },
   ballad: { name: 'בלדה רכה', rhythm: { slots: 'D - - U - U d U', sub: 2, beats: 4 }, desc: 'מכה מלאה על ה-1, השאר רך. מנגנים קרוב לגשר או עם השתקת כף יד עדינה.' },
-  sixEight: { name: '6/8 (או 12/8)', rhythm: { slots: '>D d u D d u >D d u D d u', sub: 3, beats: 4 }, desc: 'סופרים "1-2-3 4-5-6": כל פעמה מתחלקת לשלוש. הדגשה על תחילת כל קבוצה.' },
+  sixEight: { name: '6/8 (או 12/8)', rhythm: { slots: '>D d u D d u >D d u D d u', sub: 3, beats: 4 }, desc: 'סופרים "1-2-3 4-5-6", כמו נדנדה. מכה חזקה על 1, מכה רגילה על 4, והשאר רך. בטבלה הסבב מופיע פעמיים.' },
   shuffle: { name: 'שאפל בלוז', rhythm: { slots: 'D u >D u D u >D u', sub: 2, beats: 4, swing: true }, desc: 'שמיניות "צולעות" (דא-דה, דא-דה): הראשונה ארוכה, השנייה קצרה.' },
   funk16: { name: 'פאנק בשש-עשריות', rhythm: { slots: 'D - X U - U X U D - X U - U X U', sub: 4, beats: 4 }, desc: 'יד ימין זזה כל הזמן בשש-עשריות. ✕ = מכה על מיתרים מושתקים (שחרר את הלחץ ביד שמאל).' },
   rumba: { name: 'רומבה פלמנקו', rhythm: { slots: '>D - X U D U X U', sub: 2, beats: 4 }, desc: '✕ = "גולפה": מכה עם כף היד על המיתרים שמשתיקה אותם ונותנת צליל הקשה.' },

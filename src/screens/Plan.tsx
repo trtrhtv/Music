@@ -3,6 +3,7 @@ import { Blocks } from '../components/Blocks';
 import { rich } from '../components/rich';
 import { Timer } from '../components/RhythmTools';
 import { CHECKPOINT, KIND_META, PLAN, WEEK_TITLES, dayMinutes, planIntro, type PlanBlock } from '../data/plan';
+import { GLOSSARY_BY_ID } from '../data/glossary';
 import { SONG_BY_ID } from '../data/songs';
 import { go } from '../router';
 import { RATE_LABELS, coreDone, currentDay, doneCount, weakestSongs } from '../state/planProgress';
@@ -128,7 +129,7 @@ function BlockCard({ day, b }: { day: number; b: PlanBlock }) {
           {b.content && <Blocks blocks={b.content} />}
           {b.rate && <RateSongs day={day} songs={b.rate} />}
           {b.bpm && <BpmLog day={day} block={b} />}
-          {meta.help && <button className="link small help-link" onClick={() => go('glossary/' + meta.help)}>📖 מילה לא ברורה? הסבר על {meta.label}</button>}
+          {meta.help && <button className="link small help-link" onClick={() => go('glossary/' + meta.help)}>📖 מילה לא ברורה? {GLOSSARY_BY_ID[meta.help].title}</button>}
           {!done && <button className="btn primary wide" onClick={() => { togglePlanBlock(day, b.id); setOpen(false); }}>✓ סיימתי את הבלוק</button>}
         </div>
       )}

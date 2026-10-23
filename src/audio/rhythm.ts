@@ -29,7 +29,9 @@ export function parseSlots(s: string): Slot[] {
 
 /** Counting syllables for each slot, e.g. 1 & 2 & or 1 e & a. */
 export function countLabels(r: Rhythm): string[] {
-  const per = r.sub === 4 ? ['', 'e', '&', 'a'] : r.sub === 3 ? ['', '&', 'a'] : ['', '&'];
+  // Triple feel is counted "1-2-3 4-5-6", like the text in the plan.
+  if (r.sub === 3) return Array.from({ length: r.beats * 3 }, (_, i) => String((i % 6) + 1));
+  const per = r.sub === 4 ? ['', 'e', '&', 'a'] : ['', '&'];
   const out: string[] = [];
   for (let b = 1; b <= r.beats; b++) for (const p of per) out.push(p || String(b));
   return out;

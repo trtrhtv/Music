@@ -36,7 +36,7 @@ export function SongView({ id }: { id: string }) {
         <span>🎼 סולם: <bdi>{s.key}</bdi></span>
         {s.capo ? <span>📎 קאפו: {s.capo}</span> : null}
         <span>✋ {s.how}</span>
-        <span>{s.status === 'verified' ? (s.kind === 'piece' ? '✅ נבדק מול מקור' : '✅ אקורדים מאומתים') : '⚠️ לאמת מול המקור'}</span>
+        <span>{s.status === 'verified' ? (s.kind === 'piece' || !s.blocks.some((b) => b.t === 'chords') ? '✅ נבדק מול מקור' : '✅ אקורדים מאומתים') : '⚠️ לאמת מול המקור'}</span>
       </div>
       <Blocks blocks={s.blocks} />
       <h3 className="section-title">מקורות וטאב מלא</h3>
