@@ -1,3 +1,4 @@
+import { PRACTICE_TERMS } from './practiceGlossary';
 import { chord, h, list, p, see, seq, sounds, tip, type Block } from './blocks';
 
 export interface GlossaryEntry { id: string; title: string; icon: string; group: string; blocks: Block[] }
@@ -305,6 +306,7 @@ export const GLOSSARY: GlossaryEntry[] = [
       see('guitar', 'chord-diagram'),
     ],
   },
+  ...PRACTICE_TERMS,
 
   /* ───────── פסנתר ───────── */
   {

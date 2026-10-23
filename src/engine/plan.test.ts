@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PLAN, dayMinutes } from '../data/plan';
+import { CHECKPOINT, KIND_META, PLAN, dayMinutes } from '../data/plan';
 import { SONGS, SONG_BY_ID } from '../data/songs';
 import { CH, STRUMS } from '../data/guitarLib';
 import { parseSlots } from '../audio/rhythm';
@@ -28,11 +28,12 @@ function checkBlocks(blocks: Block[], where: string) {
 }
 
 describe('practice plan', () => {
-  it('has 14 days of ~2h core (light day excepted)', () => {
-    expect(PLAN.map((d) => d.n)).toEqual(Array.from({ length: 14 }, (_, i) => i + 1));
+  it('has 21 days in 3 weeks of ~2h core (light day excepted)', () => {
+    expect(PLAN.map((d) => d.n)).toEqual(Array.from({ length: 21 }, (_, i) => i + 1));
     for (const d of PLAN) {
+      expect(d.week, `day ${d.n} week`).toBe(Math.ceil(d.n / 7));
       const m = dayMinutes(d);
-      if (!d.light) expect(m.core, `day ${d.n}`).toBeGreaterThanOrEqual(100);
+      if (!d.light) expect(m.core, `day ${d.n}`).toBeGreaterThanOrEqual(90);
       expect(m.core, `day ${d.n}`).toBeLessThanOrEqual(130);
       expect(new Set(d.blocks.map((b) => b.id)).size, `day ${d.n} unique ids`).toBe(d.blocks.length);
     }
@@ -42,7 +43,11 @@ describe('practice plan', () => {
       for (const s of b.songs ?? []) expect(SONG_BY_ID[s], `day ${d.n} ${b.id}: ${s}`).toBeDefined();
       checkBlocks(b.content ?? [], `day ${d.n} ${b.id}`);
       if (b.bpm) expect(b.bpm.target).toBeGreaterThan(b.bpm.start);
+      for (const s of b.rate ?? []) expect(SONG_BY_ID[s], `day ${d.n} rate: ${s}`).toBeDefined();
+      if (b.polish) expect(d.n, `day ${d.n}: polishing needs the checkpoint ratings`).toBeGreaterThan(CHECKPOINT);
     }
+    expect(PLAN.find((d) => d.n === CHECKPOINT)!.blocks.some((b) => b.rate), 'checkpoint day rates songs').toBe(true);
+    for (const m of Object.values(KIND_META)) if (m.help) expect(GLOSSARY_BY_ID[m.help], m.help).toBeDefined();
     for (const s of SONGS) { checkBlocks(s.blocks, s.id); expect(s.sources.length, s.id).toBeGreaterThan(0); }
   });
   it('strum patterns keep the hand moving (downs on the beat grid, ups between)', () => {

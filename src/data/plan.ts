@@ -1,17 +1,18 @@
-import { list, p, tip, type Block } from './blocks';
+import { h, list, p, tip, type Block } from './blocks';
 import { CH, STRUMS, notesTab, tabFrom } from './guitarLib';
 
 export type BlockKind = 'warm' | 'strum' | 'finger' | 'song' | 'piece' | 'improv' | 'style' | 'app' | 'record' | 'free';
-export const KIND_META: Record<BlockKind, { icon: string; label: string }> = {
-  warm: { icon: '🔥', label: 'חימום' },
-  strum: { icon: '🥁', label: 'פריטה במקצב' },
-  finger: { icon: '🖐️', label: 'פריטה באצבעות' },
-  song: { icon: '🎤', label: 'שיר' },
-  piece: { icon: '🎼', label: 'יצירה' },
-  improv: { icon: '🎸', label: 'אלתור' },
-  style: { icon: '🌍', label: 'סגנון' },
-  app: { icon: '📱', label: 'שמיעה ותיאוריה' },
-  record: { icon: '🎙️', label: 'הקלטה' },
+/** `help` = the glossary entry that explains this kind of block's words. */
+export const KIND_META: Record<BlockKind, { icon: string; label: string; help?: string }> = {
+  warm: { icon: '🔥', label: 'חימום', help: 'practice-how' },
+  strum: { icon: '🥁', label: 'פריטה במקצב', help: 'rhythm-words' },
+  finger: { icon: '🖐️', label: 'פריטה באצבעות', help: 'right-hand' },
+  song: { icon: '🎤', label: 'שיר', help: 'capo' },
+  piece: { icon: '🎼', label: 'יצירה', help: 'tab-reading' },
+  improv: { icon: '🎸', label: 'אלתור', help: 'improv-words' },
+  style: { icon: '🌍', label: 'סגנון', help: 'rhythm-words' },
+  app: { icon: '📱', label: 'שמיעה ותיאוריה', help: 'app' },
+  record: { icon: '🎙️', label: 'הקלטה', help: 'practice-how' },
   free: { icon: '🎧', label: 'חופשי' },
 };
 
@@ -25,17 +26,22 @@ export interface PlanBlock {
   steps: string[];
   content?: Block[];
   songs?: string[];
-  /** Show a BPM log for this block (e.g. 60 → 80). */
-  bpm?: { start: number; target: number };
+  /** Show a log for this block: BPM (e.g. 60 → 80), or chord changes per minute. */
+  bpm?: { start: number; target: number; unit?: 'changes' };
+  /** Songs to rate (self-assessment) at a checkpoint day. */
+  rate?: string[];
+  /** Suggest the songs rated lowest on the day-14 checkpoint. */
+  polish?: boolean;
 }
 
-export interface PlanDay { n: number; week: 1 | 2; title: string; focus: string; light?: boolean; blocks: PlanBlock[] }
+export interface PlanDay { n: number; week: 1 | 2 | 3; title: string; focus: string; light?: boolean; blocks: PlanBlock[] }
 
 /* ───────── Reusable material ───────── */
 
 const strum = (id: keyof typeof STRUMS, names: string[], bpm = 70, note?: string): Block => ({
   t: 'strum', name: STRUMS[id].name, rhythm: STRUMS[id].rhythm, bpm, chords: names.map((n) => CH[n]), chordNames: names, note: note ?? STRUMS[id].desc,
 });
+const chordsOf = (...names: string[]) => names.map((name) => ({ name, frets: CH[name] }));
 const go = (...items: [string, string][]): Block => ({ t: 'go', items: items.map(([label, to]) => ({ label, to })) });
 
 // Warm-ups (frets 1–4, one finger per fret).
@@ -60,6 +66,14 @@ const HP_LICK = ['---------------5-8p5-----', '------5-8p5--------8-5---', '-5h7
 const SHUFFLE_E = tabFrom([[[6, 0], [5, 2]], [[6, 0], [5, 2]], [[6, 0], [5, 4]], [[6, 0], [5, 4]], [[6, 0], [5, 2]], [[6, 0], [5, 2]], [[6, 0], [5, 4]], [[6, 0], [5, 4]]], 3);
 const SHUFFLE_A = tabFrom([[[5, 0], [4, 2]], [[5, 0], [4, 2]], [[5, 0], [4, 4]], [[5, 0], [4, 4]], [[5, 0], [4, 2]], [[5, 0], [4, 2]], [[5, 0], [4, 4]], [[5, 0], [4, 4]]], 3);
 const BOSSA_CMAJ7 = tabFrom([[[5, 3], [4, 2], [3, 0], [2, 0]], [], [], [[4, 2], [3, 0], [2, 0]], [[6, 3]], [], [[4, 2], [3, 0], [2, 0]], []], 3);
+const PENTA_D = notesTab([[6, 10], [6, 13], [5, 10], [5, 12], [4, 10], [4, 12], [3, 10], [3, 12], [2, 10], [2, 13], [1, 10], [1, 13]]);
+// Am, F, G, C: bass with the thumb, then i-m-a-m (chord shapes as played with capo 1).
+const ARP_DMAMA = tabFrom([
+  [[5, 0]], [[3, 2]], [[2, 1]], [[1, 0]], [[2, 1]],
+  [[4, 3]], [[3, 2]], [[2, 1]], [[1, 1]], [[2, 1]],
+  [[6, 3]], [[3, 0]], [[2, 0]], [[1, 3]], [[2, 0]],
+  [[5, 3]], [[3, 0]], [[2, 1]], [[1, 0]], [[2, 1]],
+], 3);
 const BLUES12 = ['A7', 'A7', 'A7', 'A7', 'D7', 'D7', 'A7', 'A7', 'E7', 'D7', 'A7', 'E7'];
 
 const STRUM_METHOD = list(
@@ -74,10 +88,10 @@ const STRUM_METHOD = list(
 
 const warm = (id: string, kind: 'chromatic' | 'spider' | 'changes', changes?: string[]): PlanBlock => ({
   id, kind: 'warm', title: kind === 'changes' ? `חימום + "דקת מעברים" (${changes!.join(', ')})` : kind === 'chromatic' ? 'חימום כרומטי 1-2-3-4' : 'חימום "עכביש" 1-3-2-4', min: 10, core: true,
-  bpm: kind === 'changes' ? undefined : { start: 60, target: 100 },
+  bpm: kind === 'changes' ? { start: 15, target: 40, unit: 'changes' } : { start: 60, target: 100 },
   steps: kind === 'changes'
-    ? ['2 דקות מתיחות עדינות לאצבעות ולפרק כף היד.', 'לכל זוג אקורדים: כמה מעברים מלאים אתה עושה בדקה אחת? (מכה אחת על כל אקורד). רשום את המספר – מחר תנסה לשבור אותו.', 'אם יש זוג שנתקע – 2 דקות רק עליו.']
-    : ['2 דקות מתיחות עדינות.', 'אצבע אחת לכל סריג, כל תו נקי. שמיניות על המטרונום.', 'כשזה נקי 2 סבבים – העלה 5 BPM. רשום לאיזה BPM הגעת.'],
+    ? ['2 דקות מתיחות עדינות לאצבעות ולפרק כף היד.', '"דקת מעברים": בחר שני אקורדים מהרשימה, הפעל טיימר לדקה אחת, ועבור ביניהם הלוך-חזור כמה שיותר פעמים. מכה אחת על כל אקורד, וכל אקורד חייב לצלצל נקי.', 'ספור כמה מעברים נקיים עשית ורשום למטה. מחר תנסה לשבור את המספר.', 'יש זוג שנתקע? עוד 2 דקות רק עליו, לאט.']
+    : ['2 דקות מתיחות עדינות.', 'אצבע אחת לכל סריג: אצבע 1 על סריג 1, אצבע 2 על סריג 2, וכן הלאה. כל תו צריך לצלצל נקי.', 'מנגנים שני תווים על כל קליק של המטרונום (שמיניות).', 'כשזה נקי 2 סבבים ברצף – העלה 5 BPM. רשום למטה לאיזה BPM הגעת.'],
   content: kind === 'changes' ? [{ t: 'chords', items: changes!.map((n) => ({ name: n, frets: CH[n] })) }]
     : [{ t: 'tab', title: kind === 'chromatic' ? 'מלמטה (מיתר 6) למעלה, ואז חזרה' : 'אצבעות 1-3-2-4 על כל מיתר', lines: kind === 'chromatic' ? CHROMATIC : SPIDER }, { t: 'metronome', bpm: 60 }],
 });
@@ -97,12 +111,23 @@ const free = (id: string, min: number, title = 'נגינה חופשית'): PlanB
   steps: ['נגן מה שבא לך – שירים שאתה כבר מכיר, ג\'אם, או מה שלמדת היום. בלי מטרונום ובלי לחץ.', 'זה החלק שמזכיר למה אנחנו מנגנים.'],
 });
 
+const polish = (id: string, min: number, core = false): PlanBlock => ({
+  id, kind: 'song', title: 'ליטוש', min, core, polish: true,
+  steps: ['השירים שקיבלו את הציון הנמוך ביום הבדיקה (14) מופיעים למטה. לא נתת ציונים? בחר את השיר שהכי פחות יושב.', 'לא מנגנים את כל השיר: מוצאים את 2–3 המקומות שנתקעים בהם, ומתרגלים כל אחד לבד, לאט, עם מטרונום.', 'בסוף – השיר כולו פעם אחת ברצף.'],
+});
+
 const romanza = (id: string, bars: string, min: number, core: boolean, extra: string[] = []): PlanBlock => ({
   id, kind: 'piece', title: `Romanza – ${bars}`, min, core, songs: ['romanza'], bpm: { start: 50, target: 90 },
   steps: [`מתמקדים ב${bars}. קודם יד שמאל לבד (רק המעברים), אחר כך שתי הידיים לאט.`, 'המנגינה (מיתר 1) חזקה מהמיתרים הפנימיים.', ...extra, 'רשום את ה-BPM שבו זה נקי לגמרי.'],
 });
 
-/* ───────── The 14 days ───────── */
+/* ───────── The 21 days ───────── */
+
+const REP14 = ['sikui', 'hallelujah', 'mimaamakim', 'silence', 'dust', 'blues', 'shape', 'dmama', 'romanza', 'malaguena'];
+const REP21 = [...REP14.slice(0, 8), 'babydoll', 'romanza', 'malaguena'];
+
+/** Day of the mid-plan checkpoint whose ratings drive week 3's polishing. */
+export const CHECKPOINT = 14;
 
 export const PLAN: PlanDay[] = [
   {
@@ -119,14 +144,14 @@ export const PLAN: PlanDay[] = [
         steps: ['p (אגודל) = בס, i = מיתר 3, m = מיתר 2, a = מיתר 1.', 'כל אקורד 4 פעמים, אחר כך מעבר. שמיניות שוות, כל תו באותה עוצמה.', 'יד ימין רגועה – האצבעות זזות, לא כל היד.'],
         content: [{ t: 'tab', title: 'Am', lines: PIMA_AM }, { t: 'tab', title: 'C', lines: PIMA_C }, { t: 'tab', title: 'Em', lines: PIMA_EM }, { t: 'metronome', bpm: 60 }],
       },
-      songBlock('song', 'sikui', 35, ['10 דק\': לעבור על האקורדים (לפי Tab4U) וללמוד את סדר השורות.', '15 דק\': ברבעים, ואז במקצב פולק – עם ההקלטה ברקע.', '10 דק\': בית + פזמון ברצף. אל תעצור על טעויות.']),
+      songBlock('song', 'sikui', 30, ['10 דק\': לעבור על האקורדים (לפי Tab4U) וללמוד את סדר השורות.', '15 דק\': ברבעים, ואז במקצב פולק – עם ההקלטה ברקע.', '10 דק\': בית + פזמון ברצף. אל תעצור על טעויות.']),
       {
-        id: 'i', kind: 'improv', title: 'פנטטוני לה מינור – תיבה 1', min: 20, core: true, bpm: { start: 60, target: 100 },
-        steps: ['5 דק\': הסולם למעלה ולמטה עם המטרונום, אצבע אחת לכל סריג (5-6-7-8).', '15 דק\': הפעל את הלופ (Am–G) ואלתר. כלל אחד: משפטים קצרים של 3–4 תווים, ואז שתיקה. הסיום על A = "הביתה".'],
+        id: 'i', kind: 'improv', title: 'פנטטוני לה מינור – צורה 1', min: 20, core: true, bpm: { start: 60, target: 100 },
+        steps: ['5 דק\': הסולם למעלה ולמטה עם המטרונום, אצבע אחת לכל סריג (5-6-7-8).', '15 דק\': הפעל את הלופ (Am–G) ואלתר מעליו. כלל אחד: משפט קצר של 3–4 תווים, ואז שתיקה, כמו בדיבור. כשמסיימים משפט על התו A – זה נשמע "סגור", כמו לחזור הביתה.'],
         content: [{ t: 'tab', title: 'A מינור פנטטוני, סריגים 5–8', lines: PENTA1 }, strum('rock8', ['Am', 'G'], 80, 'לופ ליווי – הגיטרה של האפליקציה מנגנת, אתה מאלתר מעליה.')],
       },
       appBlock('a', 'אימון שמיעה: מרווחים בסיסיים', [['שיעור: מרווחים ראשונים', 'lesson/ear2a'], ['תרגול חכם', 'practice']]),
-      { id: 'rec', kind: 'record', title: 'הקלטת בסיס', min: 10, core: false, steps: ['הקלט בטלפון: את "יש לי סיכוי" (כמה שיש) ודקה של אלתור.', 'אל תקשיב עכשיו. נשווה ביום 6 וביום 14 – זה הכי מעודד שיש.'] },
+      { id: 'rec', kind: 'record', title: 'הקלטת בסיס', min: 10, core: true, steps: ['הקלט בטלפון: את "יש לי סיכוי" (כמה שיש), את תרגיל הפנטטוני עם המטרונום, ודקה של אלתור.', 'שמור את ההקלטה בתיקייה. אל תקשיב עכשיו – נשווה אליה ביום 6, ביום 14 וביום 21. זה הדבר הכי מעודד שיש.'] },
       romanza('rom', 'יד ימין + תיבות 1–2', 25, false, ['קודם רק תרגיל יד ימין על מיתרים פתוחים (בעמוד היצירה).']),
       free('free', 25),
     ],
@@ -145,7 +170,7 @@ export const PLAN: PlanDay[] = [
       {
         id: 'i', kind: 'improv', title: 'האמר-און ופול-אוף', min: 20, core: true,
         steps: ['h = מנגנים את התו הראשון ו"מכים" באצבע של יד שמאל על הסריג הגבוה – בלי לפרוט שוב.', 'p = מנגנים את התו הגבוה ו"מושכים" את האצבע מהמיתר כך שהנמוך נשמע.', 'שלב את הליק באלתור מעל הלופ.'],
-        content: [{ t: 'tab', title: 'ליק בתיבה 1 (h = האמר-און, p = פול-אוף)', lines: HP_LICK }, { t: 'tab', title: 'תזכורת – הסולם', lines: PENTA1 }, strum('rock8', ['Am', 'G'], 80)],
+        content: [{ t: 'tab', title: 'ליק בצורה 1 (h = האמר-און, p = פול-אוף)', lines: HP_LICK }, { t: 'tab', title: 'תזכורת – הסולם (צורה 1)', lines: PENTA1 }, strum('rock8', ['Am', 'G'], 80)],
       },
       appBlock('a', 'תיאוריה: אקורדים בסולם (למה בשיר יש בדיוק את האקורדים האלה)', [['שיעור: אקורדים בתוך סולם', 'lesson/th4a'], ['מילון: דרגות', 'glossary/roman']]),
       songBlock('song2', 'sikui', 25, ['חזרה על מה שלמדת אתמול, הפעם עם הדגשות על 2 ו-4.'], false),
@@ -170,7 +195,7 @@ export const PLAN: PlanDay[] = [
       {
         id: 'i', kind: 'improv', title: 'בלוז 12 תיבות ב-A', min: 20, core: true,
         steps: ['הלופ מנגן 12 תיבות בלוז (A7–D7–E7). ספור את התיבות – התבנית הזאת מופיעה באלפי שירים.', 'אלתר עם סולם הבלוז: כמו פנטטוני + תו אחד "כחול" (Eb).', 'נסה לשנות את המשפט כשהאקורד מתחלף ל-D7.'],
-        content: [{ t: 'tab', title: 'A בלוז, תיבה 1 (סריג 6 במיתר 5 וסריג 8 במיתר 3 = התו הכחול)', lines: BLUES_A }, strum('shuffle', BLUES12, 80, 'לופ של 12 תיבות: A7 ×4, D7 ×2, A7 ×2, E7, D7, A7, E7.')],
+        content: [{ t: 'tab', title: 'A בלוז, צורה 1 (סריג 6 במיתר 5 וסריג 8 במיתר 3 = התו הכחול)', lines: BLUES_A }, strum('shuffle', BLUES12, 80, 'לופ של 12 תיבות: A7 ×4, D7 ×2, A7 ×2, E7, D7, A7, E7.')],
       },
       appBlock('a', 'שמיעה: מז\'ור או מינור', [['שיעור: מז\'ור או מינור', 'lesson/ear2b']]),
       romanza('rom', 'תיבות 5–8', 25, false, ['תיבות 7–8: הברה קטנה בסריג 5 – לחץ רק כמה שצריך.']),
@@ -184,8 +209,8 @@ export const PLAN: PlanDay[] = [
       warm('w', 'spider'),
       {
         id: 's', kind: 'strum', title: 'שיטה: למצוא את המקצב של שיר', min: 25, core: true,
-        steps: ['5 דק\': קרא את השיטה.', '10 דק\': החל אותה על "יש לי סיכוי" – מה המשקל? איפה ההדגשות? אילו מכות "חייבות"?', '10 דק\': החל על "עיר מקלט" – נסה את שלושת המקצבים ובחר מה הכי קרוב.'],
-        content: [STRUM_METHOD, strum('quarters', ['Em', 'Am'], 90), strum('backbeat', ['Em', 'Am'], 90), strum('rock8', ['Em', 'Am'], 90)],
+        steps: ['5 דק\': קרא את השיטה.', '10 דק\': החל אותה על "יש לי סיכוי" – מה המשקל? איפה ההדגשות? אילו מכות "חייבות"?', '10 דק\': החל על "מעליי דממה" – שמע את ההקלטה, נסה את שלושת המקצבים למטה ובחר מה הכי קרוב. אין תשובה אחת נכונה – העיקר שההדגשות במקום.'],
+        content: [STRUM_METHOD, strum('quarters', ['Am', 'F', 'G', 'C'], 70), strum('ballad', ['Am', 'F', 'G', 'C'], 70), strum('folk', ['Am', 'F', 'G', 'C'], 70)],
       },
       {
         id: 'f', kind: 'finger', title: 'הדפוס של The Sound of Silence', min: 20, core: true, bpm: { start: 50, target: 80 },
@@ -194,13 +219,13 @@ export const PLAN: PlanDay[] = [
       },
       songBlock('song', 'silence', 30, ['קאפו 6. 10 דק\': אקורדים + הירידה C/B.', '15 דק\': הבית הראשון בפריטה באצבעות.', '5 דק\': בתים הבאים בפריטה במקצב רכה.']),
       {
-        id: 'i', kind: 'improv', title: 'תיבה 2 וחיבור לתיבה 1', min: 20, core: true,
-        steps: ['למד את תיבה 2 (סריגים 7–10).', 'עלה בתיבה 1 ועבור לתיבה 2 בלי עצירה – מצא את התווים המשותפים.', 'אלתר מעל הלופ ונסה "לטייל" בין התיבות.'],
-        content: [{ t: 'tab', title: 'תיבה 2', lines: PENTA2 }, strum('rock8', ['Am', 'G'], 80)],
+        id: 'i', kind: 'improv', title: 'צורה 2 וחיבור לצורה 1', min: 20, core: true,
+        steps: ['למד את צורה 2 (סריגים 7–10). זה אותו סולם, פשוט במקום אחר על הצוואר.', 'נגן את צורה 1 עד למעלה, ואז המשך לצורה 2 בלי לעצור. שים לב לתווים ששתי הצורות חולקות – הם "הגשר" ביניהן.', 'אלתר מעל הלופ ונסה לעבור בין הצורות באמצע משפט.'],
+        content: [{ t: 'tab', title: 'צורה 2', lines: PENTA2 }, strum('rock8', ['Am', 'G'], 80)],
       },
       appBlock('a', 'תרגול חכם', [['תרגול חכם', 'practice']]),
       romanza('rom', 'תיבות 1–8 ברצף', 25, false),
-      songBlock('song2', 'miklat', 20, ['בונוס: שני אקורדים, כל האנרגיה מיד ימין.'], false),
+      songBlock('song2', 'dmama', 20, ['היכרות: קאפו 1, ארבעה אקורדים (Am F G C). נגן את סדר האקורדים ברבעים מעל ההקלטה, בלי לחץ.'], false),
       free('free', 15),
     ],
   },
@@ -241,8 +266,8 @@ export const PLAN: PlanDay[] = [
       },
       { id: 'f', kind: 'finger', title: 'חזרה: Travis + Sound of Silence', min: 20, core: true, steps: ['10 דק\' לכל דפוס, בקצב האחרון שהיה נקי.'], content: [{ t: 'tab', title: 'Travis', lines: TRAVIS_C }, { t: 'tab', title: 'Silence', lines: SILENCE_AM }] },
       { id: 'song', kind: 'song', title: 'ריצה על כל השירים', min: 35, core: true, songs: ['sikui', 'hallelujah', 'mimaamakim', 'silence', 'dust'], steps: ['כל שיר פעם אחת מההתחלה עד הסוף, בלי לעצור על טעויות.', 'סמן לעצמך איפה נתקעת – שם תתמקד בשבוע הבא.'] },
-      { id: 'i', kind: 'improv', title: 'ג\'אם בלוז חופשי', min: 20, core: true, steps: ['אלתר על 12 התיבות. השתמש בכל מה שלמדת: שתי תיבות, האמר-און/פול-אוף, שאלה-תשובה.'], content: [strum('shuffle', BLUES12, 80)] },
-      { id: 'rec', kind: 'record', title: 'הקלטה והשוואה', min: 15, core: true, steps: ['הקלט את אותו דבר כמו ביום 1 + שיר אחד חדש.', 'עכשיו הקשב לשתי ההקלטות. רשום 2 דברים שהשתפרו ודבר אחד לשבוע הבא.'] },
+      { id: 'i', kind: 'improv', title: 'ג\'אם בלוז חופשי', min: 20, core: true, steps: ['אלתר על 12 התיבות. השתמש בכל מה שלמדת: שתי הצורות של הסולם, האמר-און ופול-אוף, שאלה-תשובה.'], content: [strum('shuffle', BLUES12, 80)] },
+      { id: 'rec', kind: 'record', title: 'הקלטה והשוואה', min: 15, core: true, steps: ['הקלט את אותו דבר כמו ביום 1 ("יש לי סיכוי", פנטטוני, דקת אלתור) + שיר אחד חדש.', 'עכשיו הקשב לשתי ההקלטות. רשום 2 דברים שהשתפרו ודבר אחד לשבוע הבא.'] },
       romanza('rom', 'תיבות 13–16 + כל חלק A', 25, false),
       free('free', 35),
     ],
@@ -275,19 +300,19 @@ export const PLAN: PlanDay[] = [
       songBlock('song', 'blues', 35, ['10 דק\': פתח את האקורדים ב-Tab4U, ובדוק מול ההקלטה (ותכתוב לי באיזה סולם).', '15 דק\': החל את מקצב הבלוז-רוק – שאפל או ישר, לפי מה שאתה שומע.', '10 דק\': עם ההקלטה.']),
       { id: 'i', kind: 'improv', title: 'סולם בלוז על 12 תיבות', min: 20, core: true, steps: ['אלתר על הלופ עם סולם הבלוז.', 'נסה ליק אחד שחוזר על כל אקורד – ושנה רק את התו האחרון.'], content: [{ t: 'tab', title: 'A בלוז', lines: BLUES_A }, strum('shuffle', BLUES12, 85)] },
       appBlock('a', 'שמיעה: סוגי סולמות', [['שיעור: סוגי סולמות', 'lesson/ear3c']]),
-      songBlock('song2', 'miklat', 20, ['רוק על שני אקורדים – עם השתקת כף יד בבתים.'], false),
+      songBlock('song2', 'dmama', 20, ['מעליי דממה: בית שלם במקצב שבחרת ביום 4. אם F עדיין קשה – Fmaj7.'], false),
       romanza('rom', 'תיבות 9–16', 25, false),
       free('free', 15),
     ],
   },
   {
-    n: 9, week: 2, title: 'רוק אקוסטי ו-Shape of My Heart', focus: 'הדגשות ו-palm mute; תחילת השיר של סטינג',
+    n: 9, week: 2, title: 'רוק אקוסטי ו-Shape of My Heart', focus: 'הדגשות והשתקת כף יד; תחילת השיר של סטינג',
     blocks: [
       warm('w', 'changes', ['F#m', 'E6', 'D6', 'C#7']),
-      { id: 's', kind: 'strum', title: 'שמיניות רוק עם השתקה', min: 20, core: true, bpm: { start: 80, target: 120 }, steps: ['בתים: השתקת כף יד, חלש. פזמון: פתוח וחזק. אותו מקצב.', 'החל על "בלוז כנעני" ו"עיר מקלט".'], content: [strum('rock8', ['Em', 'Am'], 90)] },
+      { id: 's', kind: 'strum', title: 'שמיניות רוק עם השתקה', min: 20, core: true, bpm: { start: 80, target: 120 }, steps: ['בתים: השתקת כף יד, חלש. פזמון: פתוח וחזק. אותו מקצב.', 'החל על "בלוז כנעני".'], content: [strum('rock8', ['Em', 'Am'], 90)] },
       { id: 'f', kind: 'finger', title: 'ארפז\'ים על הירידה של Shape of My Heart', min: 20, core: true, bpm: { start: 50, target: 80 }, steps: ['F#m – E6 – D6 – C#7: בס ואז 3-2-1 על כל אקורד.', 'שים לב לקול שיורד – זה הלב של השיר.'], content: [{ t: 'chords', items: ['F#m', 'E6', 'D6', 'C#7'].map((n) => ({ name: n, frets: CH[n] })) }, { t: 'metronome', bpm: 50 }] },
       songBlock('song', 'shape', 35, ['15 דק\': הריף מהטאב המלא (Songsterr) – תיבה-תיבה.', '20 דק\': לחבר ריף + אקורדי הבית.']),
-      { id: 'i', kind: 'improv', title: 'שתי תיבות מעל רוק', min: 20, core: true, steps: ['תיבות 1+2 מעל Em–Am (עכשיו במי מינור: אותן צורות, 3 סריגים למטה – מסריג 0/3, או בסריג 12).'], content: [strum('rock8', ['Em', 'Am'], 90)] },
+      { id: 'i', kind: 'improv', title: 'שתי הצורות מעל רוק', min: 20, core: true, steps: ['הפעם הלופ ב-Em, אז מנגנים **E מינור פנטטוני**: אותן שתי צורות בדיוק, רק 5 סריגים למטה (צורה 1 בסריגים 0–3, צורה 2 בסריגים 2–5) – או 7 סריגים למעלה (סריג 12).', 'כל השאר כמו ב-A: משפטים קצרים, ומסיימים על התו E.'], content: [strum('rock8', ['Em', 'Am'], 90)] },
       appBlock('a', 'תרגול חכם', [['תרגול חכם', 'practice']]),
       songBlock('song2', 'blues', 25, ['חזרה על בלוז כנעני.'], false),
       { id: 'romB', kind: 'piece', title: 'Romanza – חלק B (מה-PDF)', min: 20, core: false, songs: ['romanza'], steps: ['חלק B במי מז\'ור (תיבות 17–32) – מה-PDF של Werner, 4 תיבות בכל פעם.'] },
@@ -305,7 +330,7 @@ export const PLAN: PlanDay[] = [
       },
       { id: 'f', kind: 'finger', title: 'Shape of My Heart – הריף', min: 20, core: true, songs: ['shape'], steps: ['המשך מאתמול – 4 תיבות בכל פעם.'] },
       { id: 'song', kind: 'song', title: 'חזרה: Hallelujah + Sound of Silence', min: 25, core: true, songs: ['hallelujah', 'silence'], steps: ['כל שיר פעמיים מההתחלה עד הסוף.'] },
-      { id: 'i', kind: 'improv', title: 'לה דורי מעל הגרוב', min: 20, core: true, steps: ['דורי = מינור עם 6 גדולה (F#). אותה תיבה של הפנטטוני + 2 תווים.', 'הדגש את F# כשהאקורד הוא D9 – תשמע איך הוא "מתיישב".'], content: [{ t: 'tab', title: 'A דורי, סריגים 5–10', lines: DORIAN_A }, strum('funk16', ['Am7', 'D9'], 80)] },
+      { id: 'i', kind: 'improv', title: 'לה דורי מעל הגרוב', min: 20, core: true, steps: ['**דורי** הוא סולם מינור שבו התו השישי גבוה בחצי טון: ב-A זה F# במקום F. בפועל: צורה 1 של הפנטטוני + שני תווים (B ו-F#).', 'הדגש את F# כשהאקורד הוא D9 – תשמע איך הוא "מתיישב".'], content: [{ t: 'tab', title: 'A דורי, סריגים 5–10', lines: DORIAN_A }, strum('funk16', ['Am7', 'D9'], 80)] },
       appBlock('a', 'תיאוריה: מודוסים', [['שיעור: מודוסים', 'lesson/th5a'], ['מילון: מודוסים', 'glossary/modes']]),
       romanza('rom', 'כל חלק A בקצב', 25, false),
       free('free', 35),
@@ -317,12 +342,12 @@ export const PLAN: PlanDay[] = [
       warm('w', 'changes', ['Cmaj7', 'A7', 'Dm7', 'G7']),
       {
         id: 'st', kind: 'style', title: 'דפוס בוסה מפושט', min: 30, core: true, bpm: { start: 60, target: 110 },
-        steps: ['האגודל מנגן בס על 1 ועל 3 (שורש, ואז קווינטה במיתר הנמוך יותר) – כמו שעון.', 'האצבעות (i-m-a יחד) "צובטות" את האקורד במקומות שבין הפעמות.', 'קודם על Cmaj7 בלבד, אחר כך Cmaj7 – A7 – Dm7 – G7.', 'זה דפוס מפושט שכתבתי לתרגול. בוסה אמיתית מגוונת את המקומות של האקורד.'],
+        steps: ['האגודל מנגן בס על פעמה 1 ועל פעמה 3, קבוע כמו שעון. על 1: התו שעל שמו האקורד (ב-Cmaj7 – C, מיתר 5 סריג 3). על 3: התו החמישי של האקורד (ב-Cmaj7 – G, מיתר 6 סריג 3).', 'האצבעות (i-m-a יחד) "צובטות" את האקורד במקומות שבין הפעמות.', 'קודם על Cmaj7 בלבד, אחר כך Cmaj7 – A7 – Dm7 – G7.', 'זה דפוס מפושט שכתבתי לתרגול. בוסה אמיתית מגוונת את המקומות של האקורד.'],
         content: [{ t: 'tab', title: 'בוסה על Cmaj7 (בס על 1 ו-3)', lines: BOSSA_CMAJ7 }, { t: 'chords', items: ['Cmaj7', 'A7', 'Dm7', 'G7'].map((n) => ({ name: n, frets: CH[n] })) }, { t: 'metronome', bpm: 60 }],
       },
       romanza('f', 'כל חלק A', 20, true),
       songBlock('song', 'shape', 25, ['ריף + בית. נסה לנגן עם ההקלטה.']),
-      { id: 'i', kind: 'improv', title: 'מנגינה מעל I–vi–ii–V', min: 20, core: true, steps: ['הלופ מנגן Cmaj7–A7–Dm7–G7.', 'אלתר עם תווי האקורד: נגן את תווי האקורד שמתנגן (הטרצה והספטימה נשמעות הכי "ג\'אזי").'], content: [strum('quarters', ['Cmaj7', 'A7', 'Dm7', 'G7'], 70, 'ליווי ברבעים רכים.')] },
+      { id: 'i', kind: 'improv', title: 'מנגינה מעל I–vi–ii–V', min: 20, core: true, steps: ['הלופ מנגן Cmaj7–A7–Dm7–G7.', 'אלתר רק עם התווים של האקורד שמתנגן כרגע. התו השלישי והתו השביעי של כל אקורד הם אלה שנשמעים הכי "ג\'אזי" (ב-Cmaj7: E ו-B).'], content: [strum('quarters', ['Cmaj7', 'A7', 'Dm7', 'G7'], 70, 'ליווי ברבעים רכים.')] },
       appBlock('a', 'תיאוריה: אקורדי ספטימה', [['שיעור: אקורדי ספטימה', 'lesson/th4b'], ['שמיעה: ספטימות', 'lesson/ear4b']]),
       songBlock('song2', 'dust', 25, ['חזרה על Dust in the Wind.'], false),
       free('free', 35),
@@ -354,17 +379,139 @@ export const PLAN: PlanDay[] = [
       { id: 'p2', kind: 'piece', title: 'Malagueña – המשך', min: 20, core: true, songs: ['malaguena'], steps: ['המשך מהשיעורים, ושלב רסגאדו בין המשפטים.'] },
       { id: 'song', kind: 'song', title: 'The Sound of Silence + Shape of My Heart', min: 25, core: true, songs: ['silence', 'shape'], steps: ['כל שיר פעם אחת מלאה.'] },
       { id: 'i', kind: 'improv', title: 'אלתור חופשי', min: 15, core: true, steps: ['בחר סגנון (בלוז, פאנק, פלמנקו) ואלתר עם הלופ שלו.'], content: [strum('shuffle', BLUES12, 85), strum('funk16', ['Am7', 'D9'], 80), strum('rumba', ['Am', 'G', 'F', 'E'], 85)] },
-      { id: 'song2', kind: 'song', title: 'הכנה ליום ההופעה', min: 35, core: false, songs: ['sikui', 'hallelujah', 'mimaamakim', 'blues'], steps: ['השירים שפחות יושבים – עכשיו.'] },
+      { id: 'song2', kind: 'song', title: 'הכנה ליום הבדיקה', min: 35, core: false, songs: ['sikui', 'hallelujah', 'mimaamakim', 'blues', 'dmama'], steps: ['השירים שפחות יושבים – עכשיו.'] },
       free('free', 25),
     ],
   },
   {
-    n: 14, week: 2, title: 'סיום – הופעה והקלטה', focus: 'לנגן הכל ברצף ולראות כמה עברת',
+    n: 14, week: 2, title: 'יום בדיקה: כמה התקדמת?', focus: 'אותם תרגילים כמו ביום 1, הקלטה, ציון לכל שיר – ובחירה מה ללטש בשבוע 3',
+    blocks: [
+      { ...warm('w', 'chromatic'), steps: ['אותו חימום כמו ביום 1. עלה ב-BPM עד המהירות הכי גבוהה שבה זה עדיין נקי – ורשום למטה.', 'במסך "ההתקדמות שלי" תראה את המספר של יום 1 מול היום.'] },
+      {
+        id: 's', kind: 'strum', title: 'מבחן מקצבים', min: 15, core: true, bpm: { start: 60, target: 100 },
+        steps: ['כל מקצב – 2 דקות עם הלופ, בלי לעצור.', 'רשום את ה-BPM הכי גבוה שבו פולק יוצא יציב.'],
+        content: [strum('folk', ['Am', 'F', 'C', 'G'], 80), strum('sixEight', ['C', 'Am'], 60), strum('shuffle', ['E7', 'A7', 'E7', 'B7'], 80)],
+      },
+      {
+        id: 'set', kind: 'song', title: 'כל השירים – וציון לכל אחד', min: 40, core: true, songs: REP14, rate: REP14,
+        steps: ['נגן כל שיר פעם אחת מההתחלה עד הסוף, בלי לעצור על טעויות.', 'מיד אחרי כל שיר – תן לו ציון בטבלה למטה. היה כנה: הציון הזה קובע מה תלטש בשבוע 3.'],
+      },
+      { id: 'rec', kind: 'record', title: 'הקלטה והשוואה ליום 1', min: 20, core: true, steps: ['הקלט בדיוק מה שהקלטת ביום 1: "יש לי סיכוי", הפנטטוני עם המטרונום, ודקה של אלתור.', 'הקשב להקלטה של יום 1 ואז להקלטה של היום. רשום לעצמך 3 דברים שהשתפרו.'] },
+      { id: 'next', kind: 'free', title: 'מה מלטשים בשבוע 3?', min: 10, core: true, steps: ['פתח את "ההתקדמות שלי" (הכפתור במסך התוכנית).', 'שני השירים עם הציון הנמוך ביותר – הם אלה שיופיעו בבלוקים "ליטוש" בשבוע 3.', 'מקצב שה-BPM שלו כמעט לא עלה? זה סימן לתרגל אותו לאט יותר, לא יותר מהר.'] },
+      free('free', 30),
+    ],
+  },
+
+  /* ───── Week 3: new songs, polishing, performance ───── */
+  {
+    n: 15, week: 3, title: 'Babydoll ואקורד הברה Gm', focus: 'שיר עכשווי, מעבר מהיר להברה, מינור פנטטוני ב-D',
+    blocks: [
+      warm('w', 'changes', ['Dm', 'A', 'Gm']),
+      {
+        id: 's', kind: 'strum', title: 'מקצב פופ עם הדגשות', min: 20, core: true, bpm: { start: 70, target: 90 },
+        steps: ['פולק עם הדגשה על 2 ו-4 על Dm – A – Gm – A.', 'הקושי: לעבור ל-Gm בזמן. טריק: על ה-& האחרון של התיבה (המכה למעלה) היד השמאלית כבר עוזבת ועוברת. זה בסדר שהמכה הזאת תצא קצת "ריקה".'],
+        content: [{ t: 'chords', items: chordsOf('Dm', 'A', 'Gm') }, strum('backbeat', ['Dm', 'A', 'Gm', 'A'], 70)],
+      },
+      romanza('f', 'חלק B: תיבות 17–20', 20, true, ['חלק B עובר למי מז\'ור – הוא לא כתוב באפליקציה, אלא ב-PDF החינמי (קישור בעמוד היצירה).']),
+      songBlock('song', 'babydoll', 35, ['10 דק\': שלושת האקורדים ו"דקת מעברים" על A → Gm.', '15 דק\': המקצב מהבלוק הקודם, עם ההקלטה ברקע ב-70 BPM.', '10 דק\': בית + פזמון ברצף.']),
+      {
+        id: 'i', kind: 'improv', title: 'D מינור פנטטוני מעל Babydoll', min: 20, core: true,
+        steps: ['זו בדיוק צורה 1 שאתה מכיר – רק מסריג 10 במקום מסריג 5.', 'כשהלופ מגיע לאקורד A: סיים את המשפט על התו A – הוא נמצא גם ב-Dm וגם ב-A. הימנע שם מהתו C, שמתנגש עם האקורד.'],
+        content: [{ t: 'tab', title: 'D מינור פנטטוני – צורה 1, סריגים 10–13', lines: PENTA_D }, strum('backbeat', ['Dm', 'A', 'Gm', 'A'], 80)],
+      },
+      appBlock('a', 'שמיעה: זיהוי דרגות (איזה אקורד זה בסולם?)', [['שיעור: זיהוי דרגות', 'lesson/ear4c']]),
+      polish('pol', 25),
+      free('free', 35),
+    ],
+  },
+  {
+    n: 16, week: 3, title: 'מעליי דממה לעומק', focus: 'בית חלש ופזמון מלא, ארפג\' לבית',
+    blocks: [
+      warm('w', 'spider'),
+      {
+        id: 's', kind: 'strum', title: 'בית חלש, פזמון מלא', min: 20, core: true, bpm: { start: 65, target: 85 },
+        steps: ['בית: מקצב בלדה, חלש, קרוב לגשר.', 'פזמון: מקצב פולק, יד פתוחה וחזקה יותר.', 'תרגל את הרגע של המעבר מבית לפזמון – בלי לעצור ובלי לשנות מהירות.'],
+        content: [strum('ballad', ['Am', 'F', 'G', 'C'], 65), strum('folk', ['Am', 'F', 'G', 'C'], 65)],
+      },
+      {
+        id: 'f', kind: 'finger', title: 'ארפג\' לבית של מעליי דממה', min: 20, core: true, bpm: { start: 55, target: 80 },
+        steps: ['במקום לפרוט – מנגנים כל אקורד תו אחרי תו: אגודל על הבס, ואז i-m-a-m.', 'כל אקורד פעמיים, ואז המעבר הבא. האגודל עובר מיתר לפי האקורד – ראה בטאב.', 'אפשר לנגן ככה את הבית, ולעבור לפריטה במקצב בפזמון.'],
+        content: [{ t: 'tab', title: 'Am → F → G → C (צורות, עם קאפו 1)', lines: ARP_DMAMA }, { t: 'metronome', bpm: 55 }],
+      },
+      songBlock('song', 'dmama', 35, ['10 דק\': סדר האקורדים של כל השיר (מ-Tab4U).', '15 דק\': בית בארפג\', פזמון בפריטה במקצב.', '10 דק\': כל השיר עם ההקלטה.']),
+      {
+        id: 'i', kind: 'improv', title: 'אלתור מעל Am – F – G – C', min: 20, core: true,
+        steps: ['A מינור פנטטוני, צורה 1 (בלי קאפו – הלופ באפליקציה מנגן בלי קאפו).', 'נסה לסיים כל משפט על תו מתוך האקורד שמתנגן. על F: התו F עצמו לא נמצא בפנטטוני, אז סיים על A או C – שניהם חלק מאקורד F.'],
+        content: [{ t: 'tab', title: 'A מינור פנטטוני – צורה 1', lines: PENTA1 }, strum('folk', ['Am', 'F', 'G', 'C'], 80)],
+      },
+      appBlock('a', 'שמיעה: מהלכי אקורדים', [['שיעור: מהלכי אקורדים', 'lesson/ear5a']]),
+      polish('pol', 25),
+      romanza('rom', 'חלק B: תיבות 21–24', 20, false),
+      free('free', 15),
+    ],
+  },
+  {
+    n: 17, week: 3, title: 'למצוא מקצב לבד', focus: 'השיטה על שיר שלא למדנו – בלי עזרה',
+    blocks: [
+      warm('w', 'changes', ['F', 'G', 'Am', 'Gm']),
+      {
+        id: 's', kind: 'strum', title: 'מבחן: מקצב לשיר חדש', min: 25, core: true,
+        steps: ['בחר שיר שאתה אוהב ושלא נמצא בתוכנית (יש לו אקורדים ב-Tab4U).', 'עבור על 5 השלבים של השיטה, אחד-אחד. כתוב לעצמך: משקל, איפה ההדגשות, כמה צפוף.', 'נגן עם ההקלטה. אם מרגיש "לא יושב" – חזור לשלב 4: רבעים עם ההדגשות, ומשם הוסף.', 'בונוס: חפש סרטון של מישהו שמנגן את השיר ובדוק כמה קרוב היית.'],
+        content: [STRUM_METHOD],
+      },
+      romanza('f', 'חלק B: תיבות 25–32', 20, true),
+      { id: 'song', kind: 'song', title: 'Babydoll + מעליי דממה עם ההקלטה', min: 30, core: true, songs: ['babydoll', 'dmama'], steps: ['כל שיר פעמיים מההתחלה עד הסוף, עם ההקלטה המקורית.'] },
+      { id: 'i', kind: 'improv', title: 'בלוז: שאלה ותשובה', min: 20, core: true, steps: ['12 תיבות בלוז. כל 2 תיבות: משפט "שאלה" ואחריו משפט "תשובה".', 'השתמש בהאמר-און ובתו הכחול לפחות פעם אחת בכל סבב.'], content: [{ t: 'tab', title: 'A בלוז', lines: BLUES_A }, strum('shuffle', BLUES12, 85)] },
+      appBlock('a', 'תיאוריה: היפוכים (מה זה C/B ו-Am/G)', [['שיעור: היפוכים ומהלכים', 'lesson/th4c'], ['מילון: היפוכים', 'glossary/inversions']]),
+      polish('pol', 25),
+      free('free', 35),
+    ],
+  },
+  {
+    n: 18, week: 3, title: 'פלמנקו ו-Malagueña', focus: 'רסגאדו, רומבה, להמשיך את היצירה',
+    blocks: [
+      { id: 'w', kind: 'warm', title: 'חימום: רסגאדו', min: 10, core: true, steps: ['כמו ביום 12: אצבעות יוצאות אחת-אחת – זרת, קמיצה, אמה, אצבע – ואז מכה למעלה.', 'לאט ושווה. נסה 4 סבבים ברצף בלי הפסקה.'], content: [{ t: 'chords', items: chordsOf('E', 'Am') }] },
+      { id: 'st', kind: 'style', title: 'רומבה על מעליי דממה', min: 20, core: true, bpm: { start: 70, target: 100 }, steps: ['קח את מקצב הרומבה מיום 12 ושים אותו על Am – F – G – C.', 'פתאום אותו שיר נשמע ספרדי. ככה מנגנים "מבינים" מקצב: אותו מקצב עובד על כל שיר עם משקל דומה.'], content: [strum('rumba', ['Am', 'F', 'G', 'C'], 75)] },
+      { id: 'p', kind: 'piece', title: 'Malagueña – המשך', min: 35, core: true, songs: ['malaguena'], steps: ['10 דק\': חזרה על מה שלמדת ביום 12–13.', '20 דק\': השיעור הבא בסדרה (קישור בעמוד היצירה).', '5 דק\': הכל ברצף, לאט.'] },
+      romanza('f', 'חלק B כולו', 20, true),
+      { id: 'i', kind: 'improv', title: 'פריגי מעל המהלך האנדלוסי', min: 20, core: true, steps: ['E פריגי מעל Am – G – F – E. נסה לסיים כל משפט בירידה F → E.'], content: [{ t: 'tab', title: 'E פריגי', lines: PHRYG_E }, strum('rumba', ['Am', 'G', 'F', 'E'], 80)] },
+      appBlock('a', 'שמיעה: מודוסים באוזן', [['שיעור: מודוסים באוזן', 'lesson/ear5b']]),
+      polish('pol', 25),
+      free('free', 35),
+    ],
+  },
+  {
+    n: 19, week: 3, title: 'פינגרסטייל ויצירות', focus: 'שתי היצירות ושירי האצבעות',
+    blocks: [
+      warm('w', 'spider'),
+      romanza('p1', 'כל היצירה (A + B)', 30, true),
+      { id: 'shape', kind: 'song', title: 'Shape of My Heart', min: 25, core: true, songs: ['shape'], steps: ['ריף + בית, פעמיים ברצף.', 'מתמקד בצליל: כל תו של הריף מצלצל עד התו הבא.'] },
+      { id: 'song', kind: 'song', title: 'Dust in the Wind + The Sound of Silence', min: 25, core: true, songs: ['dust', 'silence'], steps: ['כל שיר פעם אחת מלאה, בקצב שבו הוא נקי.'] },
+      { id: 'i', kind: 'improv', title: 'אלתור חופשי', min: 15, core: true, steps: ['בחר סגנון אחד מהשבוע השני ואלתר עם הלופ שלו.'], content: [strum('shuffle', BLUES12, 85), strum('funk16', ['Am7', 'D9'], 80), strum('rumba', ['Am', 'G', 'F', 'E'], 85)] },
+      appBlock('a', 'תרגול חכם', [['תרגול חכם', 'practice']]),
+      { id: 'p2', kind: 'piece', title: 'Malagueña', min: 20, core: false, songs: ['malaguena'], steps: ['המשך מאתמול.'] },
+      polish('pol', 25, false),
+      free('free', 15),
+    ],
+  },
+  {
+    n: 20, week: 3, title: 'חזרה גנרלית', focus: 'ליטוש אחרון והרצה מלאה',
     blocks: [
       warm('w', 'chromatic'),
-      { id: 'set', kind: 'song', title: 'ה"הופעה": כל הרפרטואר ברצף', min: 50, core: true, songs: ['sikui', 'hallelujah', 'mimaamakim', 'silence', 'dust', 'blues', 'shape', 'romanza', 'malaguena'], steps: ['נגן כמו בהופעה: בלי לעצור, גם כשיש טעות.', 'סדר מומלץ: מהשקט לאנרגטי, ויצירה באמצע.'] },
-      { id: 'rec', kind: 'record', title: 'הקלטת סיום', min: 25, core: true, steps: ['הקלט 3 שירים, יצירה אחת ודקה של אלתור.', 'הקשב להקלטות של יום 1, יום 6 והיום – ורשום מה השתנה.'] },
-      { id: 'next', kind: 'free', title: 'מה הלאה?', min: 15, core: true, steps: ['רשום: מה הכי נהנית ממנו? מה הכי קשה עדיין?', 'בחר 2 שירים חדשים ויעד לחודש הבא – ותגיד לי, נבנה את השלב הבא.'] },
+      { ...polish('pol', 30, true), title: 'ליטוש: השיר הכי חלש' },
+      { ...polish('pol2', 25, true), title: 'ליטוש: השיר השני' },
+      { id: 'set', kind: 'song', title: 'הרצה מלאה כמו בהופעה', min: 40, core: true, songs: REP21, steps: ['כל הרפרטואר ברצף. בלי לעצור – גם כשיש טעות, ממשיכים.', 'סמן איפה נתקעת – 5 דקות על כל מקום כזה בסוף.'] },
+      appBlock('a', 'תרגול חכם', [['תרגול חכם', 'practice']]),
+      free('free', 45),
+    ],
+  },
+  {
+    n: 21, week: 3, title: 'הופעה סופית והקלטה', focus: 'לנגן הכל, להקליט, ולהשוות ליום 1 וליום 14',
+    blocks: [
+      warm('w', 'chromatic'),
+      { id: 'set', kind: 'song', title: 'ה"הופעה": כל הרפרטואר – וציון סופי', min: 50, core: true, songs: REP21, rate: REP21, steps: ['נגן כמו בהופעה: בלי לעצור, גם כשיש טעות.', 'סדר מומלץ: מהשקט לאנרגטי, ויצירה באמצע.', 'אחרי כל שיר – ציון בטבלה. במסך "ההתקדמות שלי" תראה אותו ליד הציון של יום 14.'] },
+      { id: 'rec', kind: 'record', title: 'הקלטת סיום', min: 25, core: true, steps: ['הקלט את מה שהקלטת ביום 1 וביום 14, ועוד 2 שירים ויצירה.', 'הקשב לשלוש ההקלטות ברצף. רשום מה השתנה.'] },
+      { id: 'next', kind: 'free', title: 'מה הלאה?', min: 15, core: true, steps: ['רשום: ממה הכי נהנית? מה עדיין הכי קשה?', 'בחר 2 שירים חדשים ויעד לחודש הבא – ותגיד לי, נבנה את השלב הבא.'] },
       free('free', 30),
     ],
   },
@@ -376,8 +523,23 @@ export const dayMinutes = (d: PlanDay) => ({
   extra: d.blocks.filter((b) => !b.core).reduce((s, b) => s + b.min, 0),
 });
 
+export const WEEK_TITLES: Record<number, string> = {
+  1: 'חזרה לכושר, מקצב ופריטה באצבעות',
+  2: 'סגנונות, יצירות ויום בדיקה',
+  3: 'שירים חדשים, ליטוש והופעה',
+};
+
 export const planIntro: Block[] = [
-  p('**14 ימים, בלי תאריכים.** כל יום: ליבה של כשעתיים, ועוד שעה רשות. מסמנים ✓ על כל בלוק, ועוברים ליום הבא כשמסיימים – גם אם זה לקח יומיים.'),
-  list('**חימום תמיד ראשון**, והפסקה של 5 דק\' כל 40 דק\'.', 'כאב חד או נימול – עוצרים. עייפות בשרירים – זה בסדר.', 'מטרונום בכל דבר טכני; רושמים BPM – רואים התקדמות.'),
+  p('**21 ימים, בלי תאריכים.** בכל יום יש **ליבה** של כשעתיים, ועוד **שעה רשות**. מסיימים יום – עוברים לבא, גם אם זה לקח יומיים.'),
+  list(
+    '**כל יום בנוי מבלוקים.** לוחצים על בלוק כדי לפתוח אותו: יש בו טיימר, שלבים ממוספרים, טאבים וליווי שמתנגן.',
+    '**✓** בעיגול = סיימתי את הבלוק. אפשר לבטל בלחיצה נוספת.',
+    '**יומן BPM** בתחתית בלוקים טכניים: רושמים לאיזו מהירות הגעת. כך רואים התקדמות.',
+    '**מילה לא ברורה?** בכל בלוק יש כפתור 📖 שפותח הסבר מהמילון.',
+  ),
+  h('נקודות בדיקה'),
+  list('**יום 1:** הקלטת בסיס.', '**יום 14:** אותם תרגילים והקלטה, וציון לכל שיר. הציונים קובעים מה מלטשים בשבוע 3.', '**יום 21:** הופעה, הקלטה וציון סופי – ומשווים הכל במסך "ההתקדמות שלי".'),
+  h('כללים'),
+  list('**חימום תמיד ראשון**, והפסקה של 5 דק\' כל 40 דק\'.', 'כאב חד או נימול – עוצרים. עייפות בשרירים – זה בסדר.', 'לאט ונקי לפני מהר. מטרונום בכל דבר טכני.'),
   tip('בלוק שלא הספקת? לא נורא – תעביר אותו ליום הבא או דלג. העקביות חשובה יותר משלמות.'),
 ];

@@ -90,7 +90,7 @@ export function StrumPattern({ name, rhythm, bpm: initialBpm = 70, chords, chord
           </div>
         ))}
       </div>
-      <div className="muted small">↓ למטה · ↑ למעלה · ✕ השתקה ("צ'יק") · · היד זזה בלי לפגוע{slots.some((s) => s.accent) ? ' · מודגש = חזק' : ''}</div>
+      <div className="muted small">↓ למטה · ↑ למעלה · ✕ מיתרים מושתקים ("צ'יק") · · היד זזה בלי לפגוע · חץ גדול וצבעוני = חזק, קטן ושקוף = חלש</div>
       {chordNames && <div className="small">אקורדים בלופ: <bdi>{chordNames.join(' → ')}</bdi> (אקורד לכל תיבה)</div>}
       {note && <p className="small">{note}</p>}
       <BpmControl bpm={bpm} setBpm={setBpm} />

@@ -24,8 +24,8 @@ export interface State {
   genStats: Record<string, { right: number; total: number; last: number }>;
   days: string[];
   xp: number;
-  /** Practice plan: done blocks ("day:block") and BPM log per block key. */
-  plan: { done: Record<string, boolean>; bpm: Record<string, number[]> };
+  /** Practice plan: done blocks ("day:block"), BPM log per block key and self-ratings ("day:song" → 0–3). */
+  plan: { done: Record<string, boolean>; bpm: Record<string, number[]>; rate: Record<string, number> };
 }
 
 const KEY = 'music-trainer-v1';
@@ -39,13 +39,16 @@ const fresh = (): State => ({
   genStats: {},
   days: [],
   xp: 0,
-  plan: { done: {}, bpm: {} },
+  plan: { done: {}, bpm: {}, rate: {} },
 });
 
 function load(): State {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) return { ...fresh(), ...JSON.parse(raw) };
+    if (raw) {
+      const saved = JSON.parse(raw);
+      return { ...fresh(), ...saved, plan: { ...fresh().plan, ...saved.plan } };
+    }
   } catch { /* storage unavailable */ }
   return fresh();
 }
@@ -141,8 +144,12 @@ export function logPlanBpm(day: number, block: string, bpm: number) {
   });
 }
 
+export function ratePlanSong(day: number, song: string, level: number) {
+  update((s) => ({ ...s, plan: { ...s.plan, rate: { ...s.plan.rate, [planKey(day, song)]: level } } }));
+}
+
 export function resetPlan() {
-  update((s) => ({ ...s, plan: { done: {}, bpm: {} } }));
+  update((s) => ({ ...s, plan: fresh().plan }));
 }
 
 export function resetAll() {

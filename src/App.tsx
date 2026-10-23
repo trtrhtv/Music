@@ -8,7 +8,7 @@ import { Placement } from './screens/Placement';
 import { Practice } from './screens/Practice';
 import { Tools } from './screens/Tools';
 import { Glossary } from './screens/Glossary';
-import { PlanDayView, PlanOverview } from './screens/Plan';
+import { PlanDayView, PlanOverview, PlanProgress } from './screens/Plan';
 import { SongView, SongsList } from './screens/Songs';
 import { Track } from './screens/Track';
 import { finishPlacement, resetAll, resetPlan, setLevels, useStore, type Profile } from './state/store';
@@ -70,7 +70,7 @@ export default function App() {
   else if (page === 'practice') body = <Practice />;
   else if (page === 'tools') body = <Tools />;
   else if (page === 'glossary') body = <Glossary key={arg ?? ''} id={arg} />;
-  else if (page === 'plan') body = arg ? <PlanDayView key={arg} n={Number(arg)} /> : <PlanOverview />;
+  else if (page === 'plan') body = arg ? (arg === 'progress' ? <PlanProgress /> : <PlanDayView key={arg} n={Number(arg)} />) : <PlanOverview />;
   else if (page === 'songs') body = arg ? <SongView key={arg} id={arg} /> : <SongsList />;
   else if (page === 'settings') body = <Settings />;
   else body = <Home />;
