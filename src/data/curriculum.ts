@@ -1,6 +1,7 @@
 import type { AudioCue, Domain } from '../engine/types';
 import type { Block } from './blocks';
 import { INTRO_LESSONS, LESSON_EXTRAS } from './lessonExtras';
+import { THEORY_COURSE } from './theoryCourse';
 
 export interface Lesson {
   id: string;
@@ -17,10 +18,15 @@ export interface Lesson {
   extra?: Block[];
   /** Related glossary entries. */
   see?: string[];
+  /** Theory course: unit number (see THEORY_UNITS), why it matters, step-by-step pages and a one-line summary. */
+  unit?: number;
+  why?: string;
+  pages?: { title: string; blocks: Block[] }[];
+  summary?: string;
 }
 
 export const UNIT_TITLES: Record<Domain, string[]> = {
-  theory: ['', 'יסודות: תווים וחמשה', 'סולמות ומרווחים', 'אקורדים וטונליות', 'הרמוניה', 'מודוסים והרמוניה מתקדמת'],
+  theory: ['', 'צלילים וסולם מז\'ור', 'מרווחים', 'איך בנוי אקורד', 'אקורדים בסולם, מינור וספטימות', 'פונקציות, מעגל הקווינטות ומודוסים'],
   ear: ['', 'גובה וכיוון', 'מרווחים ראשונים', 'מרווחים ואקורדים', 'ספטימות ודרגות', 'מהלכים ומודוסים'],
   guitar: ['', 'אקורדים פתוחים', 'הצוואר ואקורדי 7', 'הברה ופנטטוני', 'מפת הצוואר', 'אלתור ומודוסים'],
   piano: ['', 'הכרת המקלדת', 'אקורדים וסולם C', 'אקורדים וסולמות', 'ספטימות והרמוניה', 'וויסינג וג\'אז'],
@@ -30,29 +36,7 @@ const C4 = 60;
 const BASE_LESSONS: Lesson[] = [
   /* ───────── THEORY ───────── */
   {
-    id: 'th1a', domain: 'theory', level: 1, title: 'שמות התווים',
-    intro: [
-      'במוזיקה יש 7 תווים "טבעיים": **C D E F G A B** – בסולפג\' דו, רה, מי, פה, סול, לה, סי.',
-      'אחרי B חוזרים ל-C, גבוה יותר באוקטבה. המרחק הזה – 8 תווים – נקרא **אוקטבה**.',
-    ],
-    demos: [{ label: 'C D E F G A B C', cue: { type: 'seq', notes: [60, 62, 64, 65, 67, 69, 71, 72], gap: 0.35 } }],
-    drills: [['th.solfege', 5], ['th.nextNote', 5]],
-  },
-  {
-    id: 'th1b', domain: 'theory', level: 1, title: 'טונים, חצאי טונים, דיאזים ובמולים',
-    intro: [
-      '**חצי טון** הוא המרחק הקטן ביותר – קליד אחד ליד השני בפסנתר, או סריג אחד בגיטרה. **טון שלם** = שני חצאי טונים.',
-      'בין E–F ובין B–C יש רק חצי טון. בין כל שאר התווים הטבעיים – טון שלם.',
-      '**דיאז (#)** מעלה תו בחצי טון, **במול (b)** מוריד בחצי טון. לכן C# ו-Db הם אותו צליל.',
-    ],
-    demos: [
-      { label: 'חצי טון: E → F', cue: { type: 'seq', notes: [64, 65], gap: 0.6 } },
-      { label: 'טון שלם: C → D', cue: { type: 'seq', notes: [60, 62], gap: 0.6 } },
-    ],
-    drills: [['th.semitones', 5], ['th.enharmonic', 5]],
-  },
-  {
-    id: 'th1c', domain: 'theory', level: 1, title: 'קריאת תווים במפתח סול',
+    id: 'th1c', domain: 'theory', level: 1, title: 'קריאת תווים במפתח סול', unit: 9, optional: true,
     intro: [
       'החמשה בנויה מ-5 קווים. במפתח סול (יד ימין בפסנתר, וגם גיטרה) הקווים מלמטה למעלה הם **E G B D F**, והרווחים ביניהם **F A C E**.',
       'C האמצעי (C4) יושב על קו עזר קטן מתחת לחמשה.',
@@ -60,48 +44,12 @@ const BASE_LESSONS: Lesson[] = [
     drills: [['th.readTreble', 10]],
   },
   {
-    id: 'th2a', domain: 'theory', level: 2, title: 'סולם מז\'ור',
-    intro: [
-      'סולם מז\'ור בנוי לפי התבנית **ט ט ח ט ט ט ח** (ט = טון, ח = חצי טון).',
-      'מכל תו אפשר לבנות סולם מז\'ור – רק צריך להוסיף דיאזים או במולים כדי לשמור על התבנית. למשל G מז\'ור: G A B C D E **F#** G.',
-    ],
-    demos: [{ label: 'G מז\'ור', cue: { type: 'seq', notes: [55, 57, 59, 60, 62, 64, 66, 67], gap: 0.33 } }],
-    drills: [['th.majorPattern', 2], ['th.majorScaleDegree', 8]],
-  },
-  {
-    id: 'th2b', domain: 'theory', level: 2, title: 'מרווחים',
-    intro: [
-      '**מרווח** = המרחק בין שני תווים. סופרים חצאי טונים: 3 = טרצה קטנה, 4 = טרצה גדולה, 5 = קוורטה, 7 = קווינטה, 12 = אוקטבה.',
-      'טרצות וקווינטות הן אבני הבניין של כל האקורדים – שווה להכיר אותן בעל פה.',
-    ],
-    demos: [
-      { label: 'טרצה גדולה', cue: { type: 'seq', notes: [60, 64], gap: 0.6 } },
-      { label: 'קווינטה זכה', cue: { type: 'seq', notes: [60, 67], gap: 0.6 } },
-    ],
-    drills: [['th.intervalName', 10]],
-  },
-  {
-    id: 'th2c', domain: 'theory', level: 2, title: 'מפתח פה',
+    id: 'th2c', domain: 'theory', level: 2, title: 'מפתח פה', unit: 9, optional: true,
     intro: ['מפתח פה משמש ליד שמאל בפסנתר ולבס. הקווים מלמטה למעלה: **G B D F A**, והרווחים: **A C E G**.'],
     drills: [['th.readBass', 10]],
   },
   {
-    id: 'th3a', domain: 'theory', level: 3, title: 'אקורדים משולשים',
-    intro: [
-      'אקורד בסיסי (טריאדה) = שורש + טרצה + קווינטה.',
-      '**מז\'ור**: טרצה גדולה + קווינטה זכה (C E G). **מינור**: טרצה קטנה + קווינטה זכה (C Eb G).',
-      '**מוקטן**: טרצה קטנה + קווינטה מוקטנת (C Eb Gb). **מוגדל**: טרצה גדולה + קווינטה מוגדלת (C E G#).',
-    ],
-    demos: [
-      { label: 'C', cue: { type: 'chord', notes: [60, 64, 67] } },
-      { label: 'Cm', cue: { type: 'chord', notes: [60, 63, 67] } },
-      { label: 'Cdim', cue: { type: 'chord', notes: [60, 63, 66] } },
-      { label: 'Caug', cue: { type: 'chord', notes: [60, 64, 68] } },
-    ],
-    drills: [['th.triadBuild', 5], ['th.triadId', 5]],
-  },
-  {
-    id: 'th3b', domain: 'theory', level: 3, title: 'סימני היתק ומעגל הקווינטות',
+    id: 'th3b', domain: 'theory', level: 3, title: 'סימני היתק ומעגל הקווינטות', unit: 8,
     intro: [
       'כל סולם מז\'ור מקבל מספר קבוע של דיאזים או במולים – **סימני ההיתק**.',
       'במעגל הקווינטות כל צעד של קווינטה למעלה (C → G → D → A…) מוסיף דיאז; כל צעד למטה (C → F → Bb → Eb…) מוסיף במול.',
@@ -110,7 +58,7 @@ const BASE_LESSONS: Lesson[] = [
     drills: [['th.keySig', 10]],
   },
   {
-    id: 'th3c', domain: 'theory', level: 3, title: 'סולם מינור ומינור מקביל',
+    id: 'th3c', domain: 'theory', level: 3, title: 'סולם מינור ומינור מקביל', unit: 6,
     intro: [
       'מינור טבעי: **ט ח ט ט ח ט ט**. לכל מז\'ור יש **מינור מקביל** עם אותם תווים בדיוק, שמתחיל מהדרגה ה-6.',
       'C מז\'ור ↔ A מינור, G מז\'ור ↔ E מינור, F מז\'ור ↔ D מינור.',
@@ -119,7 +67,7 @@ const BASE_LESSONS: Lesson[] = [
     drills: [['th.relMinor', 5], ['th.minorScaleDeg', 5]],
   },
   {
-    id: 'th4a', domain: 'theory', level: 4, title: 'אקורדים בתוך סולם',
+    id: 'th4a', domain: 'theory', level: 4, title: 'אקורדים בתוך סולם', unit: 5,
     intro: [
       'בונים אקורד על כל דרגה של הסולם רק מתווי הסולם, ומקבלים: **I ii iii IV V vi vii°**.',
       'אותיות גדולות = מז\'ור, קטנות = מינור, ° = מוקטן. ב-C: C Dm Em F G Am Bdim.',
@@ -128,7 +76,7 @@ const BASE_LESSONS: Lesson[] = [
     drills: [['th.degreeQuality', 4], ['th.diatonicChord', 6]],
   },
   {
-    id: 'th4b', domain: 'theory', level: 4, title: 'אקורדי ספטימה',
+    id: 'th4b', domain: 'theory', level: 4, title: 'אקורדי ספטימה', unit: 7,
     intro: [
       'מוסיפים לטריאדה עוד טרצה ומקבלים אקורד ספטימה – 4 תווים.',
       '**maj7** (C E G B) – רך וחלומי. **7** (C E G Bb) – דומיננטה, מתח. **m7** (C Eb G Bb) – מינור רך. **m7b5** (C Eb Gb Bb) – חצי מוקטן.',
@@ -141,7 +89,7 @@ const BASE_LESSONS: Lesson[] = [
     drills: [['th.seventhId', 10]],
   },
   {
-    id: 'th4c', domain: 'theory', level: 4, title: 'היפוכים ומהלכים',
+    id: 'th4c', domain: 'theory', level: 4, title: 'היפוכים ומהלכים', unit: 5,
     intro: [
       '**היפוך** = אותו אקורד עם תו אחר בבס. היפוכים מאפשרים מעברים חלקים בין אקורדים.',
       'מהלכים שכדאי להכיר: **I–IV–V** (רוק/בלוז), **I–V–vi–IV** (פופ), **ii–V–I** (ג\'אז).',
@@ -149,7 +97,7 @@ const BASE_LESSONS: Lesson[] = [
     drills: [['th.inversion', 5], ['th.cadence', 5]],
   },
   {
-    id: 'th5a', domain: 'theory', level: 5, title: 'מודוסים',
+    id: 'th5a', domain: 'theory', level: 5, title: 'מודוסים', unit: 8,
     intro: [
       'אם מנגנים את תווי C מז\'ור אבל מתחילים מ-D, מקבלים **D דורי**. כל דרגה נותנת מודוס עם צבע משלו.',
       'יוני (1), דורי (2), פריגי (3), לידי (4), מיקסולידי (5), איולי (6), לוקרי (7).',
@@ -161,7 +109,7 @@ const BASE_LESSONS: Lesson[] = [
     drills: [['th.modeFromDegree', 4], ['th.modeChar', 3], ['th.modeSpell', 3]],
   },
   {
-    id: 'th5b', domain: 'theory', level: 5, title: 'פונקציות ודומיננטות משניות',
+    id: 'th5b', domain: 'theory', level: 5, title: 'פונקציות ודומיננטות משניות', unit: 7,
     intro: [
       'לכל אקורד יש **פונקציה**: טוניקה (בית), סובדומיננטה (יציאה), דומיננטה (מתח שחוזר הביתה).',
       '**דומיננטה משנית**: אקורד 7 שמוביל לאקורד שאינו הטוניקה. למשל ב-C, A7 מוביל ל-Dm – זה V7/ii.',
@@ -397,7 +345,7 @@ const BASE_LESSONS: Lesson[] = [
 ];
 
 /** Base lessons + their visual extras, with an optional orientation lesson first in each track. */
-export const LESSONS: Lesson[] = [...INTRO_LESSONS, ...BASE_LESSONS].map((l) => {
+export const LESSONS: Lesson[] = [...THEORY_COURSE, ...INTRO_LESSONS, ...BASE_LESSONS].map((l) => {
   const x = LESSON_EXTRAS[l.id];
   return x ? { ...l, intro: [...l.intro, ...(x.more ?? [])], extra: [...(l.extra ?? []), ...(x.extra ?? [])], see: x.see ?? l.see } : l;
 });

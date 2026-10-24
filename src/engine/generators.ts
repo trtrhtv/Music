@@ -287,6 +287,116 @@ gen('th.function', 'theory', 5, 'פונקציות הרמוניות', () => {
   });
 });
 
+/* ── Theory course: drills that go with the step-by-step lessons ── */
+
+// Interval number from counting letters (C→E = C D E = 3), whatever the accidentals.
+const NUM_NAMES = ['', 'אוניסון', 'סקונדה (2)', 'טרצה (3)', 'קוורטה (4)', 'קווינטה (5)', 'סקסטה (6)', 'ספטימה (7)', 'אוקטבה (8)'];
+
+gen('th.fretSteps', 'theory', 1, 'סריגים וחצאי טונים', () => {
+  const a = 1 + rand(7);
+  const d = pick([1, 2, 2, 3, 4, 5, 7, 12]);
+  return choice(`על אותו מיתר: מסריג ${a} לסריג ${a + d}. כמה חצאי טונים זה?`, String(d), ['1', '2', '3', '4', '5', '7', '12'], {
+    explain: `כל סריג = חצי טון אחד, אז פשוט סופרים סריגים: ${a + d} − ${a} = **${d}**${d === 2 ? ' (= טון שלם)' : d === 12 ? ' (= אוקטבה)' : ''}.`,
+  });
+});
+
+gen('th.stepUp', 'theory', 1, 'צעד למעלה ולמטה', () => {
+  const from = pick(NATURALS);
+  const up = Math.random() < 0.6;
+  const size = pick([1, 2]);
+  const p0 = pcOf(from);
+  const target = (p0 + (up ? size : -size) + 12) % 12;
+  const names = up ? PC_SHARP : PC_FLAT;
+  const ans = names[target];
+  const opts = [names[(target + 1) % 12], names[(target + 11) % 12], names[(target + 2) % 12], names[(target + 10) % 12]];
+  const dir = up ? 'מעל ' : 'מתחת ל-';
+  return choice(`איזה תו נמצא ${size === 1 ? 'חצי טון' : 'טון שלם'} ${dir}${from}?`, ans, opts, {
+    explain: `${size === 1 ? 'חצי טון = סריג אחד' : 'טון = 2 סריגים'} ${up ? 'למעלה' : 'למטה'}. ${from} → **${ans}**. זכור: בין E–F ובין B–C יש רק חצי טון.`,
+  });
+});
+
+gen('th.degreeOf', 'theory', 2, 'דרגות בסולם', () => {
+  const key = pick(['C', 'G', 'D', 'F', 'A']);
+  const notes = spellScale(key, 'major');
+  const d = 2 + rand(6);
+  return choice(`בסולם ${key} מז'ור – איזו דרגה היא התו ${notes[d - 1]}?`, String(d), ['1', '2', '3', '4', '5', '6', '7'], {
+    explain: `סופרים מהתו הראשון: ${notes.map((n, i) => `${i + 1}=${n}`).join(' · ')}.`,
+  });
+});
+
+gen('th.intervalNumber', 'theory', 2, 'שם המרווח (ספירת אותיות)', () => {
+  const root = pick(NATURALS);
+  const n = 2 + rand(7); // 2..8
+  const letter = NATURALS[(NATURALS.indexOf(root) + n - 1) % 7];
+  const acc = n < 8 && Math.random() < 0.3 ? pick(['#', 'b']) : '';
+  const top = letter + acc;
+  const chain = Array.from({ length: n }, (_, i) => NATURALS[(NATURALS.indexOf(root) + i) % 7]).join(' ');
+  return choice(`מ-${root} למעלה עד ${top}: איך נקרא המרווח (רק לפי ספירת האותיות)?`, NUM_NAMES[n], NUM_NAMES.slice(2), {
+    explain: `סופרים אותיות, כולל הראשונה והאחרונה: ${chain} = **${n}** → ${NUM_NAMES[n]}.${acc ? ' הדיאז/במול לא משנה את המספר – רק את הגודל (גדול/קטן).' : ''}`,
+  });
+});
+
+gen('th.neckInterval', 'theory', 2, 'מרווחים על הצוואר', () => {
+  const lower = pick([6, 5, 4]);
+  const f = 3 + rand(5);
+  const shape = pick([
+    { s2: lower - 1, df: 0, semis: 5 }, { s2: lower - 1, df: 2, semis: 7 }, { s2: lower - 1, df: -1, semis: 4 },
+    { s2: lower - 1, df: -2, semis: 3 }, { s2: lower, df: 7, semis: 7 }, { s2: lower, df: 12, semis: 12 },
+    ...(lower > 4 ? [{ s2: lower - 2, df: 2, semis: 12 }] : []),
+  ]);
+  const second = shape.s2 === lower ? `ואז סריג ${f + shape.df} באותו מיתר` : `ומיתר ${shape.s2} סריג ${f + shape.df}`;
+  return choice(`מיתר ${lower} סריג ${f}, ${second}. מה המרווח?`, intervalName(shape.semis), [3, 4, 5, 7, 12].map(intervalName), {
+    explain: shape.s2 === lower
+      ? `אותו מיתר: ${shape.df} סריגים = ${shape.df} חצאי טונים = **${intervalName(shape.semis)}**.`
+      : shape.s2 === lower - 2
+        ? 'שני מיתרים למעלה ושני סריגים ימינה = **אוקטבה** (אותו תו, גבוה יותר).'
+        : `בין המיתרים ${lower} ו-${lower - 1} יש קוורטה (5 חצאי טונים). ${shape.df === 0 ? 'באותו סריג' : `${shape.df > 0 ? '+' : ''}${shape.df} סריגים`} → ${shape.semis} חצאי טונים = **${intervalName(shape.semis)}**.`,
+  });
+});
+
+gen('th.thirdSwap', 'theory', 3, 'מז\'ור ↔ מינור', () => {
+  const root = pick(['C', 'D', 'E', 'G', 'A', 'F']);
+  const maj = spellChord(root, [0, 4, 7]);
+  const min = spellChord(root, [0, 3, 7]);
+  const toMinor = Math.random() < 0.5;
+  const [from, to, sym] = toMinor ? [maj, min, root + 'm'] : [min, maj, root];
+  return choice(`${toMinor ? root : root + 'm'} = ${from.join(' ')}. אילו תווים יש ב-${sym}?`, to.join(' '),
+    [from.join(' '), spellChord(root, [0, 4, 8]).join(' '), spellChord(root, [0, 3, 6]).join(' '), spellChord(root, [0, 5, 7]).join(' ')], {
+      explain: `רק **הטרצה** זזה בחצי טון: ${from[1]} → ${to[1]}. השורש (${root}) והקווינטה (${maj[2]}) נשארים.`,
+    });
+});
+
+gen('th.susPower', 'theory', 3, 'פאוור קורד ו-sus', () => {
+  const root = pick(['A', 'D', 'E', 'G', 'C']);
+  const kind = pick([
+    { sym: '5', steps: [0, 7], why: 'רק שורש וקווינטה – בלי טרצה, ולכן לא מז\'ור ולא מינור' },
+    { sym: 'sus2', steps: [0, 2, 7], why: 'הטרצה מוחלפת בתו השני (סקונדה)' },
+    { sym: 'sus4', steps: [0, 5, 7], why: 'הטרצה מוחלפת בתו הרביעי (קוורטה)' },
+  ]);
+  const ans = spellChord(root, kind.steps).join(' ');
+  const opts = [[0, 7], [0, 2, 7], [0, 5, 7], [0, 4, 7], [0, 3, 7]].map((st) => spellChord(root, st).join(' '));
+  return choice(`אילו תווים יש ב-${root}${kind.sym}?`, ans, opts, { explain: `${root}${kind.sym}: ${kind.why}: **${ans}**.` });
+});
+
+const SYMBOLS: [string, string][] = [
+  ['', 'מז\'ור'], ['m', 'מינור'], ['7', 'מז\'ור + ספטימה קטנה (דומיננט 7)'], ['maj7', 'מז\'ור + ספטימה גדולה'],
+  ['m7', 'מינור + ספטימה קטנה'], ['dim', 'מוקטן'], ['aug', 'מוגדל'], ['sus4', 'קוורטה במקום טרצה'],
+  ['sus2', 'סקונדה במקום טרצה'], ['5', 'שורש וקווינטה בלבד (פאוור קורד)'], ['add9', 'מז\'ור + התו התשיעי (= השני, אוקטבה למעלה)'],
+];
+gen('th.symbolRead', 'theory', 3, 'קריאת שם של אקורד', () => {
+  const root = pick(['C', 'D', 'E', 'G', 'A']);
+  const [sym, meaning] = pick(SYMBOLS.slice(1));
+  if (Math.random() < 0.25) {
+    const bass = pick(['B', 'G', 'E']);
+    return choice(`מה המשמעות של ${root}/${bass}?`, `${root}, עם ${bass} בבס`, [`${root} ו-${bass} ביחד כשני אקורדים`, `${bass}${'m'} עם ${root} למעלה`, `${root} מינור`], {
+      explain: `הקו הנטוי = **בס**: מנגנים אקורד ${root}, והתו הכי נמוך הוא ${bass}.`,
+    });
+  }
+  return choice(`מה המשמעות של ${root}${sym}?`, meaning, SYMBOLS.map((x) => x[1]), {
+    explain: `${root}${sym} = ${meaning}. האות הראשונה היא תמיד השורש (${root}); מה שאחריה אומר איזה סוג אקורד.`,
+  });
+});
+
 /* ───────────────────────────── EAR ───────────────────────────── */
 
 gen('ear.highLow', 'ear', 1, 'גבוה / נמוך', () => {

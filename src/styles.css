@@ -356,3 +356,13 @@ h3 { font-size: 1.05rem; }
 @media (orientation: landscape) and (min-width: 700px) {
   .app { max-width: 980px; }
 }
+
+/* Theory course: step-by-step lessons */
+.why-box { background: var(--card); border-inline-start: 4px solid var(--accent); border-radius: 12px; padding: 10px 12px; margin: 8px 0 14px; }
+.summary-box { background: #2ecc8f1a; border: 1px solid var(--ok); border-radius: 12px; padding: 10px 12px; margin: 14px 0; }
+.step-dots { display: flex; gap: 6px; margin: 6px 0; }
+.step-dots span { flex: 1; height: 4px; border-radius: 2px; background: var(--line); }
+.step-dots span.done { background: var(--accent); opacity: 0.5; }
+.step-dots span.on { background: var(--accent); }
+.step-title { font-size: 1.05rem; margin: 10px 0 4px; }
+.step-nav { display: flex; justify-content: space-between; gap: 10px; margin-top: 18px; }

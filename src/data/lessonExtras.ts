@@ -7,20 +7,6 @@ import { chord, h, list, seq, sounds, tip, type Block } from './blocks';
  */
 export const LESSON_EXTRAS: Record<string, { more?: string[]; extra?: Block[]; see?: string[] }> = {
   /* ───────── THEORY ───────── */
-  th1a: {
-    extra: [
-      { t: 'table', head: ['סולפג\'', 'אות'], ltr: [1], rows: [['דו', 'C'], ['רה', 'D'], ['מי', 'E'], ['פה', 'F'], ['סול', 'G'], ['לה', 'A'], ['סי', 'B']] },
-      { t: 'keyboard', from: 60, to: 72, labels: 'both', caption: 'כל קליד לבן עם שני השמות שלו' },
-    ],
-    see: ['notes', 'octaves'],
-  },
-  th1b: {
-    extra: [
-      { t: 'keyboard', from: 60, to: 72, labels: 'letters', marks: [64, 65, 71, 72], caption: 'E–F ו-B–C: חצי טון בלי קליד שחור באמצע' },
-      { t: 'table', head: ['קליד שחור', 'שם בדיאז', 'שם בבמול'], ltr: [1, 2], rows: [['בין C ל-D', 'C#', 'Db'], ['בין D ל-E', 'D#', 'Eb'], ['בין F ל-G', 'F#', 'Gb'], ['בין G ל-A', 'G#', 'Ab'], ['בין A ל-B', 'A#', 'Bb']] },
-    ],
-    see: ['tones', 'accidentals'],
-  },
   th1c: {
     extra: [
       { t: 'staff', spec: { clef: 'treble', notes: ['E4', 'G4', 'B4', 'D5', 'F5'] }, labels: ['E', 'G', 'B', 'D', 'F'], caption: 'התווים על הקווים' },
@@ -29,21 +15,6 @@ export const LESSON_EXTRAS: Record<string, { more?: string[]; extra?: Block[]; s
     ],
     see: ['staff'],
   },
-  th2a: {
-    extra: [
-      { t: 'keyboard', from: 55, to: 72, labels: 'letters', marks: [55, 57, 59, 60, 62, 64, 66, 67], caption: 'G מז\'ור: G A B C D E F# G' },
-      { t: 'table', head: ['מ-', 'אל', 'מרחק'], ltr: [0, 1], rows: [['G', 'A', 'ט'], ['A', 'B', 'ט'], ['B', 'C', 'ח'], ['C', 'D', 'ט'], ['D', 'E', 'ט'], ['E', 'F#', 'ט'], ['F#', 'G', 'ח']] },
-      tip('כדי לבנות סולם מז\'ור: כתוב את כל 7 האותיות מהשורש, כל אות פעם אחת, והוסף # או b איפה שצריך כדי לשמור על ט ט ח ט ט ט ח.'),
-    ],
-    see: ['scales', 'tones', 'keys'],
-  },
-  th2b: {
-    extra: [
-      { t: 'table', head: ['חצאי טונים', 'מרווח', 'מ-C'], ltr: [2], rows: [['2', 'סקונדה גדולה', 'C–D'], ['3', 'טרצה קטנה', 'C–Eb'], ['4', 'טרצה גדולה', 'C–E'], ['5', 'קוורטה זכה', 'C–F'], ['7', 'קווינטה זכה', 'C–G'], ['9', 'סקסטה גדולה', 'C–A'], ['12', 'אוקטבה', 'C–C']] },
-      tip('השם בא ממספר האותיות: C→E זה C, D, E = 3 אותיות = **טרצה**. כמה חצאי טונים – קובע אם היא גדולה או קטנה.'),
-    ],
-    see: ['intervals'],
-  },
   th2c: {
     more: ['C האמצעי (C4) יושב על קו עזר אחד **מעל** חמשת מפתח הפה – אותו C כמו במפתח סול, רק מהצד השני.'],
     extra: [
@@ -51,13 +22,6 @@ export const LESSON_EXTRAS: Record<string, { more?: string[]; extra?: Block[]; s
       { t: 'staff', spec: { clef: 'bass', notes: ['A2', 'C3', 'E3', 'G3'] }, labels: ['A', 'C', 'E', 'G'], caption: 'הרווחים' },
     ],
     see: ['staff'],
-  },
-  th3a: {
-    extra: [
-      { t: 'table', head: ['סוג', 'מבנה', 'C'], ltr: [1, 2], rows: [['מז\'ור', '4 + 3', 'C E G'], ['מינור', '3 + 4', 'C Eb G'], ['מוקטן', '3 + 3', 'C Eb Gb'], ['מוגדל', '4 + 4', 'C E G#']] },
-      tip('"4 + 3" = מהשורש לטרצה 4 חצאי טונים, ומהטרצה לקווינטה עוד 3.'),
-    ],
-    see: ['chords', 'chord-symbols'],
   },
   th3b: {
     extra: [
@@ -278,20 +242,6 @@ export const LESSON_EXTRAS: Record<string, { more?: string[]; extra?: Block[]; s
 
 /** Orientation lessons ("lesson 0") – optional, shown first in each track. */
 export const INTRO_LESSONS: Lesson[] = [
-  {
-    id: 'th0', domain: 'theory', level: 1, title: 'היכרות: איך קוראים לתווים', optional: true,
-    intro: [
-      'לפני הכל – שפה משותפת. לכל צליל במוזיקה יש שם, ויש שתי שיטות שמות: **אותיות** (C D E F G A B) ו**סולפג\'** (דו רה מי פה סול לה סי).',
-      'בין חלק מהתווים יש עוד צלילים – הם מקבלים **#** (דיאז, מעלה) או **b** (במול, מוריד). ואחרי B חוזרים ל-C, אוקטבה גבוה יותר.',
-    ],
-    extra: [
-      { t: 'table', head: ['סולפג\'', 'אות'], ltr: [1], rows: [['דו', 'C'], ['רה', 'D'], ['מי', 'E'], ['פה', 'F'], ['סול', 'G'], ['לה', 'A'], ['סי', 'B']] },
-      { t: 'keyboard', from: 60, to: 72, labels: 'both' },
-      sounds(seq('דו רה מי…', [60, 62, 64, 65, 67, 69, 71, 72], 0.35)),
-    ],
-    see: ['notes', 'accidentals', 'staff'],
-    drills: [['th.solfege', 4]],
-  },
   {
     id: 'ear0', domain: 'ear', level: 1, title: 'היכרות: איך מתאמנים בשמיעה', optional: true,
     intro: [

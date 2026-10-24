@@ -4,6 +4,7 @@ import { rich } from '../components/rich';
 import { playCue } from '../audio/cue';
 import { ExerciseView, type Outcome } from '../components/ExerciseView';
 import { LESSON_BY_ID } from '../data/curriculum';
+import { THEORY_UNITS } from '../data/theoryCourse';
 import { GEN_BY_ID } from '../engine/generators';
 import { DOMAIN_ICON } from '../engine/types';
 import { go } from '../router';
@@ -12,6 +13,7 @@ import { PASS, recordAnswer, recordLesson } from '../state/store';
 export function LessonRunner({ id }: { id: string }) {
   const lesson = LESSON_BY_ID[id];
   const [phase, setPhase] = useState<'intro' | 'drill' | 'done'>('intro');
+  const [page, setPage] = useState(0);
   const [i, setI] = useState(0);
   const [score, setScore] = useState({ right: 0, wrong: 0 });
   const queue = useMemo(
@@ -37,6 +39,32 @@ export function LessonRunner({ id }: { id: string }) {
       setPhase('done');
     }
   };
+
+  const back = () => go('track/' + lesson.domain);
+  if (phase === 'intro' && lesson.pages) {
+    const pages = lesson.pages;
+    const last = page === pages.length - 1;
+    const turn = (n: number) => { setPage(n); window.scrollTo(0, 0); };
+    return (
+      <div className="screen">
+        <button className="back" onClick={back}>→ לכל השיעורים</button>
+        <p className="muted small">{DOMAIN_ICON[lesson.domain]} {lesson.unit ? `יחידה ${lesson.unit} · ${THEORY_UNITS[lesson.unit]}` : `רמה ${lesson.level}`}</p>
+        <h1>{lesson.title}</h1>
+        {page === 0 && lesson.why && <div className="why-box"><b>למה זה חשוב לך?</b> {rich(lesson.why)}</div>}
+        <div className="step-dots" aria-hidden>{pages.map((_, k) => <span key={k} className={k === page ? 'on' : k < page ? 'done' : ''} />)}</div>
+        <h2 className="step-title">שלב {page + 1} מתוך {pages.length}: {pages[page].title}</h2>
+        <Blocks blocks={pages[page].blocks} />
+        {last && lesson.summary && <div className="summary-box"><b>בקיצור:</b> {rich(lesson.summary)}</div>}
+        {last && lesson.see && <Blocks blocks={[{ t: 'see', ids: lesson.see }]} />}
+        <div className="step-nav">
+          {page > 0 ? <button className="btn ghost" onClick={() => turn(page - 1)}>→ הקודם</button> : <span />}
+          {last
+            ? <button className="btn primary" onClick={() => setPhase('drill')}>לתרגול ({queue.length}) ←</button>
+            : <button className="btn primary" onClick={() => turn(page + 1)}>הבא ←</button>}
+        </div>
+      </div>
+    );
+  }
 
   if (phase === 'intro') {
     return (

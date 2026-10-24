@@ -120,8 +120,8 @@ describe('review fixes', () => {
     finishPlacement({} as never, { theory: 1, ear: 1, guitar: 1, piano: 1 });
     for (const l of LESSONS.filter((x) => x.domain === 'piano' && x.level === 1 && !x.optional)) recordLesson(l.id, 'piano', 1);
     expect(getState().levels.piano).toBe(2);
-    recordLesson('th1a', 'theory', 0.5);
-    expect(getState().lessons.th1a.passed).toBe(false);
+    recordLesson('t1a', 'theory', 0.5);
+    expect(getState().lessons.t1a.passed).toBe(false);
     expect(getState().levels.theory).toBe(1);
   });
 });

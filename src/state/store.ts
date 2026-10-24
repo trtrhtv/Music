@@ -159,6 +159,7 @@ export function resetAll() {
 export type LessonStatus = 'passed' | 'known' | 'open' | 'locked';
 export function lessonStatus(s: State, l: { id: string; domain: Domain; level: number }): LessonStatus {
   if (s.lessons[l.id]?.passed) return 'passed';
+  if (l.domain === 'theory') return 'open'; // the theory course is never locked
   if (l.level < s.placedLevels[l.domain]) return 'known';
   if (l.level <= s.levels[l.domain]) return 'open';
   return 'locked';
