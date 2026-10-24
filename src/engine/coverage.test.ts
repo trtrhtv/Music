@@ -49,7 +49,7 @@ it('theory course: every lesson sits in a unit, uses real drills, and teaches be
 
 it('new theory drills always offer the right answer once', async () => {
   const { GEN_BY_ID } = await import('./generators');
-  for (const id of ['th.fretSteps', 'th.stepUp', 'th.degreeOf', 'th.intervalNumber', 'th.neckInterval', 'th.thirdSwap', 'th.susPower', 'th.symbolRead']) {
+  for (const id of ['th.fretSteps', 'th.stepUp', 'th.degreeOf', 'th.intervalNumber', 'th.neckInterval', 'th.thirdSwap', 'th.susPower', 'th.symbolRead', 'th.romanChord', 'th.keyFromChords', 'th.transpose', 'th.minorDiatonic', 'th.pentaNotes']) {
     for (let i = 0; i < 200; i++) {
       const ex = GEN_BY_ID[id].make() as { kind: string; options: string[]; answer: number };
       expect(ex.answer, id).toBeGreaterThanOrEqual(0);

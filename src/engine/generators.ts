@@ -397,6 +397,74 @@ gen('th.symbolRead', 'theory', 3, 'קריאת שם של אקורד', () => {
   });
 });
 
+const GUITAR_KEYS = ['C', 'G', 'D', 'A', 'E', 'F'];
+const romanOf = (d: number) => ROMAN[d - 1];
+
+gen('th.romanChord', 'theory', 4, 'ספרות רומיות', () => {
+  const key = pick(GUITAR_KEYS);
+  const d = pick([1, 2, 4, 5, 6, 3]);
+  const all = [1, 2, 3, 4, 5, 6, 7].map((x) => diatonicChord(key, x));
+  const list = all.map((c, i) => `${romanOf(i + 1)}=${c}`).join(' · ');
+  if (Math.random() < 0.5) {
+    return choice(`בסולם ${key} מז'ור – איזה אקורד הוא ${romanOf(d)}?`, all[d - 1], all, { explain: `ב-${key}: ${list}` });
+  }
+  return choice(`בסולם ${key} מז'ור – איזו ספרה רומית מתאימה לאקורד ${all[d - 1]}?`, romanOf(d), ROMAN, { explain: `ב-${key}: ${list}` });
+});
+
+gen('th.keyFromChords', 'theory', 4, 'מה הסולם של השיר?', () => {
+  const key = pick(GUITAR_KEYS);
+  const degs = shuffle([1, 4, 5, pick([6, 2])]);
+  const chords = degs.map((d) => diatonicChord(key, d));
+  return choice(`בשיר יש את האקורדים: ${chords.join(', ')}. באיזה סולם מז'ור הוא?`, `${key} מז'ור`, GUITAR_KEYS.map((k) => `${k} מז'ור`), {
+    explain: `כולם אקורדים של ${key} מז'ור: ${degs.map((d) => `${diatonicChord(key, d)} = ${romanOf(d)}`).join(' · ')}. רק בסולם אחד יש ביחד את I, IV ו-V האלה.`,
+  });
+});
+
+const TRANSPOSE_KEYS = ['C', 'D', 'E', 'F', 'G', 'A'];
+gen('th.transpose', 'theory', 4, 'העברת שיר לסולם אחר', () => {
+  const from = pick(TRANSPOSE_KEYS);
+  const to = pick(TRANSPOSE_KEYS.filter((k) => k !== from));
+  const degs = pick([[1, 5, 6, 4], [1, 4, 5], [6, 4, 1, 5]]);
+  const prog = (k: string) => degs.map((d) => diatonicChord(k, d)).join(' – ');
+  const up = (pcOf(to) - pcOf(from) + 12) % 12;
+  return choice(`המהלך ${prog(from)} (סולם ${from}). איך הוא נראה אם מעבירים אותו ל-${to}?`, prog(to),
+    TRANSPOSE_KEYS.filter((k) => k !== to).map(prog), {
+      explain: `במספרים זה ${degs.map(romanOf).join(' – ')}. ב-${to} אותם מספרים: **${prog(to)}** (כל אקורד זז ${up} חצאי טונים למעלה).`,
+    });
+});
+
+const MINOR_QUALS = ['min', 'dim', 'maj', 'min', 'min', 'maj', 'maj'];
+const MINOR_ROMAN = ['i', 'ii°', 'III', 'iv', 'v', 'VI', 'VII'];
+gen('th.minorDiatonic', 'theory', 4, 'אקורדים בסולם מינור', () => {
+  const key = pick(['A', 'E', 'D', 'B']);
+  const notes = spellScale(key, 'minor');
+  const all = notes.map((n, i) => n + CHORDS[MINOR_QUALS[i]].symbol);
+  const d = pick([1, 3, 4, 5, 6, 7]);
+  return choice(`בסולם ${key} מינור – איזה אקורד נמצא על ${MINOR_ROMAN[d - 1]}?`, all[d - 1], all, {
+    explain: `${key} מינור: ${all.map((c, i) => `${MINOR_ROMAN[i]}=${c}`).join(' · ')}. (בשירים הרבה פעמים ה-v הופך ל-V או V7 – למשל ${notes[4]}7 – בגלל המינור ההרמוני.)`,
+  });
+});
+
+const flat = (n: string) => (n.endsWith('#') ? n.slice(0, -1) : n + 'b');
+gen('th.pentaNotes', 'theory', 3, 'פנטטוני ובלוז', () => {
+  const root = pick(['A', 'E', 'D', 'G', 'C']);
+  const mi = spellScale(root, 'minor');
+  const ma = spellScale(root, 'major');
+  const opts = {
+    minPent: [mi[0], mi[2], mi[3], mi[4], mi[6]],
+    majPent: [ma[0], ma[1], ma[2], ma[4], ma[5]],
+    blues: [mi[0], mi[2], mi[3], flat(ma[4]), mi[4], mi[6]],
+  };
+  const kind = pick(['minPent', 'majPent', 'blues'] as const);
+  const name = { minPent: 'מינור פנטטוני', majPent: 'מז\'ור פנטטוני', blues: 'סולם בלוז' }[kind];
+  const how = {
+    minPent: `סולם ${root} מינור בלי דרגות 2 ו-6`, majPent: `סולם ${root} מז'ור בלי דרגות 4 ו-7`, blues: `המינור הפנטטוני + התו הכחול (${flat(ma[4])})`,
+  }[kind];
+  return choice(`אילו תווים יש ב-${root} ${name}?`, opts[kind].join(' '), [...Object.values(opts).map((o) => o.join(' ')), mi.join(' ')], {
+    explain: `${root} ${name} = ${how}: **${opts[kind].join(' ')}**.`,
+  });
+});
+
 /* ───────────────────────────── EAR ───────────────────────────── */
 
 gen('ear.highLow', 'ear', 1, 'גבוה / נמוך', () => {
