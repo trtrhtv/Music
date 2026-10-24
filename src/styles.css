@@ -339,3 +339,11 @@ h3 { font-size: 1.05rem; }
 .prog-table th, .prog-table td { padding: 7px 6px; border-bottom: 1px solid var(--line); text-align: start; }
 .prog-table th { color: var(--muted); font-weight: 600; font-size: 0.8rem; }
 .prog-table tr.hit td { color: var(--ok); }
+
+/* Recordings */
+.take { border-top: 1px solid var(--line); padding: 8px 0; }
+.take-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 4px; }
+.take-actions { display: flex; gap: 12px; }
+.take audio { width: 100%; height: 40px; }
+.rec-on { border-color: var(--bad); color: var(--bad); animation: rec-pulse 1.2s infinite; }
+@keyframes rec-pulse { 50% { opacity: 0.6; } }

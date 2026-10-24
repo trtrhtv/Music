@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Blocks } from '../components/Blocks';
 import { rich } from '../components/rich';
+import { Recorder, Take } from '../components/Recorder';
 import { Timer } from '../components/RhythmTools';
 import { CHECKPOINT, KIND_META, PLAN, WEEK_TITLES, dayMinutes, planIntro, type PlanBlock } from '../data/plan';
 import { GLOSSARY_BY_ID } from '../data/glossary';
 import { SONG_BY_ID } from '../data/songs';
 import { go } from '../router';
+import { useRecordings } from '../state/recordings';
 import { RATE_LABELS, coreDone, currentDay, doneCount, weakestSongs } from '../state/planProgress';
 import { logPlanBpm, planKey, ratePlanSong, togglePlanBlock, useStore } from '../state/store';
 
@@ -127,6 +129,7 @@ function BlockCard({ day, b }: { day: number; b: PlanBlock }) {
           )}
           {b.polish && <PolishPick />}
           {b.content && <Blocks blocks={b.content} />}
+          {b.kind === 'record' && <Recorder day={day} />}
           {b.rate && <RateSongs day={day} songs={b.rate} />}
           {b.bpm && <BpmLog day={day} block={b} />}
           {meta.help && <button className="link small help-link" onClick={() => go('glossary/' + meta.help)}>📖 מילה לא ברורה? {GLOSSARY_BY_ID[meta.help].title}</button>}
@@ -177,6 +180,7 @@ export function PlanProgress() {
   const minutes = blocks.reduce((t, x) => t + x.b.min, 0);
   const rateDays = PLAN.filter((d) => d.blocks.some((b) => b.rate)).map((d) => d.n);
   const rated = [...new Set(PLAN.flatMap((d) => d.blocks.flatMap((b) => b.rate ?? [])))];
+  const recs = useRecordings();
   const logs = PLAN.flatMap((d) => d.blocks.filter((b) => b.bpm && s.plan.bpm[planKey(d.n, b.id)]?.length).map((b) => ({ d, b, log: s.plan.bpm[planKey(d.n, b.id)] })));
   return (
     <div className="screen">
@@ -221,7 +225,9 @@ export function PlanProgress() {
       )}
 
       <h3 className="section-title">ההקלטות</h3>
-      <p className="small">ההקלטות נשמרות בטלפון שלך, לא באפליקציה. ההשוואה הכי חשובה: <b>יום 1 מול יום {CHECKPOINT} מול יום {PLAN.length}</b> – אותם תרגילים, ברצף.</p>
+      <p className="small">ההשוואה הכי חשובה: <b>יום 1 מול יום {CHECKPOINT} מול יום {PLAN.length}</b> – אותם תרגילים, אחד אחרי השני.</p>
+      {recs.length === 0 ? <p className="muted small">עוד אין הקלטות. מקליטים בבלוקי ההקלטה (🎙️) בימים 1, 6, {CHECKPOINT} ו-{PLAN.length}.</p>
+        : recs.map((r) => <Take key={r.id} r={r} />)}
     </div>
   );
 }
