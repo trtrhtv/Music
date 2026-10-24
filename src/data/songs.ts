@@ -2,7 +2,7 @@ import { list, p, tip, type Block } from './blocks';
 import { CH, STRUMS, chords, notesTab, tabFrom } from './guitarLib';
 
 /**
- * Songs and pieces for the two-week plan. Chords were cross-checked across several chord sites
+ * Songs and pieces for the practice plan. Chords were cross-checked across several chord sites
  * (see `sources`); full arrangements, riffs and lyrics are linked rather than reproduced.
  */
 export interface Song {
@@ -47,6 +47,43 @@ const romTab = (from: number, to: number) => {
   return Array.from({ length: 6 }, (_, s) => bars.map((b) => b[s]).join('|'));
 };
 const ROMANZA_END = tabFrom([[[1, 0], [2, 0], [3, 0], [6, 0]]], 3);
+
+// ───────── Romanza, section B (bars 17–32, E major) ─────────
+// Here the melody sometimes moves to string 2 (bars 19–20), so each note names its own string.
+type N = [number, number];
+type RomBarB = { m: [N, N, N]; inner: [N, N]; bass: N[] };
+const b = (m: [N, N, N], inner: [N, N], bass: N[]): RomBarB => ({ m, inner, bass });
+const E6: N[] = [[6, 0]];
+const ROMANZA_B: RomBarB[] = [
+  /* 17 */ b([[1, 4], [1, 4], [1, 4]], [[2, 0], [3, 1]], E6),
+  /* 18 */ b([[1, 4], [1, 2], [1, 0]], [[2, 0], [3, 1]], E6),
+  /* 19 */ b([[2, 5], [2, 4], [2, 4]], [[3, 2], [4, 4]], E6),
+  /* 20 */ b([[2, 4], [2, 3], [2, 4]], [[3, 2], [4, 4]], E6),
+  /* 21 */ b([[1, 9], [1, 9], [1, 9]], [[2, 7], [3, 8]], [[6, 7]]),
+  /* 22 */ b([[1, 9], [1, 11], [1, 9]], [[2, 7], [3, 8]], [[6, 7]]),
+  /* 23 */ b([[1, 9], [1, 7], [1, 7]], [[2, 9], [3, 9]], E6),
+  /* 24 */ b([[1, 7], [1, 9], [1, 11]], [[2, 9], [3, 9]], E6),
+  /* 25 */ b([[1, 12], [1, 12], [1, 12]], [[2, 9], [3, 9]], E6),
+  /* 26 */ b([[1, 12], [1, 11], [1, 10]], [[2, 9], [3, 9]], E6),
+  /* 27 */ b([[1, 9], [1, 9], [1, 9]], [[2, 5], [3, 6]], [[5, 0]]),
+  /* 28 */ b([[1, 9], [1, 7], [1, 5]], [[2, 5], [3, 6]], [[5, 0]]),
+  /* 29 */ b([[1, 4], [1, 4], [1, 4]], [[2, 4], [3, 2]], [[5, 2]]),
+  /* 30 */ b([[1, 4], [1, 5], [1, 2]], [[2, 4], [3, 2]], [[5, 2]]),
+  /* 31 */ b([[1, 0], [1, 0], [1, 0]], [[2, 0], [3, 1]], [[4, 2], [5, 2], [6, 4]]),
+];
+function romColsB(x: RomBarB): N[][] {
+  const cols: N[][] = [];
+  x.m.forEach((mel, beat) => {
+    const bass = x.bass.length === 3 ? [x.bass[beat]] : beat === 0 ? x.bass : [];
+    cols.push([mel, ...bass], [x.inner[0]], [x.inner[1]]);
+  });
+  return cols;
+}
+const romTabB = (from: number, to: number) => {
+  const bars = ROMANZA_B.slice(from - 17, to - 16).map((x) => tabFrom(romColsB(x), 3));
+  return Array.from({ length: 6 }, (_, s) => bars.map((x) => x[s]).join('|'));
+};
+const ROMANZA_B_END = tabFrom([[[1, 0], [2, 0], [3, 1], [6, 0]]], 3);
 
 export const SONGS: Song[] = [
   {
@@ -153,20 +190,6 @@ export const SONGS: Song[] = [
       { label: 'Songsterr', url: 'https://www.songsterr.com/a/wsa/ehud-banai-blues-knaani-canaanite-blues-tab-s479246' },
     ],
   },
-  {
-    id: 'miklat', title: 'עיר מקלט (בונוס)', artist: 'אהוד בנאי', kind: 'song', status: 'verified', key: 'Em',
-    how: 'פריטה במקצב רוק',
-    blocks: [
-      p('שיר של **שני אקורדים בלבד** – Em ו-Am – ולכן מושלם לתרגל עליו מקצב: כל האנרגיה באה מיד ימין.'),
-      { t: 'chords', items: chords('Em', 'Am'), caption: 'Tab4U ונגנו מסכימים: Em ו-Am' },
-      strumBlock('rock8', ['Em', 'Am'], 90),
-      list('נסה שלושה מקצבים שונים על אותם אקורדים ושמע מה הכי קרוב להקלטה.', 'הדגשות על 2 ו-4 + השתקת כף יד בבתים = צליל רוק.'),
-    ],
-    sources: [
-      { label: 'Tab4U', url: 'https://www.tab4u.com/tabs/songs/269_%D7%90%D7%94%D7%95%D7%93_%D7%91%D7%A0%D7%90%D7%99_-_%D7%A2%D7%99%D7%A8_%D7%9E%D7%A7%D7%9C%D7%98.html' },
-      { label: 'נגנו', url: 'https://www.nagnu.co.il/%D7%90%D7%95%D7%9E%D7%A0%D7%99%D7%9D/%D7%90%D7%94%D7%95%D7%93_%D7%91%D7%A0%D7%90%D7%99/%D7%A2%D7%99%D7%A8_%D7%9E%D7%A7%D7%9C%D7%98/%D7%90%D7%A7%D7%95%D7%A8%D7%93%D7%99%D7%9D' },
-    ],
-  },
 
   {
     id: 'dmama', title: 'מעליי דממה', artist: 'שי צברי', kind: 'song', status: 'verified', key: 'Bbm (צורות של Am)', capo: 1,
@@ -204,14 +227,20 @@ export const SONGS: Song[] = [
     how: 'ארפג\'ים בשלישיות, 3/4',
     blocks: [
       p('יצירה במשקל 3/4: כל פעמה היא **שלישייה** – המנגינה על מיתר 1 (אצבע a), ואחריה מיתר 2 (m) ומיתר 3 (i). על הפעמה הראשונה האגודל מנגן בס יחד עם המנגינה.'),
-      p('**חלק A (מי מינור, תיבות 1–16)** כתוב כאן בטאב. **חלק B (מי מז\'ור)** ואצבוע מלא – ב-PDF של Werner Guitar Editions שהורדת.'),
+      p('היצירה בנויה משני חלקים: **חלק A במי מינור** (תיבות 1–16, כהה ועצוב) ו**חלק B במי מז\'ור** (תיבות 17–32, בהיר). אחרי חלק B חוזרים לחלק A, ומסיימים בתיבה 16. שני החלקים כתובים כאן בטאב.'),
       { t: 'tab', title: 'יד ימין על מיתרים פתוחים – בס+a, m, i', lines: tabFrom([[[6, 0], [1, 0]], [[2, 0]], [[3, 0]], [[1, 0]], [[2, 0]], [[3, 0]], [[1, 0]], [[2, 0]], [[3, 0]]], 3) },
       { t: 'tab', title: 'תיבות 1–4', lines: romTab(1, 4) },
       { t: 'tab', title: 'תיבות 5–8 (מ-7: הברה בסריג 5)', lines: romTab(5, 8) },
       { t: 'tab', title: 'תיבות 9–12 (9–10: הברה בסריג 7)', lines: romTab(9, 12) },
       { t: 'tab', title: 'תיבות 13–16 (ב-15 הבס יורד בכל פעמה)', lines: [...romTab(13, 15).map((l, i) => l + '|' + ROMANZA_END[i].slice(1))] },
-      list('**מהירות:** התחל ב-50 BPM, כשכל קליק = שלישייה אחת (3 תווים). היעד לסוף התוכנית: 80–90.', 'המנגינה צריכה להישמע **חזק יותר** מהמיתרים הפנימיים – זה כל הקסם.', 'בהברות (תיבות 7–10) – החזק אותן רק כמה שצריך; שחרר ביד בין התיבות.'),
-      tip('הטאב כאן נכתב לפי תווי היצירה (נחלת הכלל) ונבדק מול המהדורה של Werner. האצבוע ביד שמאל – לפי ה-PDF.'),
+      { t: 'h', text: 'חלק B – מי מז\'ור' },
+      p('אותה תבנית של יד ימין: מנגינה, ואחריה שני תווים פנימיים. ההבדל: בתיבות 19–20 **המנגינה עוברת למיתר 2**, והתווים הפנימיים יורדים למיתרים 3 ו-4 – אז האצבעות של יד ימין זזות מיתר אחד למטה (a על מיתר 2, m על 3, i על 4).'),
+      { t: 'tab', title: 'תיבות 17–20 (19–20: המנגינה על מיתר 2)', lines: romTabB(17, 20) },
+      { t: 'tab', title: 'תיבות 21–24 (21–22: הברה בסריג 7)', lines: romTabB(21, 24) },
+      { t: 'tab', title: 'תיבות 25–28 (25–26: עד סריג 12; 27–28: הברה בסריג 5, הבס = מיתר 5 פתוח)', lines: romTabB(25, 28) },
+      { t: 'tab', title: 'תיבות 29–32 (29–30: הברה בסריג 2; ב-31 הבס יורד בכל פעמה)', lines: romTabB(29, 31).map((l, i) => l + '|' + ROMANZA_B_END[i].slice(1)) },
+      list('**מהירות:** התחל ב-50 BPM, כשכל קליק = שלישייה אחת (3 תווים). היעד לסוף התוכנית: 80–90.', 'המנגינה צריכה להישמע **חזק יותר** מהמיתרים הפנימיים – זה כל הקסם.', 'בהברות (תיבות 7–10, 21–22, 27–30) – לחץ רק כמה שצריך כדי שהתווים יצלצלו, ושחרר את היד בין התיבות.'),
+      tip('הטאב כאן נכתב לפי תווי היצירה (נחלת הכלל) ונבדק תיבה-תיבה מול המהדורה של Werner. את האצבוע של יד שמאל (איזו אצבע על כל תו) – כדאי לקחת מה-PDF.'),
     ],
     sources: [
       { label: 'Werner Guitar Editions – PDF', url: 'https://wernerguitareditions.com/products/spanish-romance-for-guitar-pdf' },
