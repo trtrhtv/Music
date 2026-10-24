@@ -145,12 +145,63 @@ export function Timer({ minutes, onDone }: { minutes: number; onDone?: () => voi
 }
 
 /** Guitar tablature (6 lines, high e on top). */
+const TAB_NAMES = ['e', 'B', 'G', 'D', 'A', 'E'];
+
+/** Full-screen tab, sized so the whole line fits the width; tries to turn the screen sideways. */
+function TabFull({ lines, title, onClose }: { lines: string[]; title?: string; onClose: () => void }) {
+  const box = useRef<HTMLDivElement>(null);
+  const [portrait, setPortrait] = useState(() => matchMedia('(orientation: portrait)').matches);
+  // Keep the latest onClose without re-running the effect (that would leave full screen on every render).
+  const close = useRef(onClose);
+  useEffect(() => { close.current = onClose; });
+  useEffect(() => {
+    const el = box.current;
+    // Android: full screen + landscape lock. iPhone can't lock, so we show a hint instead.
+    el?.requestFullscreen?.().then(() => (screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> }).lock?.('landscape')).catch(() => {});
+    const mq = matchMedia('(orientation: portrait)');
+    const on = () => setPortrait(mq.matches);
+    mq.addEventListener('change', on);
+    const esc = () => { if (!document.fullscreenElement) close.current(); };
+    document.addEventListener('fullscreenchange', esc);
+    return () => {
+      mq.removeEventListener('change', on);
+      document.removeEventListener('fullscreenchange', esc);
+      screen.orientation?.unlock?.();
+      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    };
+  }, []);
+  const perRow = portrait ? 2 : 99;
+  const bars = lines.map((l) => l.split('|'));
+  const rows: string[][] = [];
+  for (let i = 0; i < bars[0].length; i += perRow) rows.push(bars.map((b) => b.slice(i, i + perRow).join('|')));
+  return (
+    <div className="tab-full" ref={box}>
+      <div className="tab-full-bar">
+        <span className="small">{title}</span>
+        <button className="btn small" onClick={onClose}>✕ סגור</button>
+      </div>
+      {portrait && <p className="muted small">💡 סובב את הטלפון לרוחב – כל השורה תיכנס, והטאב יהיה גדול יותר.</p>}
+      {/* Upright: two bars per row so it stays readable. Monospace glyphs are ~0.6em wide, so the font size is the one that fits a row. */}
+      {rows.map((r, i) => (
+        <pre key={i} className="tab" dir="ltr" style={{ fontSize: `min(calc((100vw - 48px) / ${(Math.max(...r.map((l) => l.length)) + 3) * 0.6}), 26px)` }}>
+          {r.map((l, k) => `${TAB_NAMES[k]}|${l}|`).join('\n')}
+        </pre>
+      ))}
+    </div>
+  );
+}
+
 export function TabView({ lines, title }: { lines: string[]; title?: string }) {
-  const names = ['e', 'B', 'G', 'D', 'A', 'E'];
+  const [full, setFull] = useState(false);
+  const text = lines.map((l, i) => `${TAB_NAMES[i]}|${l}|`).join('\n');
   return (
     <figure className="tab-fig">
-      {title && <figcaption>{title}</figcaption>}
-      <pre className="tab" dir="ltr">{lines.map((l, i) => `${names[i]}|${l}|`).join('\n')}</pre>
+      <figcaption>
+        <span>{title}</span>
+        <button className="link small" onClick={() => setFull(true)}>⛶ מסך מלא</button>
+      </figcaption>
+      <pre className="tab" dir="ltr">{text}</pre>
+      {full && <TabFull lines={lines} title={title} onClose={() => setFull(false)} />}
     </figure>
   );
 }
