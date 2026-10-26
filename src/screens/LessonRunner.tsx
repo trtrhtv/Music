@@ -3,14 +3,31 @@ import { Blocks } from '../components/Blocks';
 import { rich } from '../components/rich';
 import { playCue } from '../audio/cue';
 import { ExerciseView, type Outcome } from '../components/ExerciseView';
-import { LESSON_BY_ID } from '../data/curriculum';
+import { LESSON_BY_ID, type Lesson } from '../data/curriculum';
+import type { Block } from '../data/blocks';
 import { THEORY_UNITS } from '../data/theoryCourse';
 import { GEN_BY_ID } from '../engine/generators';
 import { DOMAIN_ICON } from '../engine/types';
 import { go } from '../router';
-import { PASS, recordAnswer, recordLesson } from '../state/store';
+import { PASS, recordAnswer, recordLesson, useStore } from '../state/store';
+
+/** A short listening question before any explanation; the answer is revealed on request. */
+function ListenFirst({ l }: { l: NonNullable<Lesson['listen']> }) {
+  const [shown, setShown] = useState(false);
+  return (
+    <div className="listen-first">
+      <p>{rich(l.q)}</p>
+      <div className="demos">
+        {l.sounds.map((d, k) => <button key={k} className="btn demo" onClick={() => playCue(d.cue, d.timbre)}>🔊 {d.label}</button>)}
+      </div>
+      <p className="muted small">הקשב כמה פעמים שצריך, ונסה לענות לעצמך – לפני שמסתכלים.</p>
+      {shown ? <div className="summary-box">{rich(l.answer)}</div> : <button className="btn ghost" onClick={() => setShown(true)}>מה שמעתי?</button>}
+    </div>
+  );
+}
 
 export function LessonRunner({ id }: { id: string }) {
+  const s = useStore();
   const lesson = LESSON_BY_ID[id];
   const [phase, setPhase] = useState<'intro' | 'drill' | 'done'>('intro');
   const [page, setPage] = useState(0);
@@ -42,7 +59,11 @@ export function LessonRunner({ id }: { id: string }) {
 
   const back = () => go('track/' + lesson.domain);
   if (phase === 'intro' && lesson.pages) {
-    const pages = lesson.pages;
+    // Sound before symbol: the listening question comes first, then the explanation pages.
+    const pages = [
+      ...(lesson.listen ? [{ title: '🎧 קודם להקשיב', blocks: [] as Block[], listen: lesson.listen }] : []),
+      ...lesson.pages.map((pg) => ({ ...pg, listen: undefined })),
+    ];
     const last = page === pages.length - 1;
     const turn = (n: number) => { setPage(n); window.scrollTo(0, 0); };
     return (
@@ -53,7 +74,13 @@ export function LessonRunner({ id }: { id: string }) {
         {page === 0 && lesson.why && <div className="why-box"><b>למה זה חשוב לך?</b> {rich(lesson.why)}</div>}
         <div className="step-dots" aria-hidden>{pages.map((_, k) => <span key={k} className={k === page ? 'on' : k < page ? 'done' : ''} />)}</div>
         <h2 className="step-title">שלב {page + 1} מתוך {pages.length}: {pages[page].title}</h2>
-        <Blocks blocks={pages[page].blocks} />
+        {pages[page].listen ? <ListenFirst key={page} l={pages[page].listen!} /> : <Blocks blocks={pages[page].blocks} />}
+        {last && (lesson.onGuitar || lesson.onPiano) && (
+          <div className="on-instruments">
+            {lesson.onGuitar && <div className="on-inst"><b>🎸 עכשיו על הגיטרה</b><ul>{lesson.onGuitar.map((t, i) => <li key={i}>{rich(t)}</li>)}</ul></div>}
+            {lesson.onPiano && !s.prefs.hidePiano && <div className="on-inst"><b>🎹 ועל הפסנתר</b><ul>{lesson.onPiano.map((t, i) => <li key={i}>{rich(t)}</li>)}</ul></div>}
+          </div>
+        )}
         {last && lesson.summary && <div className="summary-box"><b>בקיצור:</b> {rich(lesson.summary)}</div>}
         {last && lesson.see && <Blocks blocks={[{ t: 'see', ids: lesson.see }]} />}
         <div className="step-nav">

@@ -2,6 +2,7 @@ import type { AudioCue, Domain } from '../engine/types';
 import type { Block } from './blocks';
 import { INTRO_LESSONS, LESSON_EXTRAS } from './lessonExtras';
 import { THEORY_COURSE } from './theoryCourse';
+import type { TheoryExtra } from './theoryExtras';
 
 export interface Lesson {
   id: string;
@@ -23,6 +24,10 @@ export interface Lesson {
   why?: string;
   pages?: { title: string; blocks: Block[] }[];
   summary?: string;
+  /** Theory course: a listening question before the explanation, and tasks on the guitar and piano at the end. */
+  listen?: TheoryExtra['listen'];
+  onGuitar?: string[];
+  onPiano?: string[];
 }
 
 export const UNIT_TITLES: Record<Domain, string[]> = {

@@ -1,5 +1,6 @@
 import { chord, list, p, seq, sounds, tip, type Block } from './blocks';
 import type { Lesson } from './curriculum';
+import { THEORY_EXTRAS } from './theoryExtras';
 import { CH, STRUMS, notesTab } from './guitarLib';
 import { GUITAR_TUNING } from '../theory/theory';
 
@@ -30,7 +31,7 @@ const at = (string: number, f: number, label?: string) => ({ s: 6 - string, f, l
 const gm = (name: string) => CH[name].map((f, i) => (f < 0 ? -1 : GUITAR_TUNING[i] + f)).filter((m) => m > 0);
 const prog = (label: string, ...chords: number[][]) => ({ label, cue: { type: 'prog' as const, chords } });
 
-const L = (l: Omit<Lesson, 'domain' | 'intro'>): Lesson => ({ ...l, domain: 'theory', intro: [] });
+const L = (l: Omit<Lesson, 'domain' | 'intro'>): Lesson => ({ ...l, ...THEORY_EXTRAS[l.id], domain: 'theory', intro: [] });
 
 export const THEORY_COURSE: Lesson[] = [
   /* ───────── Unit 1: צלילים ───────── */

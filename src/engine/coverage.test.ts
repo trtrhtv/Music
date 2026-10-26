@@ -58,3 +58,17 @@ it('new theory drills always offer the right answer once', async () => {
     }
   }
 });
+
+it('every theory-course lesson starts with listening and ends with tasks on both instruments', async () => {
+  const { THEORY_COURSE } = await import('../data/theoryCourse');
+  for (const l of THEORY_COURSE) {
+    expect(l.listen?.sounds.length, `${l.id} listen`).toBeGreaterThan(0);
+    expect(l.listen?.answer.length, `${l.id} answer`).toBeGreaterThan(10);
+    for (const snd of l.listen!.sounds) {
+      const notes = snd.cue.type === 'prog' ? snd.cue.chords.flat() : snd.cue.type === 'twoParts' ? [] : snd.cue.notes;
+      for (const n of notes) expect(n, `${l.id} ${snd.label}`).toBeGreaterThan(30);
+    }
+    expect(l.onGuitar?.length, `${l.id} guitar`).toBeGreaterThan(0);
+    expect(l.onPiano?.length, `${l.id} piano`).toBeGreaterThan(0);
+  }
+});
