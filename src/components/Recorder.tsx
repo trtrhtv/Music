@@ -29,9 +29,9 @@ export function Take({ r, label }: { r: Recording; label?: string }) {
   return (
     <div className="take">
       <div className="take-head small">
-        <span>{label ?? `יום ${r.day}`} · {when} · {fmt(r.seconds)}</span>
+        <span>{label ? `${label} · ` : ''}{when} · {fmt(r.seconds)}</span>
         <span className="take-actions">
-          {url && <a className="link" href={url} download={`יום-${r.day}-${r.id}.${ext(r.mime)}`}>⬇️ שמור</a>}
+          {url && <a className="link" href={url} download={`הקלטה-${r.id}.${ext(r.mime)}`}>⬇️ שמור</a>}
           <button className="link" onClick={() => { if (confirm('למחוק את ההקלטה?')) deleteRecording(r.id); }}>🗑️</button>
         </span>
       </div>
@@ -40,7 +40,7 @@ export function Take({ r, label }: { r: Recording; label?: string }) {
   );
 }
 
-/** Record a take for a plan day and list that day's takes. */
+/** Record a take under a group key (e.g. the week) and list that group's takes. */
 export function Recorder({ day }: { day: number }) {
   const takes = useRecordings(day);
   const [state, setState] = useState<'idle' | 'rec' | 'denied' | 'unsupported'>(typeof MediaRecorder === 'undefined' ? 'unsupported' : 'idle');

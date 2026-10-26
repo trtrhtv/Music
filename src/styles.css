@@ -366,3 +366,21 @@ h3 { font-size: 1.05rem; }
 .step-dots span.on { background: var(--accent); }
 .step-title { font-size: 1.05rem; margin: 10px 0 4px; }
 .step-nav { display: flex; justify-content: space-between; gap: 10px; margin-top: 18px; }
+
+/* Guitar program */
+.track-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 8px 0; }
+.track-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 4px; text-align: start; color: inherit; }
+.track-card .tc-icon { font-size: 1.5rem; }
+.track-card .bar { margin-top: 6px; }
+.session-block { background: var(--bg2); border: 1px solid var(--line); border-radius: 16px; padding: 12px; margin: 12px 0; }
+.sb-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.sb-head h3 { margin: 0; }
+.test-card { background: #ff9f431a; border: 1px solid var(--accent2); border-radius: 12px; padding: 10px 12px; margin: 10px 0; }
+.test-card p { margin: 6px 0; }
+.ok-text { color: var(--ok); }
+.unit.stage.passed h3 { color: var(--ok); }
+.prog-track { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.stage-dots { display: flex; gap: 5px; }
+.stage-dots span { width: 18px; height: 8px; border-radius: 4px; background: var(--line); }
+.stage-dots span.done { background: var(--ok); }
+.stage-dots span.on { background: var(--accent); }

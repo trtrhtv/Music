@@ -1,8 +1,7 @@
 import { LESSONS, UNIT_TITLES, lessonsFor } from '../data/curriculum';
 import { DOMAIN_ICON, DOMAIN_LABEL, LEVEL_LABEL, type Domain } from '../engine/types';
 import { go } from '../router';
-import { lessonStatus, streak, useStore, type State } from '../state/store';
-import { currentDay } from '../state/planProgress';
+import { lessonStatus, streak, today, useStore, type State } from '../state/store';
 
 function nextLesson(s: State, d: Domain) {
   return lessonsFor(d).find((l) => lessonStatus(s, l) === 'open');
@@ -11,7 +10,6 @@ function nextLesson(s: State, d: Domain) {
 export function Home() {
   const s = useStore();
   const st = streak(s.days);
-  const cd = currentDay(s);
   const order: Domain[] = ['theory', 'ear', 'guitar', 'piano'];
   const doneCount = LESSONS.filter((l) => s.lessons[l.id]?.passed).length;
   return (
@@ -27,9 +25,9 @@ export function Home() {
         </div>
       </header>
 
-      <button className="cta plan-cta" onClick={() => go('plan/' + cd.n)}>
-        <span className="cta-icon">🗓️</span>
-        <span><b>התוכנית – יום {cd.n}</b><br /><small>{cd.title}</small></span>
+      <button className="cta plan-cta" onClick={() => go('plan')}>
+        <span className="cta-icon">🎸</span>
+        <span><b>{s.prog.placed ? 'תרגול גיטרה – השעה הבאה' : 'תוכנית גיטרה – מבחן מיקום'}</b><br /><small>{s.prog.placed ? `היום: ${(s.prog.sessions[today()] ?? []).length} שעות תרגול` : 'נבדוק מאיפה להתחיל בכל מסלול'}</small></span>
       </button>
 
       <button className="cta" onClick={() => go('practice')}>

@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import { lessonsFor } from '../data/curriculum';
 import type { Domain } from '../engine/types';
+import type { TrackId } from '../data/tracks';
 
 export interface Profile {
   guitarExp: number; // 0..4
@@ -24,8 +25,17 @@ export interface State {
   genStats: Record<string, { right: number; total: number; last: number }>;
   days: string[];
   xp: number;
-  /** Practice plan: done blocks ("day:block"), BPM log per block key and self-ratings ("day:song" → 0–3). */
-  plan: { done: Record<string, boolean>; bpm: Record<string, number[]>; rate: Record<string, number> };
+  /**
+   * Guitar program: current stage per track (1–5, 6 = done), the days each stage test was passed
+   * ("track:stage" → dates), BPM log per exercise, and sessions done per date.
+   */
+  prog: {
+    placed: boolean;
+    stage: Record<TrackId, number>;
+    passes: Record<string, string[]>;
+    bpm: Record<string, number[]>;
+    sessions: Record<string, string[]>;
+  };
 }
 
 const KEY = 'music-trainer-v1';
@@ -39,7 +49,7 @@ const fresh = (): State => ({
   genStats: {},
   days: [],
   xp: 0,
-  plan: { done: {}, bpm: {}, rate: {} },
+  prog: { placed: false, stage: { tech: 1, rhythm: 1, neck: 1, finger: 1 }, passes: {}, bpm: {}, sessions: {} },
 });
 
 function load(): State {
@@ -47,7 +57,7 @@ function load(): State {
     const raw = localStorage.getItem(KEY);
     if (raw) {
       const saved = JSON.parse(raw);
-      return { ...fresh(), ...saved, plan: { ...fresh().plan, ...saved.plan } };
+      return { ...fresh(), ...saved, prog: { ...fresh().prog, ...saved.prog } };
     }
   } catch { /* storage unavailable */ }
   return fresh();
@@ -127,29 +137,49 @@ export function setLevels(levels: Record<Domain, number>) {
   update((s) => ({ ...s, placed: true, levels: { ...levels }, placedLevels: { ...levels } }));
 }
 
-export const planKey = (day: number, block: string) => `${day}:${block}`;
+/** Days a stage test must be passed on before the stage counts as done. */
+export const PASS_DAYS = 2;
+export const STAGES = 5;
+const touchDay = (s: State) => (s.days.includes(today()) ? s.days : [...s.days, today()]);
 
-export function togglePlanBlock(day: number, block: string) {
+export function placeProgram(stage: Record<TrackId, number>) {
+  update((s) => ({ ...s, prog: { ...s.prog, placed: true, stage: { ...stage } } }));
+}
+
+export function setTrackStage(track: TrackId, n: number) {
+  update((s) => ({ ...s, prog: { ...s.prog, stage: { ...s.prog.stage, [track]: Math.max(1, Math.min(STAGES + 1, n)) } } }));
+}
+
+/** Records today's pass of the current stage test; the stage advances after PASS_DAYS different days. Returns true if it advanced. */
+export function passStageTest(track: TrackId): boolean {
+  let advanced = false;
   update((s) => {
-    const k = planKey(day, block);
-    const days = s.days.includes(today()) ? s.days : [...s.days, today()];
-    return { ...s, days, plan: { ...s.plan, done: { ...s.plan.done, [k]: !s.plan.done[k] } } };
+    const stage = s.prog.stage[track];
+    const k = `${track}:${stage}`;
+    const dates = s.prog.passes[k] ?? [];
+    const next = dates.includes(today()) ? dates : [...dates, today()];
+    advanced = next.length >= PASS_DAYS && stage <= STAGES;
+    return {
+      ...s, days: touchDay(s),
+      prog: { ...s.prog, passes: { ...s.prog.passes, [k]: next }, stage: advanced ? { ...s.prog.stage, [track]: stage + 1 } : s.prog.stage },
+    };
+  });
+  return advanced;
+}
+
+export function logExerciseBpm(exercise: string, bpm: number) {
+  update((s) => ({ ...s, days: touchDay(s), prog: { ...s.prog, bpm: { ...s.prog.bpm, [exercise]: [...(s.prog.bpm[exercise] ?? []), bpm] } } }));
+}
+
+export function finishSession(id: string) {
+  update((s) => {
+    const done = s.prog.sessions[today()] ?? [];
+    return { ...s, days: touchDay(s), prog: { ...s.prog, sessions: { ...s.prog.sessions, [today()]: [...done, id] } } };
   });
 }
 
-export function logPlanBpm(day: number, block: string, bpm: number) {
-  update((s) => {
-    const k = planKey(day, block);
-    return { ...s, plan: { ...s.plan, bpm: { ...s.plan.bpm, [k]: [...(s.plan.bpm[k] ?? []), bpm] } } };
-  });
-}
-
-export function ratePlanSong(day: number, song: string, level: number) {
-  update((s) => ({ ...s, plan: { ...s.plan, rate: { ...s.plan.rate, [planKey(day, song)]: level } } }));
-}
-
-export function resetPlan() {
-  update((s) => ({ ...s, plan: fresh().plan }));
+export function resetProgram() {
+  update((s) => ({ ...s, prog: fresh().prog }));
 }
 
 export function resetAll() {

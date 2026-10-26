@@ -5,7 +5,9 @@ import type { ReactNode } from 'react';
 // sequences, so each run is isolated as one left-to-right unit.
 const TOKEN = '[A-G](?:[#b♯♭]{1,2})?(?:maj7|m7b5|dim|aug|sus[24]|m7|m|7|5|°|ø|\\+)?(?:\\/[A-G][#b]?)?\\d?(?![A-Za-z])';
 // Arrows join a run too, so "E7 → Am" stays in reading order instead of flipping around the arrow.
-const MUSIC_RUN = new RegExp(`(${TOKEN}(?:(?:\\s*[–\\-→]\\s*|\\s+)${TOKEN})*)`, 'g');
+// Counting syllables ("1-e-&-a", "1-2-3") and finger orders ("1-3-2-4") are kept left-to-right as well.
+const COUNT = '[1-6](?:-(?:e|&|a|[1-6]))+(?![\\w])';
+const MUSIC_RUN = new RegExp(`(${TOKEN}(?:(?:\\s*[–\\-→]\\s*|\\s+)${TOKEN})*|${COUNT})`, 'g');
 
 function isolate(text: string, key: string): ReactNode[] {
   return text.split(MUSIC_RUN).map((s, i) => (i % 2 ? <bdi key={`${key}-${i}`}>{s}</bdi> : s));

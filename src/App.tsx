@@ -8,10 +8,11 @@ import { Placement } from './screens/Placement';
 import { Practice } from './screens/Practice';
 import { Tools } from './screens/Tools';
 import { Glossary } from './screens/Glossary';
-import { PlanDayView, PlanOverview, PlanProgress } from './screens/Plan';
-import { SongView, SongsList } from './screens/Songs';
+import { PlacementView, ProgramHome, ProgressView, SessionView, TrackView } from './screens/Program';
+import { SongView } from './screens/Songs';
+import type { TrackId } from './data/tracks';
 import { Track } from './screens/Track';
-import { finishPlacement, resetAll, resetPlan, setLevels, useStore, type Profile } from './state/store';
+import { finishPlacement, resetAll, resetProgram, setLevels, useStore, type Profile } from './state/store';
 import { LevelPicker } from './screens/LevelPicker';
 import { priorTiers } from './engine/placement';
 
@@ -41,18 +42,18 @@ function Settings() {
       <button className="btn ghost wide" onClick={() => go('retest')}>לעשות את מבחן הרמה מחדש</button>
       <button className="btn ghost wide" onClick={() => go('levels')}>לשנות רמות ידנית</button>
       <p className="muted small">ההתקדמות בשיעורים נשמרת; הרמות יתעדכנו לפי המבחן החדש.</p>
-      <button className="btn ghost wide" onClick={() => { if (confirm('לאפס את ההתקדמות בתוכנית (סימונים ו-BPM)?')) resetPlan(); }}>איפוס התוכנית</button>
+      <button className="btn ghost wide" onClick={() => { if (confirm('לאפס את תוכנית הגיטרה (שלבים, BPM ומבחן המיקום)?')) resetProgram(); }}>איפוס תוכנית הגיטרה</button>
       <button className="btn danger wide" onClick={() => { if (confirm('למחוק את כל ההתקדמות?')) { resetAll(); go(''); } }}>איפוס מלא</button>
       <p className="muted small">כל הנתונים נשמרים רק במכשיר הזה.</p>
     </div>
   );
 }
 
-const NAV: [string, string, string][] = [['', '🏠', 'בית'], ['plan', '🗓️', 'תוכנית'], ['practice', '⚡', 'תרגול'], ['glossary', '📚', 'מילון'], ['tools', '🧰', 'כלים']];
+const NAV: [string, string, string][] = [['', '🏠', 'בית'], ['plan', '🎸', 'גיטרה'], ['practice', '⚡', 'תרגול'], ['glossary', '📚', 'מילון'], ['tools', '🧰', 'כלים']];
 
 export default function App() {
   const s = useStore();
-  const [page, arg] = useRoute();
+  const [page, arg, arg2] = useRoute();
 
   if (!s.placed || page === 'retest') return <main className="app"><PlacementFlow /></main>;
   if (page === 'levels') {
@@ -70,8 +71,10 @@ export default function App() {
   else if (page === 'practice') body = <Practice />;
   else if (page === 'tools') body = <Tools />;
   else if (page === 'glossary') body = <Glossary key={arg ?? ''} id={arg} />;
-  else if (page === 'plan') body = arg ? (arg === 'progress' ? <PlanProgress /> : <PlanDayView key={arg} n={Number(arg)} />) : <PlanOverview />;
-  else if (page === 'songs') body = arg ? <SongView key={arg} id={arg} /> : <SongsList />;
+  else if (page === 'plan') {
+    body = arg === 's' && arg2 ? <SessionView key={arg2} id={arg2} /> : arg === 't' && arg2 ? <TrackView key={arg2} id={arg2 as TrackId} />
+      : arg === 'placement' ? <PlacementView /> : arg === 'progress' ? <ProgressView /> : <ProgramHome />;
+  } else if (page === 'songs' && arg) body = <SongView key={arg} id={arg} />;
   else if (page === 'settings') body = <Settings />;
   else body = <Home />;
 

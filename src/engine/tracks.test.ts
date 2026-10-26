@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CHECKPOINT, KIND_META, PLAN, dayMinutes } from '../data/plan';
+import { SESSIONS, TRACKS, TRACK_BY_ID } from '../data/tracks';
 import { SONGS, SONG_BY_ID } from '../data/songs';
 import { CH, STRUMS } from '../data/guitarLib';
 import { parseSlots } from '../audio/rhythm';
@@ -22,39 +22,48 @@ function checkBlocks(blocks: Block[], where: string) {
       const [page, arg] = l.to.split('/');
       if (page === 'lesson') expect(LESSON_BY_ID[arg], `${where}: ${l.to}`).toBeDefined();
       else if (page === 'glossary') expect(GLOSSARY_BY_ID[arg], `${where}: ${l.to}`).toBeDefined();
-      else expect(['practice', 'tools', 'plan', 'songs'], `${where}: ${l.to}`).toContain(page);
+      else if (page === 'songs') expect(SONG_BY_ID[arg], `${where}: ${l.to}`).toBeDefined();
+      else expect(['practice', 'tools', 'plan'], `${where}: ${l.to}`).toContain(page);
     }
   }
 }
 
-describe('practice plan', () => {
-  it('has 21 days in 3 weeks of ~2h core (light day excepted)', () => {
-    expect(PLAN.map((d) => d.n)).toEqual(Array.from({ length: 21 }, (_, i) => i + 1));
-    for (const d of PLAN) {
-      expect(d.week, `day ${d.n} week`).toBe(Math.ceil(d.n / 7));
-      const m = dayMinutes(d);
-      if (!d.light) expect(m.core, `day ${d.n}`).toBeGreaterThanOrEqual(90);
-      expect(m.core, `day ${d.n}`).toBeLessThanOrEqual(130);
-      expect(new Set(d.blocks.map((b) => b.id)).size, `day ${d.n} unique ids`).toBe(d.blocks.length);
+describe('guitar program', () => {
+  it('has four tracks of five stages, each with exercises and a measurable test', () => {
+    expect(TRACKS.map((t) => t.id)).toEqual(['tech', 'rhythm', 'neck', 'finger']);
+    const ids = new Set<string>();
+    for (const t of TRACKS) {
+      expect(t.stages, t.id).toHaveLength(5);
+      expect(GLOSSARY_BY_ID[t.help], `${t.id} help`).toBeDefined();
+      t.stages.forEach((st, i) => {
+        const where = `${t.id} stage ${i + 1}`;
+        expect(st.exercises.length, where).toBeGreaterThan(0);
+        expect(st.test.length, where).toBeGreaterThan(20);
+        for (const ex of st.exercises) {
+          expect(ids.has(ex.id), `duplicate ${ex.id}`).toBe(false);
+          ids.add(ex.id);
+          expect(ex.steps.length, ex.id).toBeGreaterThan(0);
+          if (ex.bpm) expect(ex.bpm.target, ex.id).toBeGreaterThan(ex.bpm.start);
+          checkBlocks(ex.content ?? [], `${where} ${ex.id}`);
+        }
+      });
     }
   });
-  it('blocks reference real songs, lessons and well-formed content', () => {
-    for (const d of PLAN) for (const b of d.blocks) {
-      for (const s of b.songs ?? []) expect(SONG_BY_ID[s], `day ${d.n} ${b.id}: ${s}`).toBeDefined();
-      checkBlocks(b.content ?? [], `day ${d.n} ${b.id}`);
-      if (b.bpm) expect(b.bpm.target).toBeGreaterThan(b.bpm.start);
-      for (const s of b.rate ?? []) expect(SONG_BY_ID[s], `day ${d.n} rate: ${s}`).toBeDefined();
-      if (b.polish) expect(d.n, `day ${d.n}: polishing needs the checkpoint ratings`).toBeGreaterThan(CHECKPOINT);
+  it('sessions are about an hour (or half), end with free playing, and point at real tracks', () => {
+    for (const s of SESSIONS) {
+      const min = s.blocks.reduce((n, b) => n + b.min, 0);
+      expect([30, 60], s.id).toContain(min);
+      expect(s.blocks[s.blocks.length - 1].kind, s.id).toBe('free');
+      for (const b of s.blocks) if (b.kind === 'track') expect(TRACK_BY_ID[b.track], s.id).toBeDefined();
     }
-    expect(PLAN.find((d) => d.n === CHECKPOINT)!.blocks.some((b) => b.rate), 'checkpoint day rates songs').toBe(true);
-    for (const m of Object.values(KIND_META)) if (m.help) expect(GLOSSARY_BY_ID[m.help], m.help).toBeDefined();
+  });
+  it('the Romanza page is well-formed', () => {
     for (const s of SONGS) { checkBlocks(s.blocks, s.id); expect(s.sources.length, s.id).toBeGreaterThan(0); }
   });
   it('strum patterns keep the hand moving (downs on the beat grid, ups between)', () => {
     for (const [id, st] of Object.entries(STRUMS)) {
-      const slots = parseSlots(st.rhythm.slots);
       if (st.rhythm.sub === 3) continue; // triplet feel alternates differently
-      slots.forEach((s, i) => {
+      parseSlots(st.rhythm.slots).forEach((s, i) => {
         if (s.kind === 'D') expect(i % 2, `${id} slot ${i}`).toBe(0);
         if (s.kind === 'U') expect(i % 2, `${id} slot ${i}`).toBe(1);
       });
@@ -63,8 +72,8 @@ describe('practice plan', () => {
   it('every chord voicing is a playable 6-string shape', () => {
     for (const [n, f] of Object.entries(CH)) {
       expect(f, n).toHaveLength(6);
-      const fretted = f.filter((x) => x > 0);
-      if (fretted.length) expect(Math.max(...fretted) - Math.min(...fretted), `${n} stretch`).toBeLessThanOrEqual(4);
+      const played = f.filter((x) => x > 0);
+      if (played.length) expect(Math.max(...played) - Math.min(...played), n).toBeLessThanOrEqual(4);
     }
   });
 });
