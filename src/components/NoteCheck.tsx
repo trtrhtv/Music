@@ -15,7 +15,8 @@ export function NoteCheck({ notes, onClose }: { notes: number[]; onClose: () => 
   const expected = useRef(notes);
 
   useEffect(() => {
-    const mic = new MicListener();
+    // More sensitive than the tuner: a phone a metre from the guitar picks up quiet notes.
+    const mic = new MicListener(0.003);
     const tracker = new NoteTracker((m) => {
       setHeard(m);
       const r = matchNote(expected.current, st.current.marks, st.current.pos, m);
@@ -24,7 +25,7 @@ export function NoteCheck({ notes, onClose }: { notes: number[]; onClose: () => 
       setWrong(st.current.wrong);
       if (r.pos >= expected.current.length) mic.stop();
     });
-    mic.start((f) => tracker.frame(f)).catch(() => setDenied(true));
+    mic.start((f) => tracker.frame(f, expected.current[st.current.pos])).catch(() => setDenied(true));
     return () => mic.stop();
   }, []);
 

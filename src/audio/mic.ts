@@ -5,6 +5,9 @@ export interface MicFrame {
   freq: number | null;
   chroma: number[];
   level: number;
+  /** Spectrum in dB (reused between frames – copy it to keep it) and its bin width. */
+  spec?: Float32Array;
+  binHz?: number;
 }
 
 /** Streams pitch + chroma frames from the microphone until stopped. */
@@ -13,6 +16,9 @@ export class MicListener {
   private analyser: AnalyserNode | null = null;
   private raf = 0;
   private running = false;
+  private minRms: number;
+  /** `minRms`: quietest frame that still gets a pitch (lower = more sensitive). */
+  constructor(minRms = 0.01) { this.minRms = minRms; }
 
   async start(onFrame: (f: MicFrame) => void) {
     const c = audio();
@@ -36,7 +42,7 @@ export class MicListener {
       let sum = 0;
       for (let i = 0; i < time.length; i++) sum += time[i] * time[i];
       const level = Math.sqrt(sum / time.length);
-      onFrame({ freq: detectPitch(time, c.sampleRate), chroma: chromaFromSpectrum(freq, binHz), level });
+      onFrame({ freq: detectPitch(time, c.sampleRate, 60, 1400, this.minRms), chroma: chromaFromSpectrum(freq, binHz), level, spec: freq, binHz });
       this.raf = requestAnimationFrame(tick);
     };
     tick();

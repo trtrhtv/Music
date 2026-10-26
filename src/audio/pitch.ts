@@ -4,11 +4,11 @@
  * Monophonic pitch detection using the YIN difference function.
  * Returns frequency in Hz, or null when the frame has no clear pitch.
  */
-export function detectPitch(buf: Float32Array, sampleRate: number, minHz = 60, maxHz = 1400): number | null {
+export function detectPitch(buf: Float32Array, sampleRate: number, minHz = 60, maxHz = 1400, minRms = 0.01): number | null {
   let rms = 0;
   for (let i = 0; i < buf.length; i++) rms += buf[i] * buf[i];
   rms = Math.sqrt(rms / buf.length);
-  if (rms < 0.01) return null;
+  if (rms < minRms) return null;
 
   const maxTau = Math.min(Math.floor(sampleRate / minHz), Math.floor(buf.length / 2));
   const minTau = Math.max(2, Math.floor(sampleRate / maxHz));
@@ -112,4 +112,57 @@ export function chromaMatchesChord(chroma: number[], chordPcs: number[]): { ok: 
   }
   const audible = target.every((p) => chroma[p] > 0.15);
   return { ok: audible && score > 0.8 && score >= bestScore - 0.01, score, best };
+}
+
+/**
+ * Harmonic score of a note in a magnitude spectrum: the sum of the strongest bin near each of
+ * its first harmonics. Used on the spectrum *increase* after an attack, so notes that are still
+ * ringing from before don't count – only what was just played.
+ */
+export function noteScore(mag: Float32Array, binHz: number, midi: number, harmonics = 6): number {
+  const f0 = 440 * Math.pow(2, (midi - 69) / 12);
+  let s = 0;
+  for (let h = 1; h <= harmonics; h++) {
+    const c = (f0 * h) / binHz;
+    const lo = Math.max(1, Math.floor(c * 0.985)), hi = Math.min(mag.length - 1, Math.ceil(c * 1.015));
+    let best = 0;
+    for (let i = lo; i <= hi; i++) best = Math.max(best, mag[i]);
+    s += best;
+  }
+  return s;
+}
+
+/** The note (midi 40–88) that best explains a spectrum increase, and how clearly. */
+export function attackNote(rise: Float32Array, binHz: number): { midi: number; score: number; ratio: number } {
+  let best = 0, second = 0, midi = 0;
+  for (let m = 40; m <= 88; m++) {
+    const s = noteScore(rise, binHz, m);
+    if (s > best) { second = best; best = s; midi = m; } else if (s > second) second = s;
+  }
+  return { midi, score: best, ratio: second ? best / second : Infinity };
+}
+
+/**
+ * How much of a spectrum increase is explained by one note's harmonic series (0–1):
+ * the energy share of the strongest new peaks that sit on its harmonics. A bright attack with
+ * strong overtones still scores high for the right note; a wrong note's peaks fall off the series.
+ */
+/** Share of the new energy that must sit on a note's harmonics to count as that note. */
+export const EXPLAINED = 0.85;
+
+export function explainedBy(rise: Float32Array, binHz: number, midi: number, loHz = 70, hiHz = 4000): number {
+  const f0 = 440 * Math.pow(2, (midi - 69) / 12);
+  const peaks: [number, number][] = [];
+  for (let i = Math.max(2, Math.floor(loHz / binHz)); i < Math.min(rise.length - 2, hiHz / binHz); i++) {
+    if (rise[i] > 0 && rise[i] >= rise[i - 1] && rise[i] > rise[i + 1]) peaks.push([i * binHz, rise[i]]);
+  }
+  peaks.sort((a, b) => b[1] - a[1]);
+  const top = peaks.slice(0, 8);
+  const total = top.reduce((s, [, m]) => s + m * m, 0);
+  if (!total) return 0;
+  const on = top.filter(([f]) => {
+    const h = Math.round(f / f0);
+    return h >= 1 && Math.abs(f - h * f0) <= Math.max(binHz * 1.5, h * f0 * 0.015);
+  }).reduce((s, [, m]) => s + m * m, 0);
+  return on / total;
 }
