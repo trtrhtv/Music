@@ -32,7 +32,7 @@ export function Track({ domain }: { domain: Domain }) {
         {THEORY_UNITS.map((title, u) => u > 0 && (
           <section key={u} className="unit">
             <h3>יחידה {u} · {title}</h3>
-            {ls.filter((l) => l.unit === u).map((l, k) => row(l, k + 1))}
+            {ls.filter((l) => l.unit === u && !(l.piano && s.prefs.hidePiano)).map((l, k) => row(l, k + 1))}
           </section>
         ))}
       </div>

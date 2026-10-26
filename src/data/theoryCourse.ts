@@ -2,6 +2,7 @@ import { chord, list, p, seq, sounds, tip, type Block } from './blocks';
 import type { Lesson } from './curriculum';
 import { THEORY_EXTRAS } from './theoryExtras';
 import { UNIT_SUMMARIES } from './theorySummaries';
+import { PIANO_SKILLS } from './pianoSkills';
 import { CH, STRUMS, notesTab } from './guitarLib';
 import { GUITAR_TUNING } from '../theory/theory';
 
@@ -879,4 +880,4 @@ const COURSE: Lesson[] = [
 ];
 
 /** The course, with a spiral summary at the end of every unit. */
-export const THEORY_COURSE: Lesson[] = [...COURSE, ...UNIT_SUMMARIES];
+export const THEORY_COURSE: Lesson[] = [...COURSE, ...PIANO_SKILLS, ...UNIT_SUMMARIES];

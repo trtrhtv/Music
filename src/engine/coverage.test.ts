@@ -49,7 +49,7 @@ it('theory course: every lesson sits in a unit, uses real drills, and teaches be
 
 it('new theory drills always offer the right answer once', async () => {
   const { GEN_BY_ID } = await import('./generators');
-  for (const id of ['th.fretSteps', 'th.stepUp', 'th.degreeOf', 'th.intervalNumber', 'th.neckInterval', 'th.thirdSwap', 'th.susPower', 'th.symbolRead', 'th.romanChord', 'th.keyFromChords', 'th.transpose', 'th.minorDiatonic', 'th.pentaNotes']) {
+  for (const id of ['th.fretSteps', 'th.stepUp', 'th.degreeOf', 'th.intervalNumber', 'th.neckInterval', 'th.thirdSwap', 'th.susPower', 'th.symbolRead', 'th.romanChord', 'th.keyFromChords', 'th.transpose', 'th.minorDiatonic', 'th.pentaNotes', 'th.harmonize']) {
     for (let i = 0; i < 200; i++) {
       const ex = GEN_BY_ID[id].make() as { kind: string; options: string[]; answer: number };
       expect(ex.answer, id).toBeGreaterThanOrEqual(0);
@@ -65,7 +65,8 @@ it('every theory-course lesson starts with listening and ends with tasks on both
     expect(l.listen?.sounds.length, `${l.id} listen`).toBeGreaterThan(0);
     expect(l.listen?.answer.length, `${l.id} answer`).toBeGreaterThan(10);
     for (const snd of l.listen!.sounds) {
-      const notes = snd.cue.type === 'prog' ? snd.cue.chords.flat() : snd.cue.type === 'twoParts' ? [] : snd.cue.notes;
+      const notesOf = (c: typeof snd.cue): number[] => c.type === 'prog' ? c.chords.flat() : c.type === 'together' ? c.parts.flatMap(notesOf) : c.type === 'twoParts' ? [...notesOf(c.first), ...notesOf(c.second)] : c.notes;
+      const notes = notesOf(snd.cue);
       for (const n of notes) expect(n, `${l.id} ${snd.label}`).toBeGreaterThan(30);
     }
     expect(l.onGuitar?.length, `${l.id} guitar`).toBeGreaterThan(0);

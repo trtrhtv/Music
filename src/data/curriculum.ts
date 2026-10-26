@@ -28,6 +28,8 @@ export interface Lesson {
   listen?: TheoryExtra['listen'];
   onGuitar?: string[];
   onPiano?: string[];
+  /** A keyboard-skills lesson – hidden while the piano is hidden. */
+  piano?: boolean;
 }
 
 export const UNIT_TITLES: Record<Domain, string[]> = {

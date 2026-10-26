@@ -160,7 +160,10 @@ function StagePanel({ track, min }: { track: TrackId; min?: number }) {
 /* ───────── Session ───────── */
 
 function nextTheoryLesson(s: State) {
-  return LESSONS.find((l) => l.domain === 'theory' && l.pages && !s.lessons[l.id]?.passed);
+  // In course order (unit by unit), skipping the keyboard lessons while the piano is hidden.
+  return LESSONS.filter((l) => l.domain === 'theory' && l.pages && !(l.piano && s.prefs.hidePiano))
+    .sort((a, b) => (a.unit ?? 0) - (b.unit ?? 0))
+    .find((l) => !s.lessons[l.id]?.passed);
 }
 
 function BlockView({ b, sessionId, onTimeUp }: { b: SessionBlock; sessionId: string; onTimeUp?: () => void }) {

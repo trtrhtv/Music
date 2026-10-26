@@ -17,8 +17,10 @@ export const LEVEL_LABEL = ['', 'מתחיל', 'בסיסי', 'בינוני', 'ב�
 export type AudioCue =
   | { type: 'seq'; notes: number[]; gap?: number }
   | { type: 'chord'; notes: number[]; spread?: number }
-  | { type: 'prog'; chords: number[][] }
-  | { type: 'twoParts'; first: AudioCue; second: AudioCue; pause?: number };
+  | { type: 'prog'; chords: number[][]; gap?: number }
+  | { type: 'twoParts'; first: AudioCue; second: AudioCue; pause?: number }
+  /** Several cues at once, e.g. a melody over its chords. */
+  | { type: 'together'; parts: AudioCue[] };
 
 export interface StaffSpec {
   clef: 'treble' | 'bass';

@@ -465,6 +465,28 @@ gen('th.pentaNotes', 'theory', 3, 'פנטטוני ובלוז', () => {
   });
 });
 
+gen('th.harmonize', 'theory', 4, 'הרמוניזציה של מנגינה', () => {
+  const key = pick(['C', 'G', 'F', 'D']);
+  const scale = spellScale(key, 'major');
+  const tones = (d: number) => [0, 2, 4].map((k) => scale[(d - 1 + k) % 7]);
+  // A bar of melody: two notes from one of I / IV / V (the first on the strong beat) and one passing note.
+  for (;;) {
+    const d = pick([1, 4, 5]);
+    const ct = tones(d);
+    const a = pick(ct), b = pick(ct.filter((x) => x !== a));
+    const pass = scale[(scale.indexOf(b) + pick([1, 6])) % 7];
+    const notes = [a, pass, b];
+    const fit = (x: number) => notes.filter((n) => tones(x).includes(n)).length + (tones(x).includes(a) ? 0.5 : 0);
+    const best = [1, 4, 5].sort((x, y) => fit(y) - fit(x));
+    if (best[0] !== d || fit(best[1]) === fit(d)) continue;
+    const name = (x: number) => diatonicChord(key, x);
+    return choice(`ב-${key} מז'ור, בתיבה יש את המנגינה ${notes.join(' – ')} (התו הראשון על הפעמה החזקה). איזה אקורד הכי מתאים?`, name(d), [1, 4, 5].map(name), {
+      n: 3,
+      explain: `${name(d)} = ${ct.join(' ')}: יש בו ${notes.filter((n) => ct.includes(n)).join(' ו-')} – כולל התו שעל הפעמה החזקה. ${pass} הוא תו בדרך – לא מהאקורד.`,
+    });
+  }
+});
+
 /* ───────────────────────────── EAR ───────────────────────────── */
 
 gen('ear.highLow', 'ear', 1, 'גבוה / נמוך', () => {
