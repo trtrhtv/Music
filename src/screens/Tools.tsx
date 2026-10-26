@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { MicListener } from '../audio/mic';
 import { playChord, playNote } from '../audio/synth';
 import { ChordDiagram } from '../components/ChordDiagram';
-import { Fretboard } from '../components/Fretboard';
+import { Fretboard, type FretMark } from '../components/Fretboard';
+import { NECK_ROOTS, NECK_SETS, neckMarks } from '../theory/neckMap';
 import { Keyboard } from '../components/Keyboard';
 import { MicDenied } from '../components/MicTasks';
 import { Metronome } from '../components/RhythmTools';
@@ -85,10 +86,31 @@ function FreePiano() {
 
 function FreeNeck() {
   const [names, setNames] = useState(false);
+  const [root, setRoot] = useState('A');
+  const [set, setSet] = useState('');
+  const [show, setShow] = useState<'names' | 'degrees'>('degrees');
+  const def = NECK_SETS.find((x) => x.id === set);
+  const marks: FretMark[] = def ? neckMarks(root, def, show) : [];
   return (
     <>
-      <label className="toggle"><input type="checkbox" checked={names} onChange={(e) => setNames(e.target.checked)} /> הצג את כל שמות התווים</label>
-      <Fretboard showNames={names} onPress={(s, f) => playNote(GUITAR_TUNING[s] + f, { timbre: 'guitar' })} />
+      <p className="muted small">מפת צוואר: בחר סולם או אקורד, וראה את כל המקומות שלו על הצוואר – בשמות תווים או במספרי דרגות. לחיצה על משבצת משמיעה אותה.</p>
+      <div className="neck-controls">
+        <select value={root} onChange={(e) => setRoot(e.target.value)} aria-label="שורש" dir="ltr">{NECK_ROOTS.map((r) => <option key={r}>{r}</option>)}</select>
+        <select value={set} onChange={(e) => setSet(e.target.value)} aria-label="מה להציג">
+          <option value="">— צוואר ריק —</option>
+          {NECK_SETS.map((x) => <option key={x.id} value={x.id}>{x.label}</option>)}
+        </select>
+        {def && (
+          <div className="chips">
+            <button className={`chip small ${show === 'degrees' ? 'on' : ''}`} onClick={() => setShow('degrees')}>דרגות (1, 3, 5)</button>
+            <button className={`chip small ${show === 'names' ? 'on' : ''}`} onClick={() => setShow('names')}>שמות תווים</button>
+          </div>
+        )}
+      </div>
+      {def && <p className="small" dir="ltr">{root} · {def.spell(root).join(' ')}</p>}
+      {!def && <label className="toggle"><input type="checkbox" checked={names} onChange={(e) => setNames(e.target.checked)} /> הצג את כל שמות התווים</label>}
+      <Fretboard maxFret={def ? 15 : 12} marks={marks} showNames={!def && names} onPress={(st, f) => playNote(GUITAR_TUNING[st] + f, { timbre: 'guitar' })} />
+      {def && <p className="muted small">הירוק = השורש (1). כדאי לסובב את הטלפון לרוחב – רואים את כל הצוואר.</p>}
     </>
   );
 }

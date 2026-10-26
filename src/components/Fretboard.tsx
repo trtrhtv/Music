@@ -2,7 +2,7 @@ import { GUITAR_TUNING, PC_SHARP, pc } from '../theory/theory';
 
 export interface FretMark { s: number; f: number; kind: 'mark' | 'ok' | 'bad' | 'hint'; label?: string }
 
-const INLAYS = [3, 5, 7, 9, 12];
+const INLAYS = [3, 5, 7, 9, 12, 15];
 
 /**
  * Horizontal fretboard (LTR): high E string on top like tab, frets left → right.

@@ -411,3 +411,5 @@ textarea.note { width: 100%; box-sizing: border-box; background: var(--card); co
 .on-instruments { display: grid; gap: 8px; margin: 12px 0; }
 .on-inst { background: var(--bg2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
 .on-inst ul { margin: 6px 0 0; padding-inline-start: 20px; }
+.neck-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }
+.neck-controls select { background: var(--card); color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 6px 8px; font: inherit; }
