@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Blocks } from '../components/Blocks';
 import { Recorder, Take } from '../components/Recorder';
 import { Timer } from '../components/RhythmTools';
+import { TimingCheck } from '../components/TimingCheck';
 import { rich } from '../components/rich';
 import { LESSONS } from '../data/curriculum';
 import { GLOSSARY_BY_ID } from '../data/glossary';
@@ -96,6 +97,7 @@ function StageTest({ track }: { track: TrackId }) {
     <div className="test-card">
       <div className="small"><b>🏁 מבחן השלב</b> · צריך לעבור ב-{PASS_DAYS} ימים שונים ({dates.length}/{PASS_DAYS})</div>
       <p>{rich(stage.test)}</p>
+      {stage.timing && <TimingCheck key={`${track}${n}`} bpm={stage.timing.bpm} sub={stage.timing.sub} />}
       {passedToday
         ? <p className="small ok-text">✓ עברת היום. {dates.length < PASS_DAYS ? 'נסה שוב מחר – אם זה עדיין יושב, השלב מאחוריך.' : ''} <button className="link" onClick={() => { unpassStageTest(track); setMsg(''); }}>בטל</button></p>
         : <button className="btn primary wide" onClick={() => setMsg(passStageTest(track) ? `🎉 שלב ${n} הושלם! עוברים לשלב ${n + 1}.` : '')}>עברתי את המבחן היום</button>}
@@ -347,6 +349,7 @@ export function PlacementView() {
       <div className="test-card">
         <div className="small"><b>שלב {k}: {stage.title}</b></div>
         <p>{rich(stage.test)}</p>
+        {stage.timing && <TimingCheck key={`${t.id}${k}`} bpm={stage.timing.bpm} sub={stage.timing.sub} />}
       </div>
       <ExerciseCard key={stage.exercises[0].id} ex={stage.exercises[0]} open />
       <div className="row">
