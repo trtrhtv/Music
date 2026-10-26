@@ -3,6 +3,8 @@ import { Blocks } from '../components/Blocks';
 import { Recorder, Take } from '../components/Recorder';
 import { Timer } from '../components/RhythmTools';
 import { TimingCheck } from '../components/TimingCheck';
+import { NoteCheck } from '../components/NoteCheck';
+import { parseTab } from '../audio/tabPlayer';
 import { rich } from '../components/rich';
 import { LESSONS } from '../data/curriculum';
 import { GLOSSARY_BY_ID } from '../data/glossary';
@@ -88,6 +90,14 @@ function ExerciseCard({ ex, label, open: initial = false }: { ex: Exercise; labe
   );
 }
 
+/** Mic check that the stage test's notes are right, in the order they are played. */
+function StageNoteCheck({ tabs }: { tabs: string[][] }) {
+  const [open, setOpen] = useState(false);
+  const notes = tabs.flatMap((t) => parseTab(t).map((e) => e[0]));
+  return open ? <NoteCheck notes={notes} onClose={() => setOpen(false)} />
+    : <button className="btn small ghost" onClick={() => setOpen(true)}>🎯 בדיקת תווים במיקרופון ({notes.length} תווים)</button>;
+}
+
 function StageTest({ track }: { track: TrackId }) {
   const s = useStore();
   const n = stageOf(s, track);
@@ -101,6 +111,7 @@ function StageTest({ track }: { track: TrackId }) {
       <div className="small"><b>🏁 מבחן השלב</b> · צריך לעבור ב-{PASS_DAYS} ימים שונים ({dates.length}/{PASS_DAYS})</div>
       <p>{rich(stage.test)}</p>
       {stage.timing && <TimingCheck key={`${track}${n}`} bpm={stage.timing.bpm} sub={stage.timing.sub} />}
+      {stage.check && <StageNoteCheck key={`c${track}${n}`} tabs={stage.check} />}
       {passedToday
         ? <p className="small ok-text">✓ עברת היום. {dates.length < PASS_DAYS ? 'נסה שוב מחר – אם זה עדיין יושב, השלב מאחוריך.' : ''} <button className="link" onClick={() => { unpassStageTest(track); setMsg(''); }}>בטל</button></p>
         : <button className="btn primary wide" onClick={() => setMsg(passStageTest(track) ? `🎉 שלב ${n} הושלם! עוברים לשלב ${n + 1}.` : '')}>עברתי את המבחן היום</button>}
@@ -419,6 +430,25 @@ export function PlacementView() {
 
 /* ───────── Progress ───────── */
 
+/** BPM over time for one exercise: a thin line with the target as a dashed reference. */
+function BpmSpark({ log, target }: { log: number[]; target: number }) {
+  const W = 120, H = 38, P = 5;
+  const lo = Math.min(...log, target) - 5, hi = Math.max(...log, target) + 5;
+  const x = (i: number) => (log.length === 1 ? W / 2 : P + (i * (W - 2 * P)) / (log.length - 1));
+  const y = (v: number) => H - P - ((v - lo) * (H - 2 * P)) / (hi - lo);
+  return (
+    <svg className="spark" viewBox={`0 0 ${W} ${H}`} width={W} height={H} role="img" aria-label={`BPM: ${log.join(', ')}; יעד ${target}`}>
+      <line x1={P} x2={W - P} y1={y(target)} y2={y(target)} className="spark-target" />
+      <polyline points={log.map((v, i) => `${x(i)},${y(v)}`).join(' ')} className="spark-line" />
+      {log.map((v, i) => (
+        <circle key={i} cx={x(i)} cy={y(v)} r={i === log.length - 1 ? 4 : 2.5} className="spark-dot">
+          <title>{`רישום ${i + 1}: ${v}`}</title>
+        </circle>
+      ))}
+    </svg>
+  );
+}
+
 export function ProgressView() {
   const s = useStore();
   const recs = useRecordings();
@@ -444,12 +474,12 @@ export function ProgressView() {
       <h3 className="section-title">מהירות (BPM)</h3>
       {exercises.length === 0 ? <p className="muted small">עוד אין רישומים. בכל תרגיל יש יומן BPM בתחתית.</p> : (
         <table className="prog-table">
-          <thead><tr><th>תרגיל</th><th>ראשון</th><th>אחרון</th><th>יעד</th></tr></thead>
+          <thead><tr><th>תרגיל</th><th>לאורך זמן</th><th>אחרון</th><th>יעד</th></tr></thead>
           <tbody>
             {exercises.map(({ t, i, ex, log }) => (
               <tr key={ex.id} className={log[log.length - 1] >= ex.bpm!.target ? 'hit' : ''}>
                 <td>{t.icon} {ex.title} <small className="muted">(שלב {i + 1})</small></td>
-                <td>{log[0]}</td><td><b>{log[log.length - 1]}</b></td><td>{ex.bpm!.target}</td>
+                <td><BpmSpark log={log} target={ex.bpm!.target} /></td><td><b>{log[log.length - 1]}</b><br /><small className="muted">מ-{log[0]}</small></td><td>{ex.bpm!.target}</td>
               </tr>
             ))}
           </tbody>

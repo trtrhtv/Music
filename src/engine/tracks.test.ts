@@ -3,6 +3,7 @@ import { SESSIONS, TRACKS, TRACK_BY_ID } from '../data/tracks';
 import { SONGS, SONG_BY_ID } from '../data/songs';
 import { CH, STRUMS } from '../data/guitarLib';
 import { parseSlots } from '../audio/rhythm';
+import { parseTab } from '../audio/tabPlayer';
 import { LESSON_BY_ID } from '../data/curriculum';
 import { GLOSSARY_BY_ID } from '../data/glossary';
 import type { Block } from '../data/blocks';
@@ -39,6 +40,7 @@ describe('guitar program', () => {
         const where = `${t.id} stage ${i + 1}`;
         expect(st.exercises.length, where).toBeGreaterThan(0);
         expect(st.test.length, where).toBeGreaterThan(20);
+        for (const tabLines of st.check ?? []) expect(parseTab(tabLines).every((e) => e.length === 1), `${where}: check tabs are single notes`).toBe(true);
         for (const ex of st.exercises) {
           expect(ids.has(ex.id), `duplicate ${ex.id}`).toBe(false);
           ids.add(ex.id);

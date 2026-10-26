@@ -403,3 +403,7 @@ textarea.note { width: 100%; box-sizing: border-box; background: var(--card); co
 .journal-row { border-bottom: 1px solid var(--line); padding: 8px 0; display: flex; flex-direction: column; gap: 2px; }
 .file-btn { position: relative; display: block; text-align: center; cursor: pointer; }
 .file-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.spark { display: block; overflow: visible; }
+.spark-line { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.spark-dot { fill: var(--accent); stroke: var(--card); stroke-width: 1.5; }
+.spark-target { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }

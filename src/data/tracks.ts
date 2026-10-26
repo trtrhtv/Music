@@ -28,6 +28,8 @@ export interface Stage {
   test: string;
   /** Optional mic check of steadiness for the test: tempo and notes per beat. */
   timing?: { bpm: number; sub: number };
+  /** Optional mic check that the test's notes are right: tabs played one after another. */
+  check?: string[][];
 }
 
 export interface Track { id: TrackId; title: string; icon: string; desc: string; /** Glossary entries that explain this track's words. */ help: string[]; stages: Stage[] }
@@ -97,6 +99,7 @@ export const TRACKS: Track[] = [
             steps: ['אותו דבר, בסדר אצבעות 1-3-2-4 – מאמן עצמאות של אצבעות.', 'לאט מספיק כדי שלא תהיה אף טעות. טעות = הורד 5 BPM.'],
             content: [tab('1-3-2-4 על כל מיתר', SPIDER), metro(60)] },
         ],
+        check: [CHROMATIC],
         timing: { bpm: 90, sub: 2 },
         test: 'כרומטי 1-2-3-4 מיתר 6 עד 1 ובחזרה, בשמיניות על **90 BPM**, פעמיים ברצף בלי אף תו עמום – פעם עם מפרט ופעם עם אצבעות.',
       },
@@ -125,6 +128,7 @@ export const TRACKS: Track[] = [
             steps: ['צורה 1 של A מינור פנטטוני, למעלה ולמטה.', 'קודם שמיניות (2 בקליק), אחר כך שש-עשריות (4 בקליק).', 'שים לב למעבר בין מיתרים: היד הימנית לא "מדלגת" – רק עוברת למיתר הבא.'],
             content: [tab('A מינור פנטטוני – צורה 1 (סריגים 5–8)', run(...PENTA[0])), metro(60)] },
         ],
+        check: [run(...PENTA[0]), run(...[...PENTA[0]].reverse())],
         timing: { bpm: 70, sub: 4 },
         test: 'פנטטוני צורה 1 למעלה ולמטה בשש-עשריות על **70 BPM**, פעמיים ברצף בלי טעות – עם מפרט ועם אצבעות.',
       },
@@ -272,6 +276,7 @@ export const TRACKS: Track[] = [
             steps: ['משפט של 3–4 תווים, ואז שתיקה – כמו לדבר.', 'שאלה (נגמרת באוויר) ותשובה (נגמרת על A).', 'האמר-און ופול-אוף לפחות פעם בכל משפט.'],
             content: [strum('rock8', ['Am', 'G'], 80, 'לופ ליווי – אתה מאלתר מעליו.')] },
         ],
+        check: [run(...PENTA[0]), run(...PENTA[1])],
         timing: { bpm: 80, sub: 2 },
         test: 'צורות 1 ו-2 ברצף בשמיניות ב-**80 BPM**, ו-2 דקות אלתור על הלופ עם משפטים קצרים שנגמרים על A.',
       },
@@ -293,6 +298,7 @@ export const TRACKS: Track[] = [
             steps: ['פנטטוני + התו הכחול (Eb). מנגנים אותו בדרך, לא עוצרים עליו.', 'אלתר על 12 התיבות, ונסה לעבור בין 3 צורות שונות בתוך סבב אחד.'],
             content: [tab('A בלוז – צורה 1', BLUES_A), strum('shuffle', BLUES12, 85)] },
         ],
+        check: [4, 0, 1, 2, 3].map((i) => run(...PENTA[i])),
         timing: { bpm: 70, sub: 2 },
         test: 'כל 5 הצורות ברצף בשמיניות ב-**70 BPM**, ואלתור על בלוז 12 תיבות שעובר בין 3 צורות לפחות.',
       },
@@ -306,6 +312,7 @@ export const TRACKS: Track[] = [
             steps: ['ארפג\' = תווי האקורד בלבד (1-3-5), אחד אחרי השני.', 'נגן את שלושתם ברצף: G, C, D – בלי להזיז את היד.'],
             content: [tab('G (G B D)', ARP_G), tab('C (C E G)', ARP_C), tab('D (D F# A)', ARP_D), { t: 'go', items: [{ label: 'שיעור: אקורד = 1 + 3 + 5', to: 'lesson/t4a' }] }] },
         ],
+        check: [G_MAJOR, ARP_G, ARP_C, ARP_D],
         timing: { bpm: 80, sub: 2 },
         test: 'G מז\'ור בשמיניות ב-**80 BPM**, וארפג\'י G–C–D ברצף ב-**70 BPM** – בלי טעות ובלי להזיז את היד.',
       },
