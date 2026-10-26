@@ -125,3 +125,17 @@ describe('review fixes', () => {
     expect(getState().levels.theory).toBe(1);
   });
 });
+
+describe('spaced review of theory lessons', () => {
+  it('schedules a passed lesson for tomorrow, moves up on right answers and back on wrong ones', async () => {
+    const { recordLesson, answerReview, getState, addDays, today, dueReviews, REVIEW_DAYS } = await import('../state/store');
+    recordLesson('t2a', 'theory', 0.9);
+    expect(getState().review.t2a).toEqual({ box: 0, due: addDays(today(), 1) });
+    expect(dueReviews(getState(), ['t2a'])).toEqual([]);
+    answerReview('t2a', true);
+    expect(getState().review.t2a).toEqual({ box: 1, due: addDays(today(), REVIEW_DAYS[1]) });
+    answerReview('t2a', false);
+    expect(getState().review.t2a.box).toBe(0);
+    expect(addDays('2026-12-30', 3)).toBe('2027-01-02');
+  });
+});

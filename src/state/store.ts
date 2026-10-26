@@ -33,6 +33,8 @@ export interface State {
    */
   /** Display preferences. */
   prefs: { hidePiano: boolean };
+  /** Spaced review of passed theory lessons: Leitner box and next due date per lesson. */
+  review: Record<string, { box: number; due: string }>;
   prog: {
     placed: boolean;
     stage: Record<TrackId, number>;
@@ -56,6 +58,7 @@ const fresh = (): State => ({
   days: [],
   xp: 0,
   prefs: { hidePiano: false },
+  review: {},
   prog: { placed: false, stage: { tech: 1, rhythm: 1, neck: 1, finger: 1 }, passes: {}, bpm: {}, sessions: {}, journal: [] },
 });
 
@@ -134,10 +137,37 @@ export function recordLesson(id: string, domain: Domain, score: number) {
   update((s) => {
     const prev = s.lessons[id] ?? { best: 0, passed: false, attempts: 0 };
     const lessons = { ...s.lessons, [id]: { best: Math.max(prev.best, score), passed: prev.passed || score >= PASS, attempts: prev.attempts + 1 } };
+    // A theory lesson passed for the first time enters spaced review: first due tomorrow.
+    const review = domain === 'theory' && !prev.passed && score >= PASS && !s.review[id] ? { ...s.review, [id]: { box: 0, due: addDays(today(), REVIEW_DAYS[0]) } } : s.review;
     // Level up when every lesson of the current level is passed.
     let lvl = s.levels[domain];
     while (lvl < 5 && lessonsFor(domain).filter((l) => l.level === lvl && !l.optional).every((l) => lessons[l.id]?.passed || l.level < s.placedLevels[domain])) lvl++;
-    return { ...s, lessons, levels: { ...s.levels, [domain]: lvl } };
+    return { ...s, lessons, review, levels: { ...s.levels, [domain]: lvl } };
+  });
+}
+
+/** Days until the next review, per box: 1, 3, 7, 14, 30, 60 – a right answer moves up a box, a wrong one back to the start. */
+export const REVIEW_DAYS = [1, 3, 7, 14, 30, 60];
+export const addDays = (date: string, n: number) => {
+  const d = new Date(date + 'T12:00:00Z');
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+};
+
+/** Theory lessons whose review is due today, oldest first. Lessons passed before review existed count as due. */
+export function dueReviews(s: State, theoryIds: string[]): string[] {
+  return theoryIds
+    .filter((id) => s.lessons[id]?.passed)
+    .map((id) => ({ id, due: s.review[id]?.due ?? today() }))
+    .filter((r) => r.due <= today())
+    .sort((a, b) => a.due.localeCompare(b.due))
+    .map((r) => r.id);
+}
+
+export function answerReview(id: string, right: boolean) {
+  update((s) => {
+    const box = right ? Math.min((s.review[id]?.box ?? 0) + 1, REVIEW_DAYS.length - 1) : 0;
+    return { ...s, review: { ...s.review, [id]: { box, due: addDays(today(), REVIEW_DAYS[box]) } } };
   });
 }
 

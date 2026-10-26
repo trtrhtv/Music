@@ -10,6 +10,7 @@ import { Tools } from './screens/Tools';
 import { Glossary } from './screens/Glossary';
 import { PlacementView, ProgramHome, ProgressView, SessionView, TrackView } from './screens/Program';
 import { SongView } from './screens/Songs';
+import { ReviewRunner } from './screens/Review';
 import { downloadBackup, restoreBackup } from './state/backup';
 import type { TrackId } from './data/tracks';
 import { Track } from './screens/Track';
@@ -96,6 +97,7 @@ export default function App() {
   if (page === 'track' && DOMAINS.includes(arg as Domain)) body = <Track key={arg} domain={arg as Domain} />;
   else if (page === 'lesson' && arg) body = <LessonRunner key={arg} id={arg} />;
   else if (page === 'practice') body = <Practice />;
+  else if (page === 'review') body = <ReviewRunner />;
   else if (page === 'tools') body = <Tools />;
   else if (page === 'glossary') body = <Glossary key={arg ?? ''} id={arg} />;
   else if (page === 'plan') {
@@ -108,7 +110,7 @@ export default function App() {
   return (
     <main className="app">
       {body}
-      {page !== 'lesson' && (
+      {page !== 'lesson' && page !== 'review' && (
         <nav className="tabbar">
           {NAV.map(([p, icon, label]) => (
             <button key={p} className={(page ?? '') === p || (p === '' && page === 'track') || (p === 'plan' && page === 'songs') ? 'on' : ''} onClick={() => go(p)}>

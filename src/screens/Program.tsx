@@ -4,6 +4,7 @@ import { Recorder, Take } from '../components/Recorder';
 import { Timer } from '../components/RhythmTools';
 import { TimingCheck } from '../components/TimingCheck';
 import { NoteCheck } from '../components/NoteCheck';
+import { REVIEW_SIZE, useDueReviews } from '../state/reviewDue';
 import { parseTab } from '../audio/tabPlayer';
 import { rich } from '../components/rich';
 import { LESSONS } from '../data/curriculum';
@@ -165,6 +166,7 @@ function nextTheoryLesson(s: State) {
 function BlockView({ b, sessionId, onTimeUp }: { b: SessionBlock; sessionId: string; onTimeUp?: () => void }) {
   const s = useStore();
   const recs = useRecordings();
+  const due = useDueReviews();
   const head = (icon: string, title: string, sub?: string) => (
     <div className="sb-head"><h3>{icon} {title}</h3><span className="muted small">{b.min} דק'{sub ? ` · ${sub}` : ''}</span></div>
   );
@@ -192,8 +194,9 @@ function BlockView({ b, sessionId, onTimeUp }: { b: SessionBlock; sessionId: str
     body = (
       <>
         {head('📖', 'תיאוריה ושמיעה')}
-        <p className="small">השיעור הבא בקורס התיאוריה ובאימון השמיעה – לפי הסדר. אם נשאר זמן: תרגילים מהירים.</p>
+        <p className="small">קודם חזרה קצרה על נושאים שלמדת (אם יש), ואז השיעור הבא בתיאוריה ובשמיעה – לפי הסדר.</p>
         <Blocks blocks={[{ t: 'go', items: [
+          ...(due.length ? [{ label: `🔁 חזרה מרווחת (${Math.min(due.length, REVIEW_SIZE)} שאלות)`, to: 'review' }] : []),
           ...(l ? [{ label: `תיאוריה: ${l.title}`, to: 'lesson/' + l.id }] : []),
           ...(ear ? [{ label: `שמיעה: ${ear.title}`, to: 'lesson/' + ear.id }] : []),
           { label: 'תרגילים מהירים', to: 'practice' },
