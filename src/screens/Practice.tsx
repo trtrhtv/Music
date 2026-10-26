@@ -11,7 +11,7 @@ const ROUND = 10;
 /** Weighted pick favouring weak and not-recently-practised skills within unlocked levels. */
 function smartQueue(s: State, filter: Domain | 'all', mic: boolean, n = ROUND): Generator[] {
   const pool = GENERATORS.filter((g) =>
-    (filter === 'all' || g.domain === filter) && g.tier <= s.levels[g.domain] && g.tier >= s.levels[g.domain] - 2 && (mic || !isMicGen(g)));
+    (filter === 'all' ? !(g.domain === 'piano' && s.prefs.hidePiano) : g.domain === filter) && g.tier <= s.levels[g.domain] && g.tier >= s.levels[g.domain] - 2 && (mic || !isMicGen(g)));
   if (!pool.length) return [];
   const weight = (g: Generator) => {
     const st = s.genStats[g.id];

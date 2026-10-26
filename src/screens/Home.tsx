@@ -1,7 +1,7 @@
 import { LESSONS, UNIT_TITLES, lessonsFor } from '../data/curriculum';
 import { DOMAIN_ICON, DOMAIN_LABEL, LEVEL_LABEL, type Domain } from '../engine/types';
 import { go } from '../router';
-import { lessonStatus, streak, today, useStore, type State } from '../state/store';
+import { lessonStatus, setHidePiano, streak, today, useStore, type State } from '../state/store';
 import { useRecordings } from '../state/recordings';
 
 function nextLesson(s: State, d: Domain) {
@@ -48,7 +48,7 @@ export function Home() {
       <h3 className="section-title">שיעורים באפליקציה</h3>
       <p className="muted small">שיעורים קצרים עם תרגילים על המסך. האימון עם הגיטרה ביד – בלשונית 🎸 גיטרה.</p>
       <div className="tracks">
-        {order.map((d) => {
+        {order.filter((d) => !(d === 'piano' && s.prefs.hidePiano)).map((d) => {
           const ls = lessonsFor(d);
           const done = ls.filter((l) => ['passed', 'known'].includes(lessonStatus(s, l))).length;
           const nl = nextLesson(s, d);
@@ -66,6 +66,7 @@ export function Home() {
           );
         })}
       </div>
+      <button className="link small" onClick={() => setHidePiano(!s.prefs.hidePiano)}>{s.prefs.hidePiano ? '🎹 הצג גם את הפסנתר' : '🎹 הסתר את הפסנתר בינתיים'}</button>
     </div>
   );
 }

@@ -13,6 +13,8 @@ export interface Profile {
   hasPiano: boolean;
 }
 
+export interface JournalEntry { date: string; session: string; goal: string; good: string; next: string }
+
 export interface State {
   version: 1;
   placed: boolean;
@@ -29,12 +31,16 @@ export interface State {
    * Guitar program: current stage per track (1–5, 6 = done), the days each stage test was passed
    * ("track:stage" → dates), BPM log per exercise, and sessions done per date.
    */
+  /** Display preferences. */
+  prefs: { hidePiano: boolean };
   prog: {
     placed: boolean;
     stage: Record<TrackId, number>;
     passes: Record<string, string[]>;
     bpm: Record<string, number[]>;
     sessions: Record<string, string[]>;
+    /** Practice journal: the goal set before a session and the reflection after it. */
+    journal: JournalEntry[];
   };
 }
 
@@ -49,18 +55,25 @@ const fresh = (): State => ({
   genStats: {},
   days: [],
   xp: 0,
-  prog: { placed: false, stage: { tech: 1, rhythm: 1, neck: 1, finger: 1 }, passes: {}, bpm: {}, sessions: {} },
+  prefs: { hidePiano: false },
+  prog: { placed: false, stage: { tech: 1, rhythm: 1, neck: 1, finger: 1 }, passes: {}, bpm: {}, sessions: {}, journal: [] },
 });
+
+/** Fills in fields added after the data was saved. */
+const withDefaults = (saved: Partial<State>): State =>
+  ({ ...fresh(), ...saved, prog: { ...fresh().prog, ...saved.prog }, prefs: { ...fresh().prefs, ...saved.prefs } });
 
 function load(): State {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) {
-      const saved = JSON.parse(raw);
-      return { ...fresh(), ...saved, prog: { ...fresh().prog, ...saved.prog } };
-    }
+    if (raw) return withDefaults(JSON.parse(raw));
   } catch { /* storage unavailable */ }
   return fresh();
+}
+
+/** Replaces everything with a backup's state. */
+export function restoreState(saved: Partial<State>) {
+  update(() => withDefaults(saved));
 }
 
 let state = load();
@@ -185,11 +198,16 @@ export function logExerciseBpm(exercise: string, bpm: number) {
   update((s) => ({ ...s, days: touchDay(s), prog: { ...s.prog, bpm: { ...s.prog.bpm, [exercise]: [...(s.prog.bpm[exercise] ?? []), bpm] } } }));
 }
 
-export function finishSession(id: string) {
+export function finishSession(id: string, note?: Omit<JournalEntry, 'date' | 'session'>) {
   update((s) => {
     const done = s.prog.sessions[today()] ?? [];
-    return { ...s, days: touchDay(s), prog: { ...s.prog, sessions: { ...s.prog.sessions, [today()]: [...done, id] } } };
+    const journal = note && (note.goal || note.good || note.next) ? [...s.prog.journal, { date: today(), session: id, ...note }] : s.prog.journal;
+    return { ...s, days: touchDay(s), prog: { ...s.prog, journal, sessions: { ...s.prog.sessions, [today()]: [...done, id] } } };
   });
+}
+
+export function setHidePiano(hidePiano: boolean) {
+  update((s) => ({ ...s, prefs: { ...s.prefs, hidePiano } }));
 }
 
 export function resetProgram() {

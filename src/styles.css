@@ -393,3 +393,13 @@ h3 { font-size: 1.05rem; }
 .timing-check { background: var(--bg2); border-radius: 10px; padding: 10px; margin: 8px 0; }
 .count-in { font-size: 2.6rem; font-weight: 800; text-align: center; color: var(--accent2); }
 .vary { background: var(--card); border-radius: 8px; padding: 6px 10px; }
+.note-check { background: var(--bg2); border-radius: 10px; padding: 10px; margin: 6px 0; }
+.nc-notes { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0; }
+.nc-note { min-width: 30px; text-align: center; padding: 3px 4px; border-radius: 6px; background: var(--card); border: 1px solid var(--line); font-size: 0.85rem; }
+.nc-note.ok { background: var(--ok); color: #fff; border-color: var(--ok); }
+.nc-note.miss { background: var(--bad); color: #fff; border-color: var(--bad); }
+.nc-note.now { outline: 2px solid var(--accent); }
+textarea.note { width: 100%; box-sizing: border-box; background: var(--card); color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 8px; font: inherit; margin: 4px 0 8px; resize: vertical; }
+.journal-row { border-bottom: 1px solid var(--line); padding: 8px 0; display: flex; flex-direction: column; gap: 2px; }
+.file-btn { position: relative; display: block; text-align: center; cursor: pointer; }
+.file-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Loop, countLabels, parseSlots, type Rhythm } from '../audio/rhythm';
 import { audio, output } from '../audio/synth';
 import { TabPlayer, parseTab } from '../audio/tabPlayer';
+import { NoteCheck } from './NoteCheck';
 
 function BpmControl({ bpm, setBpm }: { bpm: number; setBpm: (n: number) => void }) {
   const clamp = (n: number) => Math.max(30, Math.min(220, Math.round(n)));
@@ -127,13 +128,14 @@ export function Timer({ minutes, onDone }: { minutes: number; onDone?: () => voi
       if (x <= 1) {
         setOn(false);
         chime();
-        onDone?.();
         return 0;
       }
       return x - 1;
     }), 1000);
     return () => clearInterval(t);
-  }, [on, onDone]);
+  }, [on]);
+  // Tell the parent once the time is up (outside the state updater).
+  useEffect(() => { if (left === 0) onDone?.(); }, [left, onDone]);
   const mm = String(Math.floor(left / 60)).padStart(2, '0');
   const ss = String(left % 60).padStart(2, '0');
   return (
@@ -197,9 +199,12 @@ export function TabView({ lines, title, sub = 2 }: { lines: string[]; title?: st
   const [bpm, setBpm] = useState(sub === 3 ? 50 : 60);
   const [step, setStep] = useState(-1);
   const [playing, setPlaying] = useState(false);
+  const [checking, setChecking] = useState(false);
   const player = useRef<TabPlayer | null>(null);
   useEffect(() => () => player.current?.stop(), []);
   const events = parseTab(lines);
+  // Single-note lines (scales, riffs) can be checked by ear through the mic.
+  const melody = events.length >= 4 && events.every((e) => e.length === 1) ? events.map((e) => e[0]) : null;
   const toggle = () => {
     if (playing) { player.current?.stop(); return; }
     player.current = new TabPlayer(events, setStep, () => { setPlaying(false); setStep(-1); });
@@ -217,7 +222,9 @@ export function TabView({ lines, title, sub = 2 }: { lines: string[]; title?: st
         <button className={`btn small ${playing ? 'ghost' : 'primary'}`} onClick={toggle}>{playing ? '■ עצור' : '▶ השמע'}</button>
         <BpmControl bpm={bpm} setBpm={(n) => { setBpm(n); if (playing) player.current?.stop(); }} />
         {playing && <span className="small muted" dir="ltr">{step + 1}/{events.length}</span>}
+        {melody && !checking && <button className="btn small ghost" onClick={() => setChecking(true)}>🎤 בדוק אותי</button>}
       </div>
+      {checking && melody && <NoteCheck notes={melody} onClose={() => setChecking(false)} />}
       <pre className="tab" dir="ltr">{text}</pre>
       {full && <TabFull lines={lines} title={title} onClose={() => setFull(false)} />}
     </figure>

@@ -151,7 +151,7 @@ function nextTheoryLesson(s: State) {
   return LESSONS.find((l) => l.domain === 'theory' && l.pages && !s.lessons[l.id]?.passed);
 }
 
-function BlockView({ b, sessionId }: { b: SessionBlock; sessionId: string }) {
+function BlockView({ b, sessionId, onTimeUp }: { b: SessionBlock; sessionId: string; onTimeUp?: () => void }) {
   const s = useStore();
   const recs = useRecordings();
   const head = (icon: string, title: string, sub?: string) => (
@@ -207,26 +207,75 @@ function BlockView({ b, sessionId }: { b: SessionBlock; sessionId: string }) {
   return (
     <section className="session-block">
       {body}
-      <Timer minutes={b.min} />
+      <Timer minutes={b.min} onDone={onTimeUp} />
     </section>
   );
 }
 
+const MODE_KEY = 'session-mode';
+const readMode = (): 'steps' | 'all' => { try { return localStorage.getItem(MODE_KEY) === 'all' ? 'all' : 'steps'; } catch { return 'steps'; } };
+
 export function SessionView({ id }: { id: string }) {
   const s = useStore();
   const session = SESSION_BY_ID[id];
+  const [mode, setModeState] = useState(readMode);
+  const [step, setStep] = useState(0);
+  const [timeUp, setTimeUp] = useState(false);
+  const [note, setNote] = useState({ goal: '', good: '', next: '' });
   const [done, setDone] = useState(false);
   if (!session) return <div className="screen"><p>לא נמצא</p></div>;
+  const setMode = (m: 'steps' | 'all') => { setModeState(m); try { localStorage.setItem(MODE_KEY, m); } catch { /* storage unavailable */ } };
   const total = session.blocks.reduce((n, b) => n + b.min, 0);
+  const already = done || (s.prog.sessions[today()] ?? []).includes(id);
+  const lastNext = [...s.prog.journal].reverse().find((j) => j.next)?.next;
+  const last = session.blocks.length + 1; // 0 = goal, 1..n = blocks, n+1 = reflection
+  const turn = (n: number) => { setStep(n); setTimeUp(false); window.scrollTo(0, 0); };
+
+  const goalCard = (
+    <section className="session-block">
+      <div className="sb-head"><h3>🎯 מטרה לשעה הזאת</h3><span className="muted small">חצי דקה</span></div>
+      {lastNext && <p className="small">בפעם הקודמת כתבת שהמטרה הבאה: <b>{lastNext}</b></p>}
+      <p className="small muted">מטרה אחת, קטנה ומדידה. למשל: "פולק ב-85 נקי", "צורה 2 בלי להסתכל", "תיבות 5–8 של הרומנסה".</p>
+      <textarea className="note" rows={2} value={note.goal} onChange={(e) => setNote({ ...note, goal: e.target.value })} placeholder="המטרה שלי עכשיו…" />
+    </section>
+  );
+  const reflectCard = (
+    <section className="session-block">
+      <div className="sb-head"><h3>📝 רגע לפני שמסיימים</h3><span className="muted small">דקה</span></div>
+      {note.goal && <p className="small">המטרה הייתה: <b>{note.goal}</b>. הגעת?</p>}
+      <label className="small">מה הלך טוב, ומה היה קשה?</label>
+      <textarea className="note" rows={2} value={note.good} onChange={(e) => setNote({ ...note, good: e.target.value })} />
+      <label className="small">מה המטרה לפעם הבאה?</label>
+      <textarea className="note" rows={2} value={note.next} onChange={(e) => setNote({ ...note, next: e.target.value })} />
+      {already
+        ? <div className="feedback right"><div className="fb-title">🎉 השעה נרשמה. כל הכבוד!</div></div>
+        : <button className="btn primary wide big" onClick={() => { finishSession(id, note); setDone(true); }}>✓ סיימתי את השעה</button>}
+    </section>
+  );
+
   return (
     <div className="screen">
       <button className="back" onClick={() => go('plan')}>→ לגיטרה</button>
       <h1>{session.title}</h1>
       <p className="muted small">{total} דקות · {session.desc}</p>
-      {session.blocks.map((b, i) => <BlockView key={i} b={b} sessionId={id} />)}
-      {done || (s.prog.sessions[today()] ?? []).includes(id)
-        ? <div className="feedback right"><div className="fb-title">🎉 השעה נרשמה. כל הכבוד!</div></div>
-        : <button className="btn primary wide big" onClick={() => { finishSession(id); setDone(true); }}>✓ סיימתי את השעה</button>}
+      <button className="link small" onClick={() => setMode(mode === 'steps' ? 'all' : 'steps')}>{mode === 'steps' ? '📄 להציג הכול בעמוד אחד' : '👣 צעד אחר צעד'}</button>
+      {mode === 'all' ? (
+        <>
+          {goalCard}
+          {session.blocks.map((b, i) => <BlockView key={i} b={b} sessionId={id} />)}
+          {reflectCard}
+        </>
+      ) : (
+        <>
+          <div className="step-dots" aria-hidden>{Array.from({ length: last + 1 }, (_, k) => <span key={k} className={k === step ? 'on' : k < step ? 'done' : ''} />)}</div>
+          {step === 0 ? goalCard : step === last ? reflectCard : <BlockView key={step} b={session.blocks[step - 1]} sessionId={id} onTimeUp={() => setTimeUp(true)} />}
+          {timeUp && step < last && <p className="small ok-text">⏰ הזמן של החלק הזה נגמר. סיים את מה שאתה באמצעו, ועבור הלאה.</p>}
+          <div className="step-nav">
+            {step > 0 ? <button className="btn ghost" onClick={() => turn(step - 1)}>→ הקודם</button> : <span />}
+            {step < last && <button className="btn primary" onClick={() => turn(step + 1)}>{step === last - 1 ? 'לסיום ←' : step === 0 ? 'מתחילים ←' : 'הבא ←'}</button>}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -406,6 +455,16 @@ export function ProgressView() {
           </tbody>
         </table>
       )}
+      <h3 className="section-title">יומן תרגול</h3>
+      {s.prog.journal.length === 0 ? <p className="muted small">בתחילת כל שעה כותבים מטרה, ובסוף – מה הלך ומה הלאה. זה יופיע כאן.</p>
+        : [...s.prog.journal].reverse().slice(0, 10).map((j, i) => (
+          <div key={i} className="journal-row small">
+            <div className="muted">{j.date.split('-').reverse().slice(0, 2).join('.')} · {SESSION_BY_ID[j.session]?.title ?? ''}</div>
+            {j.goal && <div>🎯 {j.goal}</div>}
+            {j.good && <div>📝 {j.good}</div>}
+            {j.next && <div>➡️ {j.next}</div>}
+          </div>
+        ))}
       <h3 className="section-title">הקלטות</h3>
       <p className="small">ההקלטה השבועית נמצאת בסוף "שעה של חזרה" (פעם בשבוע). כאן אפשר להקשיב לכולן לפי הסדר.</p>
       {recs.length === 0 ? <p className="muted small">עוד אין הקלטות.</p> : recs.map((r) => <Take key={r.id} r={r} />)}
