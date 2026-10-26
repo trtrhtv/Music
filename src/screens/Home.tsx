@@ -2,6 +2,7 @@ import { LESSONS, UNIT_TITLES, lessonsFor } from '../data/curriculum';
 import { DOMAIN_ICON, DOMAIN_LABEL, LEVEL_LABEL, type Domain } from '../engine/types';
 import { go } from '../router';
 import { lessonStatus, streak, today, useStore, type State } from '../state/store';
+import { useRecordings } from '../state/recordings';
 
 function nextLesson(s: State, d: Domain) {
   return lessonsFor(d).find((l) => lessonStatus(s, l) === 'open');
@@ -12,6 +13,8 @@ export function Home() {
   const st = streak(s.days);
   const order: Domain[] = ['theory', 'ear', 'guitar', 'piano'];
   const doneCount = LESSONS.filter((l) => s.lessons[l.id]?.passed).length;
+  const recs = useRecordings();
+  const recDue = s.prog.placed && (!recs.length || Date.now() - recs[recs.length - 1].created > 7 * 86400000);
   return (
     <div className="screen">
       <header className="home-head">
@@ -29,6 +32,13 @@ export function Home() {
         <span className="cta-icon">🎸</span>
         <span><b>{s.prog.placed ? 'תרגול גיטרה – השעה הבאה' : 'תוכנית גיטרה – מבחן מיקום'}</b><br /><small>{s.prog.placed ? `היום: ${(s.prog.sessions[today()] ?? []).length} שעות תרגול` : 'נבדוק מאיפה להתחיל בכל מסלול'}</small></span>
       </button>
+
+      {recDue && (
+        <button className="lesson-row open" onClick={() => go('plan/progress')}>
+          <span className="lr-badge">🎙️</span>
+          <span className="lr-title">הגיע הזמן להקלטה השבועית<br /><small className="muted">דקה מכל מסלול – כדי לשמוע את ההתקדמות</small></span>
+        </button>
+      )}
 
       <button className="cta" onClick={() => go('practice')}>
         <span className="cta-icon">⚡</span>

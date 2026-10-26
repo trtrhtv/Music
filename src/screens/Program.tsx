@@ -17,6 +17,8 @@ import {
 } from '../state/store';
 
 const WEEK = 7 * 86400000;
+/** Same number all day, changes every day – picks the daily variation. */
+const dayIndex = () => Math.floor((Date.now() - new Date().getTimezoneOffset() * 60000) / 86400000);
 const weekKey = () => Math.floor(Date.now() / WEEK);
 const stageOf = (s: State, t: TrackId) => s.prog.stage[t];
 const trackDone = (s: State, t: TrackId) => stageOf(s, t) > STAGES;
@@ -77,6 +79,7 @@ function ExerciseCard({ ex, label, open: initial = false }: { ex: Exercise; labe
       {open && (
         <div className="pb-body">
           <ol className="pb-steps">{ex.steps.map((st, i) => <li key={i}>{rich(st)}</li>)}</ol>
+          {ex.vary && <p className="vary small">🔄 <b>הווריאציה של היום:</b> {rich(ex.vary[dayIndex() % ex.vary.length])}</p>}
           {ex.content && <Blocks blocks={ex.content} />}
           {ex.bpm && <BpmLog ex={ex} />}
         </div>
@@ -174,11 +177,16 @@ function BlockView({ b, sessionId }: { b: SessionBlock; sessionId: string }) {
     );
   } else if (b.kind === 'theory') {
     const l = nextTheoryLesson(s);
+    const ear = LESSONS.find((x) => x.domain === 'ear' && !x.optional && !s.lessons[x.id]?.passed);
     body = (
       <>
         {head('📖', 'תיאוריה ושמיעה')}
-        <p className="small">השיעור הבא בקורס התיאוריה, ואז כמה דקות של תרגילים מהירים.</p>
-        <Blocks blocks={[{ t: 'go', items: [...(l ? [{ label: `שיעור: ${l.title}`, to: 'lesson/' + l.id }] : []), { label: 'תרגילים מהירים', to: 'practice' }] }]} />
+        <p className="small">השיעור הבא בקורס התיאוריה ובאימון השמיעה – לפי הסדר. אם נשאר זמן: תרגילים מהירים.</p>
+        <Blocks blocks={[{ t: 'go', items: [
+          ...(l ? [{ label: `תיאוריה: ${l.title}`, to: 'lesson/' + l.id }] : []),
+          ...(ear ? [{ label: `שמיעה: ${ear.title}`, to: 'lesson/' + ear.id }] : []),
+          { label: 'תרגילים מהירים', to: 'practice' },
+        ] }]} />
       </>
     );
   } else {

@@ -13,6 +13,8 @@ export interface Exercise {
   title: string;
   steps: string[];
   content?: Block[];
+  /** Daily variations of the same exercise (same difficulty), so repetition doesn't get stale. */
+  vary?: string[];
   /** BPM (or chord changes per minute) to log while practising. */
   bpm?: { start: number; target: number; unit?: 'changes' };
 }
@@ -88,7 +90,7 @@ export const TRACKS: Track[] = [
       {
         title: 'סנכרון ידיים', goal: 'כל תו נקי, שתי הידיים זזות בדיוק ביחד.',
         exercises: [
-          { id: 'tech1-chrom', title: 'כרומטי 1-2-3-4', bpm: { start: 60, target: 90 },
+          { id: 'tech1-chrom', title: 'כרומטי 1-2-3-4', vary: ['בסריגים 1–4', 'בסריגים 5–8', 'בסריגים 9–12', 'רק עם מפרט', 'רק עם אצבעות (i-m)', 'מתחילים ממיתר 1 ויורדים'], bpm: { start: 60, target: 90 },
             steps: ['אצבע אחת לכל סריג: אצבע 1 בסריג 1, אצבע 2 בסריג 2 וכן הלאה.', `שני תווים על כל קליק (שמיניות). ${BOTH_HANDS}`, 'האצבעות של יד שמאל נשארות קרוב למיתר גם כשהן לא לוחצות.', 'נקי פעמיים ברצף → +5 BPM.'],
             content: [tab('מיתר 6 עד מיתר 1, ואז בחזרה', CHROMATIC), metro(60)] },
           { id: 'tech1-spider', title: 'עכביש 1-3-2-4', bpm: { start: 60, target: 90 },
@@ -119,7 +121,7 @@ export const TRACKS: Track[] = [
           { id: 'tech3-single', title: 'מיתר אחד, שש-עשריות', bpm: { start: 60, target: 100 },
             steps: ['תו אחד (מיתר 1, סריג 5) – ארבעה תווים על כל קליק.', BOTH_HANDS, 'התנועה קטנה ורגועה. אם היד מתכווצת – הורד מהירות.'],
             content: [metro(60)] },
-          { id: 'tech3-penta', title: 'פנטטוני בשמיניות ובשש-עשריות', bpm: { start: 60, target: 90 },
+          { id: 'tech3-penta', title: 'פנטטוני בשמיניות ובשש-עשריות', vary: ['צורה 1 ב-A (סריג 5)', 'אותה צורה ב-G (סריג 3)', 'אותה צורה ב-E (סריג 12)', 'בקבוצות של 3 תווים', 'מתחילים מלמעלה'], bpm: { start: 60, target: 90 },
             steps: ['צורה 1 של A מינור פנטטוני, למעלה ולמטה.', 'קודם שמיניות (2 בקליק), אחר כך שש-עשריות (4 בקליק).', 'שים לב למעבר בין מיתרים: היד הימנית לא "מדלגת" – רק עוברת למיתר הבא.'],
             content: [tab('A מינור פנטטוני – צורה 1 (סריגים 5–8)', run(...PENTA[0])), metro(60)] },
         ],
@@ -164,7 +166,7 @@ export const TRACKS: Track[] = [
           { id: 'rh1-quarters', title: 'רבעים ומטוטלת', bpm: { start: 60, target: 90 },
             steps: ['מכה אחת למטה על כל מספר, ספירה בקול "1, 2, 3, 4".', 'עכשיו היד עולה בין המכות **בלי לגעת** – "1 וְ 2 וְ". זו תנועת הבסיס לכל מקצב.'],
             content: [strum('quarters', ['Am', 'F', 'C', 'G'], 60)] },
-          { id: 'rh1-folk', title: 'פולק', bpm: { start: 60, target: 90 },
+          { id: 'rh1-folk', title: 'פולק', vary: ['Am–F–C–G', 'G–D–Em–C', 'C–G–Am–F', 'D–A–Bm–G', 'Em–C–G–D'], bpm: { start: 60, target: 90 },
             steps: ['אותה תנועה, ומשנים רק מתי פוגעים: למטה · למטה-למעלה · (אוויר)-למעלה · למטה-למעלה.', 'אקורד חדש בכל סבב – בלי לעצור את היד.'],
             content: [strum('folk', ['Am', 'F', 'C', 'G'], 60)] },
           { id: 'rh1-changes', title: 'דקת מעברים', bpm: { start: 15, target: 40, unit: 'changes' },
@@ -177,7 +179,7 @@ export const TRACKS: Track[] = [
       {
         title: 'הדגשות והשתקות', goal: 'לשלוט בעוצמה: חזק, חלש, עמום ו"צ\'יק".',
         exercises: [
-          { id: 'rh2-backbeat', title: 'הדגשה על 2 ו-4', bpm: { start: 70, target: 100 },
+          { id: 'rh2-backbeat', title: 'הדגשה על 2 ו-4', vary: ['C–G–Am–F', 'G–Em–C–D', 'A–E–F#m–D', 'Dm–Bb–F–C (עם הברות)'], bpm: { start: 70, target: 100 },
             steps: ['פולק, כשהמכות על 2 ו-4 חזקות והשאר רכות.', 'תשמע איך זה פתאום "מתנדנד" – זה הגרוב של פופ ורוק.'],
             content: [strum('backbeat', ['C', 'G', 'Am', 'F'], 70)] },
           { id: 'rh2-palm', title: 'השתקת כף יד', bpm: { start: 70, target: 110 },
@@ -266,7 +268,7 @@ export const TRACKS: Track[] = [
           { id: 'neck2-boxes', title: 'צורות 1 ו-2', bpm: { start: 60, target: 90 },
             steps: ['**צורה** = תבנית של הסולם באזור של 4–5 סריגים, שמנגנים בלי להזיז את היד. לסולם הפנטטוני יש 5 צורות לאורך הצוואר.', 'כל צורה למעלה ולמטה, ואז מעבר מצורה 1 לצורה 2 בלי עצירה.', 'שים לב לתווים ששתי הצורות חולקות – הם הגשר.'],
             content: [tab('צורה 1 (סריגים 5–8)', run(...PENTA[0])), tab('צורה 2 (סריגים 7–10)', run(...PENTA[1])), metro(60)] },
-          { id: 'neck2-phrases', title: 'משפטים על לופ',
+          { id: 'neck2-phrases', title: 'משפטים על לופ',vary: ['רק 3 תווים בכל משפט', 'משפט שחוזר פעמיים עם שינוי קטן', 'רק בצורה 2', 'עם סלייד אחד בכל משפט', 'משפטים שמתחילים על פעמה 2'], 
             steps: ['משפט של 3–4 תווים, ואז שתיקה – כמו לדבר.', 'שאלה (נגמרת באוויר) ותשובה (נגמרת על A).', 'האמר-און ופול-אוף לפחות פעם בכל משפט.'],
             content: [strum('rock8', ['Am', 'G'], 80, 'לופ ליווי – אתה מאלתר מעליו.')] },
         ],
@@ -279,6 +281,14 @@ export const TRACKS: Track[] = [
           { id: 'neck3-five', title: 'חמש הצורות', bpm: { start: 50, target: 80 },
             steps: ['צורה אחת חדשה בכל פעם, למעלה ולמטה. אחר כך כל החמש ברצף, מעלה ומטה בצוואר.', 'מצא את כל ה-A בכל צורה – הם "הבית".'],
             content: PENTA.map((shape, i) => tab(`צורה ${i + 1} (סריגים ${PENTA_FRETS[i]})`, run(...shape))) },
+          { id: 'neck3-ear', title: 'להוציא מנגינה מהשמיעה',
+            steps: [
+              'בחר מנגינה פשוטה שאתה יודע לזמזם (שיר ילדים, פזמון של שיר מוכר).',
+              'מצא את התו הראשון: זמזם אותו, ונגן תווים על מיתר 2 או 3 עד שאחד "מתאים".',
+              'כל תו הבא: עולה או יורד? צעד קטן או קפיצה? נסה – ותקן לפי האוזן.',
+              'כתוב לעצמך את הסריגים. 5 דקות ביום, מנגינה אחת בשבוע – זה אחד התרגילים הכי חזקים לאוזן ולצוואר.',
+            ],
+            content: [{ t: 'go', items: [{ label: 'שמיעה: מרווחים ראשונים', to: 'lesson/ear2a' }, { label: 'שיעור: לשמוע מרווחים', to: 'lesson/t3d' }] }] },
           { id: 'neck3-blues', title: 'סולם בלוז על 12 תיבות',
             steps: ['פנטטוני + התו הכחול (Eb). מנגנים אותו בדרך, לא עוצרים עליו.', 'אלתר על 12 התיבות, ונסה לעבור בין 3 צורות שונות בתוך סבב אחד.'],
             content: [tab('A בלוז – צורה 1', BLUES_A), strum('shuffle', BLUES12, 85)] },
@@ -320,7 +330,7 @@ export const TRACKS: Track[] = [
       {
         title: 'p-i-m-a וארפג\'ים', goal: 'כל אצבע על המיתר שלה, כל התווים באותה עוצמה.',
         exercises: [
-          { id: 'fi1-pima', title: 'p-i-m-a-m-i', bpm: { start: 60, target: 90 },
+          { id: 'fi1-pima', title: 'p-i-m-a-m-i', vary: ['Am–C–Em', 'C–Am–F–G', 'G–Em–C–D', 'Dm–Am–E–Am'], bpm: { start: 60, target: 90 },
             steps: ['**ארפג\'** = מנגנים את תווי האקורד אחד אחרי השני במקום ביחד.', 'p (אגודל) = בס, i = מיתר 3, m = מיתר 2, a = מיתר 1.', 'כל אקורד פעמיים, ואז מעבר. שמיניות שוות.', 'יד ימין רגועה – האצבעות זזות, לא כל היד.'],
             content: [tab('Am', PIMA([5, 0], 2, 1, 0)), tab('C', PIMA([5, 3], 0, 1, 0)), tab('Em', PIMA([6, 0], 0, 0, 0)), metro(60)] },
           { id: 'fi1-pami', title: 'p-a-m-i (בכיוון ההפוך)', bpm: { start: 60, target: 90 },
@@ -336,7 +346,7 @@ export const TRACKS: Track[] = [
           { id: 'fi2-thumb', title: 'אגודל לבד', bpm: { start: 50, target: 90 },
             steps: ['רק האגודל: על C – מיתרים 5-4-5-4. על G – מיתרים 6-4-6-4.', 'עד שזה אוטומטי – אפשר אפילו לדבר תוך כדי.'],
             content: [metro(50)] },
-          { id: 'fi2-travis', title: 'Travis על C, Am ו-G', bpm: { start: 50, target: 80 },
+          { id: 'fi2-travis', title: 'Travis על C, Am ו-G', vary: ['C–Am–G', 'C–F–G (F: אגודל על מיתרים 4-3)', 'G–Em–C–D', 'Am–G–F–E'], bpm: { start: 50, target: 80 },
             steps: ['מוסיפים את האצבעות **בין** מכות האגודל, לפי הטאב.', 'מתבלבל? חזור לאגודל לבד, ואז הוסף אצבע אחת בכל פעם.'],
             content: [tab('C', TRAVIS_C), tab('Am', TRAVIS_AM), tab('G (אגודל על 6-4)', TRAVIS_G), metro(50)] },
         ],
