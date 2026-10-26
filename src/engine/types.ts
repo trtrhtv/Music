@@ -3,7 +3,7 @@ export const DOMAINS: Domain[] = ['theory', 'ear', 'guitar', 'piano'];
 export const DOMAIN_LABEL: Record<Domain, string> = {
   theory: 'תיאוריה',
   ear: 'שמיעה',
-  guitar: 'גיטרה',
+  guitar: 'שיעורי גיטרה',
   piano: 'פסנתר',
 };
 export const DOMAIN_ICON: Record<Domain, string> = {

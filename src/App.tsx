@@ -49,7 +49,7 @@ function Settings() {
   );
 }
 
-const NAV: [string, string, string][] = [['', '🏠', 'בית'], ['plan', '🎸', 'גיטרה'], ['practice', '⚡', 'תרגול'], ['glossary', '📚', 'מילון'], ['tools', '🧰', 'כלים']];
+const NAV: [string, string, string][] = [['', '🏠', 'בית'], ['plan', '🎸', 'גיטרה'], ['practice', '⚡', 'תרגילים'], ['glossary', '📚', 'מילון'], ['tools', '🧰', 'כלים']];
 
 export default function App() {
   const s = useStore();

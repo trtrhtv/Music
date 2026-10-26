@@ -32,11 +32,11 @@ export function Home() {
 
       <button className="cta" onClick={() => go('practice')}>
         <span className="cta-icon">⚡</span>
-        <span><b>תרגול חכם – 10 דקות</b><br /><small>תרגילים מעורבים, עם דגש על מה שהכי צריך חיזוק</small></span>
+        <span><b>תרגילים מהירים – 10 דקות</b><br /><small>שאלות קצרות בתיאוריה ובשמיעה, עם דגש על מה שהכי צריך חיזוק</small></span>
       </button>
 
-      <h3 className="section-title">המסלולים שלך</h3>
-      <p className="muted small">תיאוריה ושמיעה משותפות לשני הכלים; גיטרה ופסנתר – מסלולי טכניקה נפרדים.</p>
+      <h3 className="section-title">שיעורים באפליקציה</h3>
+      <p className="muted small">שיעורים קצרים עם תרגילים על המסך. האימון עם הגיטרה ביד – בלשונית 🎸 גיטרה.</p>
       <div className="tracks">
         {order.map((d) => {
           const ls = lessonsFor(d);

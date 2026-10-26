@@ -34,7 +34,7 @@ describe('guitar program', () => {
     const ids = new Set<string>();
     for (const t of TRACKS) {
       expect(t.stages, t.id).toHaveLength(5);
-      expect(GLOSSARY_BY_ID[t.help], `${t.id} help`).toBeDefined();
+      for (const h of t.help) expect(GLOSSARY_BY_ID[h], `${t.id} help ${h}`).toBeDefined();
       t.stages.forEach((st, i) => {
         const where = `${t.id} stage ${i + 1}`;
         expect(st.exercises.length, where).toBeGreaterThan(0);

@@ -17,7 +17,8 @@ export type Block =
   /** Links to glossary entries. */
   | { t: 'see'; ids: string[] }
   /** Guitar tab, 6 lines from high e to low E. */
-  | { t: 'tab'; lines: string[]; title?: string }
+  /** `sub` = notes per beat when played back (2 = eighths, 3 = triplets). */
+  | { t: 'tab'; lines: string[]; title?: string; sub?: number }
   /** Playable strum pattern; chords are fret voicings (6→1) cycled per bar. */
   | { t: 'strum'; name: string; rhythm: Rhythm; bpm?: number; chords?: number[][]; chordNames?: string[]; note?: string }
   | { t: 'metronome'; bpm?: number; beats?: number }

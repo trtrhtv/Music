@@ -167,6 +167,20 @@ export function passStageTest(track: TrackId): boolean {
   return advanced;
 }
 
+/** Undoes today's pass – of the current stage, or of the stage that just advanced because of it. */
+export function unpassStageTest(track: TrackId) {
+  update((s) => {
+    let stage = s.prog.stage[track];
+    let k = `${track}:${stage}`;
+    if (!(s.prog.passes[k] ?? []).includes(today()) && stage > 1 && (s.prog.passes[`${track}:${stage - 1}`] ?? []).includes(today())) {
+      stage -= 1;
+      k = `${track}:${stage}`;
+    }
+    const dates = (s.prog.passes[k] ?? []).filter((d) => d !== today());
+    return { ...s, prog: { ...s.prog, stage: { ...s.prog.stage, [track]: stage }, passes: { ...s.prog.passes, [k]: dates } } };
+  });
+}
+
 export function logExerciseBpm(exercise: string, bpm: number) {
   update((s) => ({ ...s, days: touchDay(s), prog: { ...s.prog, bpm: { ...s.prog.bpm, [exercise]: [...(s.prog.bpm[exercise] ?? []), bpm] } } }));
 }

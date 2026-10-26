@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Loop, countLabels, parseSlots, type Rhythm } from '../audio/rhythm';
 import { audio, output } from '../audio/synth';
+import { TabPlayer, parseTab } from '../audio/tabPlayer';
 
 function BpmControl({ bpm, setBpm }: { bpm: number; setBpm: (n: number) => void }) {
   const clamp = (n: number) => Math.max(30, Math.min(220, Math.round(n)));
@@ -191,8 +192,20 @@ function TabFull({ lines, title, onClose }: { lines: string[]; title?: string; o
   );
 }
 
-export function TabView({ lines, title }: { lines: string[]; title?: string }) {
+export function TabView({ lines, title, sub = 2 }: { lines: string[]; title?: string; sub?: number }) {
   const [full, setFull] = useState(false);
+  const [bpm, setBpm] = useState(sub === 3 ? 50 : 60);
+  const [step, setStep] = useState(-1);
+  const [playing, setPlaying] = useState(false);
+  const player = useRef<TabPlayer | null>(null);
+  useEffect(() => () => player.current?.stop(), []);
+  const events = parseTab(lines);
+  const toggle = () => {
+    if (playing) { player.current?.stop(); return; }
+    player.current = new TabPlayer(events, setStep, () => { setPlaying(false); setStep(-1); });
+    player.current.start(bpm, sub);
+    setPlaying(true);
+  };
   const text = lines.map((l, i) => `${TAB_NAMES[i]}|${l}|`).join('\n');
   return (
     <figure className="tab-fig">
@@ -200,6 +213,11 @@ export function TabView({ lines, title }: { lines: string[]; title?: string }) {
         <span>{title}</span>
         <button className="link small" onClick={() => setFull(true)}>⛶ מסך מלא</button>
       </figcaption>
+      <div className="tab-play">
+        <button className={`btn small ${playing ? 'ghost' : 'primary'}`} onClick={toggle}>{playing ? '■ עצור' : '▶ השמע'}</button>
+        <BpmControl bpm={bpm} setBpm={(n) => { setBpm(n); if (playing) player.current?.stop(); }} />
+        {playing && <span className="small muted" dir="ltr">{step + 1}/{events.length}</span>}
+      </div>
       <pre className="tab" dir="ltr">{text}</pre>
       {full && <TabFull lines={lines} title={title} onClose={() => setFull(false)} />}
     </figure>

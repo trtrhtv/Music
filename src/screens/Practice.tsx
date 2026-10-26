@@ -85,7 +85,7 @@ export function Practice() {
 
   return (
     <div className="screen">
-      <h1>⚡ תרגול חכם</h1>
+      <h1>⚡ תרגילים מהירים</h1>
       <p className="lead">סבב של {ROUND} תרגילים מכל מה שפתוח לך, עם עדיפות למיומנויות החלשות ולמה שלא תרגלת מזמן.</p>
       <div className="chips">
         <button className={`chip ${filter === 'all' ? 'on' : ''}`} onClick={() => setFilter('all')}>הכל</button>

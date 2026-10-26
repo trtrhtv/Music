@@ -369,9 +369,9 @@ h3 { font-size: 1.05rem; }
 
 /* Guitar program */
 .track-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 8px 0; }
-.track-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 4px; text-align: start; color: inherit; }
-.track-card .tc-icon { font-size: 1.5rem; }
-.track-card .bar { margin-top: 6px; }
+.prog-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 4px; text-align: start; color: inherit; }
+.prog-card .tc-icon { font-size: 1.5rem; }
+.prog-card .bar { margin-top: 6px; }
 .session-block { background: var(--bg2); border: 1px solid var(--line); border-radius: 16px; padding: 12px; margin: 12px 0; }
 .sb-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .sb-head h3 { margin: 0; }
@@ -384,3 +384,9 @@ h3 { font-size: 1.05rem; }
 .stage-dots span { width: 18px; height: 8px; border-radius: 4px; background: var(--line); }
 .stage-dots span.done { background: var(--ok); }
 .stage-dots span.on { background: var(--accent); }
+.tab-play { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+.tab-play .bpm-ctl { margin: 0; }
+.help-links { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 8px 0; }
+.tab-play { margin: 2px 0 6px; }
+.tab-play .bpm-ctl button { min-width: 34px; height: 30px; padding: 0 6px; font-size: 0.85rem; }
+.tab-play .bpm-ctl .bpm-val { font-size: 1.1rem; }

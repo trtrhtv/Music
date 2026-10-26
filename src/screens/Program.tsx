@@ -12,7 +12,7 @@ import {
 import { go } from '../router';
 import { useRecordings } from '../state/recordings';
 import {
-  PASS_DAYS, STAGES, finishSession, logExerciseBpm, passStageTest, placeProgram, setTrackStage, today, useStore, type State,
+  PASS_DAYS, STAGES, finishSession, logExerciseBpm, passStageTest, placeProgram, setTrackStage, today, unpassStageTest, useStore, type State,
 } from '../state/store';
 
 const WEEK = 7 * 86400000;
@@ -36,6 +36,14 @@ function reviewExercises(s: State, n = 3): { ex: Exercise; track: TrackId }[] {
 
 /* ───────── Small pieces ───────── */
 
+/** What to aim for next time, from the last logged value. */
+function nextHint(last: number, ex: Exercise) {
+  const { target, unit } = ex.bpm!;
+  if (last >= target) return '🎯 הגעת ליעד! עכשיו: לנגן את זה רגוע ונקי גם ביום אחר.';
+  const next = Math.min(target, last + (unit === 'changes' ? 2 : 5));
+  return unit === 'changes' ? `בפעם הבאה: נסה ${next} מעברים בדקה.` : `בפעם הבאה: חימום ב-${last}, ואז נסה ${next}. לא נקי? חזור ל-${last}.`;
+}
+
 function BpmLog({ ex }: { ex: Exercise }) {
   const s = useStore();
   const log = s.prog.bpm[ex.id] ?? [];
@@ -49,6 +57,7 @@ function BpmLog({ ex }: { ex: Exercise }) {
         <button className="btn small" onClick={() => { const n = Number(val); if (n >= 1 && n <= 240) logExerciseBpm(ex.id, n); }}>רשום</button>
       </div>
       {log.length > 0 && <div className="muted small" dir="ltr">{log.slice(-6).join(' → ')}</div>}
+      {log.length > 0 && <div className="small">{nextHint(log[log.length - 1], ex)}</div>}
     </div>
   );
 }
@@ -88,9 +97,19 @@ function StageTest({ track }: { track: TrackId }) {
       <div className="small"><b>🏁 מבחן השלב</b> · צריך לעבור ב-{PASS_DAYS} ימים שונים ({dates.length}/{PASS_DAYS})</div>
       <p>{rich(stage.test)}</p>
       {passedToday
-        ? <p className="small ok-text">✓ עברת היום. {dates.length < PASS_DAYS ? 'נסה שוב מחר – אם זה עדיין יושב, השלב מאחוריך.' : ''}</p>
-        : <button className="btn primary wide" onClick={() => setMsg(passStageTest(track) ? `🎉 שלב ${n} הושלם! עוברים לשלב ${n + 1}.` : '✓ נרשם. עוד יום אחד ועברת את השלב.')}>עברתי את המבחן היום</button>}
-      {msg && <p className="small ok-text">{msg}</p>}
+        ? <p className="small ok-text">✓ עברת היום. {dates.length < PASS_DAYS ? 'נסה שוב מחר – אם זה עדיין יושב, השלב מאחוריך.' : ''} <button className="link" onClick={() => { unpassStageTest(track); setMsg(''); }}>בטל</button></p>
+        : <button className="btn primary wide" onClick={() => setMsg(passStageTest(track) ? `🎉 שלב ${n} הושלם! עוברים לשלב ${n + 1}.` : '')}>עברתי את המבחן היום</button>}
+      {msg && <p className="small ok-text">{msg} <button className="link" onClick={() => { unpassStageTest(track); setMsg(''); }}>בטל</button></p>}
+    </div>
+  );
+}
+
+/** Glossary entries that explain a track's words. */
+function HelpLinks({ track }: { track: TrackId }) {
+  return (
+    <div className="help-links small">
+      <span className="muted">📖 מילה לא ברורה?</span>
+      {TRACK_BY_ID[track].help.map((h) => <button key={h} className="link" onClick={() => go('glossary/' + h)}>{GLOSSARY_BY_ID[h].title}</button>)}
     </div>
   );
 }
@@ -116,6 +135,7 @@ function StagePanel({ track, min }: { track: TrackId; min?: number }) {
       <p className="small"><b>שלב {n}/{STAGES}: {stage.title}</b> – {stage.goal}</p>
       {stage.exercises.map((ex, i) => <ExerciseCard key={ex.id} ex={ex} label={each ? `כ-${each} דק'` : undefined} open={i === 0} />)}
       <StageTest track={track} />
+      <HelpLinks track={track} />
     </>
   );
 }
@@ -155,8 +175,8 @@ function BlockView({ b, sessionId }: { b: SessionBlock; sessionId: string }) {
     body = (
       <>
         {head('📖', 'תיאוריה ושמיעה')}
-        <p className="small">השיעור הבא בקורס התיאוריה, ואז כמה דקות של תרגול חכם.</p>
-        <Blocks blocks={[{ t: 'go', items: [...(l ? [{ label: `שיעור: ${l.title}`, to: 'lesson/' + l.id }] : []), { label: 'תרגול חכם', to: 'practice' }] }]} />
+        <p className="small">השיעור הבא בקורס התיאוריה, ואז כמה דקות של תרגילים מהירים.</p>
+        <Blocks blocks={[{ t: 'go', items: [...(l ? [{ label: `שיעור: ${l.title}`, to: 'lesson/' + l.id }] : []), { label: 'תרגילים מהירים', to: 'practice' }] }]} />
       </>
     );
   } else {
@@ -236,7 +256,7 @@ export function ProgramHome() {
         {TRACKS.map((t) => {
           const n = stageOf(s, t.id);
           return (
-            <button key={t.id} className="track-card" onClick={() => go('plan/t/' + t.id)}>
+            <button key={t.id} className="prog-card" onClick={() => go('plan/t/' + t.id)}>
               <span className="tc-icon">{t.icon}</span>
               <b>{t.title}</b>
               <small className="muted">{n > STAGES ? 'הושלם 🏆' : `שלב ${n}: ${t.stages[n - 1].title}`}</small>
@@ -262,13 +282,12 @@ export function TrackView({ id }: { id: TrackId }) {
   const [peek, setPeek] = useState<number | null>(null);
   if (!t) return <div className="screen"><p>לא נמצא</p></div>;
   const n = stageOf(s, id);
-  const help = GLOSSARY_BY_ID[t.help];
   return (
     <div className="screen">
       <button className="back" onClick={() => go('plan')}>→ לגיטרה</button>
       <h1>{t.icon} {t.title}</h1>
       <p className="lead">{t.desc}</p>
-      {help && <button className="link small" onClick={() => go('glossary/' + t.help)}>📖 {help.title}</button>}
+      <HelpLinks track={id} />
       {t.stages.map((st, i) => {
         const k = i + 1;
         const state = k < n ? 'passed' : k === n ? 'open' : '';
