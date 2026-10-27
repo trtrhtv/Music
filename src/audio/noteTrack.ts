@@ -77,7 +77,8 @@ export class NoteTracker {
     this.candidate = m;
     const need = expected === undefined || m === expected || Math.abs(m - expected) === 12 ? 3 : OTHER_FRAMES;
     // The note reported last, heard again while another one is expected, is almost always still ringing.
-    const ringing = m === this.last && expected !== undefined && m !== expected && Math.abs(m - expected) !== 12;
+    // (An octave counts as the same note: a low string is sometimes reported an octave up.)
+    const ringing = this.last !== null && (m - this.last) % 12 === 0 && expected !== undefined && m !== expected && Math.abs(m - expected) !== 12;
     if (this.steady === need && !ringing && (this.armed || m !== this.last)) {
       this.last = m;
       this.armed = false;
