@@ -8,7 +8,7 @@ import { Placement } from './screens/Placement';
 import { Practice } from './screens/Practice';
 import { Tools } from './screens/Tools';
 import { Glossary } from './screens/Glossary';
-import { PlacementView, ProgramHome, ProgressView, SessionView, TrackView } from './screens/Program';
+import { PlacementView, ProgramHome, ProgressView, CoachView, SessionView, TrackView } from './screens/Program';
 import { SongView } from './screens/Songs';
 import { ReviewRunner } from './screens/Review';
 import { downloadBackup, restoreBackup } from './state/backup';
@@ -102,7 +102,7 @@ export default function App() {
   else if (page === 'glossary') body = <Glossary key={arg ?? ''} id={arg} />;
   else if (page === 'plan') {
     body = arg === 's' && arg2 ? <SessionView key={arg2} id={arg2} /> : arg === 't' && arg2 ? <TrackView key={arg2} id={arg2 as TrackId} />
-      : arg === 'placement' ? <PlacementView /> : arg === 'progress' ? <ProgressView /> : <ProgramHome />;
+      : arg === 'placement' ? <PlacementView /> : arg === 'progress' ? <ProgressView /> : arg === 'coach' ? <CoachView /> : <ProgramHome />;
   } else if (page === 'songs' && arg) body = <SongView key={arg} id={arg} />;
   else if (page === 'settings') body = <Settings />;
   else body = <Home />;

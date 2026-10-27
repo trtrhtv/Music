@@ -467,6 +467,11 @@ export const TRACKS: Track[] = [
 
 export const TRACK_BY_ID = Object.fromEntries(TRACKS.map((t) => [t.id, t])) as Record<TrackId, Track>;
 
+/** Which track and stage (1-based) each exercise belongs to. */
+export const EXERCISE_HOME: Record<string, { track: TrackId; stage: number }> = Object.fromEntries(
+  TRACKS.flatMap((t) => t.stages.flatMap((st, i) => st.exercises.map((ex) => [ex.id, { track: t.id, stage: i + 1 }]))),
+);
+
 /* ───────── Practice sessions: about an hour each, can be done separately during the day ───────── */
 
 export type SessionBlock =

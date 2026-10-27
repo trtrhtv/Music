@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Blocks } from '../components/Blocks';
 import { Recorder, Take } from '../components/Recorder';
 import { Timer } from '../components/RhythmTools';
@@ -10,13 +10,15 @@ import { rich } from '../components/rich';
 import { LESSONS } from '../data/curriculum';
 import { GLOSSARY_BY_ID } from '../data/glossary';
 import {
-  SESSIONS, SESSION_BY_ID, TRACKS, TRACK_BY_ID, hoursText, nextSession, programIntro, sessionMinutes,
+  EXERCISE_HOME, SESSIONS, SESSION_BY_ID, TRACKS, TRACK_BY_ID, hoursText, nextSession, programIntro, sessionMinutes,
   type Exercise, type SessionBlock, type TrackId,
 } from '../data/tracks';
 import { go } from '../router';
 import { useRecordings } from '../state/recordings';
+import { HeardCtx } from '../state/heardContext';
+import { ACTIONABLE, adviceAll, type Advice } from '../engine/coach';
 import {
-  PASS_DAYS, STAGES, finishSession, logExerciseBpm, passStageTest, placeProgram, setTrackStage, today, unpassStageTest, useStore, type State,
+  PASS_DAYS, STAGES, finishSession, logExerciseBpm, markCoachSeen, passStageTest, placeProgram, setTrackStage, setTrackTempo, today, unpassStageTest, useStore, type State,
 } from '../state/store';
 
 const WEEK = 7 * 86400000;
@@ -52,6 +54,8 @@ function nextHint(last: number, ex: Exercise) {
 
 function BpmLog({ ex }: { ex: Exercise }) {
   const s = useStore();
+  const home = EXERCISE_HOME[ex.id];
+  const tempo = home && s.prog.tempo[home.track];
   const log = s.prog.bpm[ex.id] ?? [];
   const [val, setVal] = useState(String(log[log.length - 1] ?? ex.bpm!.start));
   const changes = ex.bpm!.unit === 'changes';
@@ -64,13 +68,31 @@ function BpmLog({ ex }: { ex: Exercise }) {
       </div>
       {log.length > 0 && <div className="muted small" dir="ltr">{log.slice(-6).join(' → ')}</div>}
       {log.length > 0 && <div className="small">{nextHint(log[log.length - 1], ex)}</div>}
+      {tempo && !changes && (
+        <div className="small coach-tempo">🎧 לפי מה ששמעתי: השבוע עבוד במסלול הזה סביב <b>{tempo} BPM</b>, ועלה 5 כשזה נקי פעמיים. <button className="link" onClick={() => setTrackTempo(home!.track, undefined)}>בטל</button></div>
+      )}
     </div>
   );
 }
 
+/** Mic timing check inside an exercise, at the tempo being practised. */
+function ExerciseTiming({ ex }: { ex: Exercise }) {
+  const s = useStore();
+  const [open, setOpen] = useState(false);
+  const home = EXERCISE_HOME[ex.id];
+  const sub = home && TRACK_BY_ID[home.track].stages[home.stage - 1].timing?.sub;
+  if (!ex.bpm || ex.bpm.unit === 'changes' || !sub) return null;
+  const log = s.prog.bpm[ex.id] ?? [];
+  const bpm = s.prog.tempo[home.track] ?? log[log.length - 1] ?? ex.bpm.start;
+  return open ? <TimingCheck bpm={bpm} sub={sub} bars={4} />
+    : <button className="btn small ghost" onClick={() => setOpen(true)}>🎤 בדיקת קצב ב-{bpm} BPM (4 תיבות)</button>;
+}
+
 function ExerciseCard({ ex, label, open: initial = false }: { ex: Exercise; label?: string; open?: boolean }) {
   const [open, setOpen] = useState(initial);
+  const home = EXERCISE_HOME[ex.id];
   return (
+    <HeardCtx.Provider value={home ? { ...home, ex: ex.id } : null}>
     <div className="plan-block">
       <div className="pb-head">
         <button className="pb-title" onClick={() => setOpen(!open)}>
@@ -92,9 +114,11 @@ function ExerciseCard({ ex, label, open: initial = false }: { ex: Exercise; labe
           {ex.vary && <p className="vary small">🔄 <b>הווריאציה של היום:</b> {rich(ex.vary[dayIndex() % ex.vary.length])}</p>}
           {ex.content && <Blocks blocks={ex.content} />}
           {ex.bpm && <BpmLog ex={ex} />}
+          <ExerciseTiming ex={ex} />
         </div>
       )}
     </div>
+    </HeardCtx.Provider>
   );
 }
 
@@ -115,6 +139,7 @@ function StageTest({ track }: { track: TrackId }) {
   const dates = s.prog.passes[`${track}:${n}`] ?? [];
   const passedToday = dates.includes(today());
   return (
+    <HeardCtx.Provider value={{ track, stage: n }}>
     <div className="test-card">
       <div className="small"><b>🏁 מבחן השלב</b> · צריך לעבור ב-{PASS_DAYS} ימים שונים ({dates.length}/{PASS_DAYS})</div>
       <p>{rich(stage.test)}</p>
@@ -125,6 +150,7 @@ function StageTest({ track }: { track: TrackId }) {
         : <button className="btn primary wide" onClick={() => setMsg(passStageTest(track) ? `🎉 שלב ${n} הושלם! עוברים לשלב ${n + 1}.` : '')}>עברתי את המבחן היום</button>}
       {msg && <p className="small ok-text">{msg} <button className="link" onClick={() => { unpassStageTest(track); setMsg(''); }}>בטל</button></p>}
     </div>
+    </HeardCtx.Provider>
   );
 }
 
@@ -358,6 +384,7 @@ export function ProgramHome() {
       </div>
       <div className="row">
         <button className="btn ghost" onClick={() => go('plan/progress')}>📈 ההתקדמות שלי</button>
+        <button className="btn ghost" onClick={() => go('plan/coach')}>🎧 מה שמעתי</button>
         <button className="btn ghost" onClick={() => go('songs/romanza')}>🎼 Romanza</button>
       </div>
       <details className="plan-intro"><summary>איך התוכנית עובדת</summary><Blocks blocks={programIntro} /></details>
@@ -520,6 +547,53 @@ export function ProgressView() {
       <p className="small">ההקלטה השבועית נמצאת בסוף "שעה של חזרה" (פעם בשבוע). כאן אפשר להקשיב לכולן לפי הסדר.</p>
       {recs.length === 0 ? <p className="muted small">עוד אין הקלטות.</p> : recs.map((r) => <Take key={r.id} r={r} />)}
       <details className="plan-intro"><summary>הקלטה עכשיו</summary><Recorder day={weekKey()} /></details>
+    </div>
+  );
+}
+
+/* ───────── What I heard: level suggestions from the mic checks ───────── */
+
+const ADVICE_ICON: Record<Advice['kind'], string> = { more: '👂', keep: '✅', slow: '🐢', down: '↩️', ready: '🏁', up: '🚀' };
+
+function AdviceCard({ a }: { a: Advice }) {
+  const s = useStore();
+  const t = TRACK_BY_ID[a.track];
+  const [done, setDone] = useState('');
+  const tempo = s.prog.tempo[a.track];
+  return (
+    <div className={`advice ${ACTIONABLE.includes(a.kind) ? 'act' : ''}`}>
+      <div className="small muted">{t.icon} {t.title} · שלב {a.stage}: {t.stages[a.stage - 1].title}</div>
+      <b>{ADVICE_ICON[a.kind]} {a.title}</b>
+      <ul className="small">{a.detail.map((d, i) => <li key={i}>{rich(d)}</li>)}</ul>
+      {done ? <p className="small ok-text">{done}</p> : (
+        <div className="row wrap tight">
+          {a.kind === 'slow' && a.bpm && tempo !== a.bpm && <button className="btn small primary" onClick={() => { setTrackTempo(a.track, a.bpm); setDone(`✓ בתרגילי המסלול יופיע עכשיו: עבוד סביב ${a.bpm} BPM.`); }}>האט ל-{a.bpm} BPM</button>}
+          {a.kind === 'down' && <button className="btn small primary" onClick={() => { setTrackStage(a.track, a.stage - 1); setDone(`✓ חזרת לשלב ${a.stage - 1}. השלב הנוכחי יחכה לך.`); }}>חזור לשלב {a.stage - 1}</button>}
+          {a.kind === 'up' && <button className="btn small primary" onClick={() => { setTrackStage(a.track, a.stage + 1); setDone(`✓ עברת לשלב ${a.stage + 1}.`); }}>עבור לשלב {a.stage + 1}</button>}
+          {(a.kind === 'ready' || a.kind === 'up' || a.kind === 'more') && <button className="btn small ghost" onClick={() => go('plan/t/' + a.track)}>{a.kind === 'more' ? 'לתרגילי המסלול' : 'למבחן השלב'}</button>}
+        </div>
+      )}
+      {tempo && a.kind !== 'slow' && <p className="small muted">הצעת קצב פעילה: {tempo} BPM. <button className="link" onClick={() => setTrackTempo(a.track, undefined)}>בטל</button></p>}
+    </div>
+  );
+}
+
+export function CoachView() {
+  const s = useStore();
+  const [list] = useState(() => adviceAll(s, today()));
+  useEffect(() => { markCoachSeen(); }, []);
+  const act = list.filter((a) => ACTIONABLE.includes(a.kind));
+  const rest = list.filter((a) => !ACTIONABLE.includes(a.kind));
+  return (
+    <div className="screen">
+      <button className="back" onClick={() => go('plan')}>→ לגיטרה</button>
+      <h1>🎧 מה שמעתי</h1>
+      <p className="small muted">מכל בדיקות המיקרופון (קצב ותווים) של 3 השבועות האחרונים, בשלב שאתה נמצא בו בכל מסלול. אני רק מציע – אתה מחליט.</p>
+      {act.length > 0 && <h3 className="section-title">הצעות</h3>}
+      {act.map((a) => <AdviceCard key={a.track} a={a} />)}
+      {rest.length > 0 && <h3 className="section-title">{act.length ? 'שאר המסלולים' : 'המסלולים'}</h3>}
+      {rest.map((a) => <AdviceCard key={a.track} a={a} />)}
+      {!list.length && <p>סיימת את כל המסלולים 🏆</p>}
     </div>
   );
 }

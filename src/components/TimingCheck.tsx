@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { audio, playNote } from '../audio/synth';
 import { detectOnsets, scoreTiming, type TimingResult } from '../audio/timing';
 import { MicDenied } from './MicTasks';
+import { useRecordHeard } from '../state/heardContext';
 
 /** Share of notes that must land on the grid to pass. */
 export const TIMING_PASS = 0.85;
@@ -16,6 +17,7 @@ export function TimingCheck({ bpm, sub, bars = 8 }: { bpm: number; sub: number; 
   const [beat, setBeat] = useState(0);
   const [res, setRes] = useState<TimingResult | null>(null);
   const stopRef = useRef<() => void>(() => {});
+  const record = useRecordHeard();
   useEffect(() => () => stopRef.current(), []);
 
   async function start() {
@@ -53,7 +55,10 @@ export function TimingCheck({ bpm, sub, bars = 8 }: { bpm: number; sub: number; 
       for (const a of chunks) { all.set(a, o); o += a.length; }
       // Skip the count-in (and its echo): analyse from just before the first played beat.
       const from = Math.max(0, Math.round((playStart - 0.15 - t0) * c.sampleRate));
-      setRes(scoreTiming(detectOnsets(all.subarray(from), c.sampleRate), spb / sub));
+      const r = scoreTiming(detectOnsets(all.subarray(from), c.sampleRate), spb / sub);
+      setRes(r);
+      // Too few notes heard is a mic problem, not a playing one – don't count it.
+      if (r.count >= (bars * BEATS) / 2) record({ kind: 'timing', score: r.onTime, bpm, drift: r.driftMs });
       setPhase('done');
     };
     timers.push(window.setTimeout(() => stop(true), (end - c.currentTime) * 1000));

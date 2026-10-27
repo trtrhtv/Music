@@ -2,6 +2,7 @@ import { LESSONS, UNIT_TITLES, lessonsFor } from '../data/curriculum';
 import { DOMAIN_ICON, DOMAIN_LABEL, LEVEL_LABEL, type Domain } from '../engine/types';
 import { SESSION_BY_ID, hoursText, nextSession, sessionMinutes } from '../data/tracks';
 import { go } from '../router';
+import { coachDue } from '../engine/coach';
 import { lessonStatus, setHidePiano, streak, today, useStore, type State } from '../state/store';
 import { useRecordings } from '../state/recordings';
 import { REVIEW_SIZE, useDueReviews } from '../state/reviewDue';
@@ -47,6 +48,12 @@ export function Home() {
         </button>
       )}
 
+      {s.prog.placed && coachDue(s, today()) && (
+        <button className="lesson-row open" onClick={() => go('plan/coach')}>
+          <span className="lr-badge">🎧</span>
+          <span className="lr-title">מה שמעתי – והאם להתאים את הרמה<br /><small className="muted">סיכום של בדיקות המיקרופון שלך, עם הצעות לכל מסלול</small></span>
+        </button>
+      )}
       {due.length > 0 && (
         <button className="lesson-row open" onClick={() => go('review')}>
           <span className="lr-badge">🔁</span>

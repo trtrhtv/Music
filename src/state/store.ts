@@ -15,6 +15,21 @@ export interface Profile {
 
 export interface JournalEntry { date: string; session: string; goal: string; good: string; next: string }
 
+/** One microphone check of the guitar program: what was heard, where, and how well (0–1). */
+export interface Heard {
+  date: string;
+  kind: 'timing' | 'notes';
+  track: TrackId;
+  stage: number;
+  /** The exercise it was played in (absent: the stage test). */
+  ex?: string;
+  bpm?: number;
+  score: number;
+  /** Timing: average drift in ms (+ slowing down, − rushing). Notes: wrong notes. */
+  drift?: number;
+  wrong?: number;
+}
+
 export interface State {
   version: 1;
   placed: boolean;
@@ -43,6 +58,11 @@ export interface State {
     sessions: Record<string, string[]>;
     /** Practice journal: the goal set before a session and the reflection after it. */
     journal: JournalEntry[];
+    /** Every mic check, so the level can be adjusted to how the playing actually sounds. */
+    heard: Heard[];
+    /** When "what I heard" was last opened, and the tempo it suggested per track (until it's met or replaced). */
+    coachSeen: string;
+    tempo: Partial<Record<TrackId, number>>;
   };
 }
 
@@ -59,7 +79,7 @@ const fresh = (): State => ({
   xp: 0,
   prefs: { hidePiano: false },
   review: {},
-  prog: { placed: false, stage: { tech: 1, rhythm: 1, neck: 1, finger: 1 }, passes: {}, bpm: {}, sessions: {}, journal: [] },
+  prog: { placed: false, stage: { tech: 1, rhythm: 1, neck: 1, finger: 1 }, passes: {}, bpm: {}, sessions: {}, journal: [], heard: [], coachSeen: '', tempo: {} },
 });
 
 /** Fills in fields added after the data was saved. */
@@ -233,6 +253,25 @@ export function finishSession(id: string, note?: Omit<JournalEntry, 'date' | 'se
     const done = s.prog.sessions[today()] ?? [];
     const journal = note && (note.goal || note.good || note.next) ? [...s.prog.journal, { date: today(), session: id, ...note }] : s.prog.journal;
     return { ...s, days: touchDay(s), prog: { ...s.prog, journal, sessions: { ...s.prog.sessions, [today()]: [...done, id] } } };
+  });
+}
+
+/** Keeps the last few hundred mic checks – enough for weeks of practice. */
+const HEARD_KEEP = 400;
+export function recordHeard(h: Omit<Heard, 'date'>) {
+  update((s) => ({ ...s, days: touchDay(s), prog: { ...s.prog, heard: [...s.prog.heard, { date: today(), ...h }].slice(-HEARD_KEEP) } }));
+}
+
+export function markCoachSeen() {
+  update((s) => ({ ...s, prog: { ...s.prog, coachSeen: today() } }));
+}
+
+/** The practice tempo suggested for a track (undefined clears it). */
+export function setTrackTempo(track: TrackId, bpm: number | undefined) {
+  update((s) => {
+    const tempo = { ...s.prog.tempo };
+    if (bpm === undefined) delete tempo[track]; else tempo[track] = bpm;
+    return { ...s, prog: { ...s.prog, tempo } };
   });
 }
 

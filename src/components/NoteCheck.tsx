@@ -3,6 +3,7 @@ import { MicListener } from '../audio/mic';
 import { NoteTracker, matchNote, type Mark } from '../audio/noteTrack';
 import { noteName } from '../theory/theory';
 import { MicDenied } from './MicTasks';
+import { useRecordHeard } from '../state/heardContext';
 
 /** Listens while you play a single-note tab and checks each note against it. */
 export function NoteCheck({ notes, onClose }: { notes: number[]; onClose: () => void }) {
@@ -13,6 +14,7 @@ export function NoteCheck({ notes, onClose }: { notes: number[]; onClose: () => 
   const st = useRef({ pos: 0, marks: notes.map((): Mark => 'pending'), wrong: 0 });
   // The parent rebuilds the array on every render; listen once, with the notes it opened with.
   const expected = useRef(notes);
+  const record = useRef(useRecordHeard());
 
   useEffect(() => {
     const mic = new MicListener();
@@ -22,7 +24,12 @@ export function NoteCheck({ notes, onClose }: { notes: number[]; onClose: () => 
       st.current = { pos: r.pos, marks: r.marks, wrong: st.current.wrong + (r.wrong ? 1 : 0) };
       setMarks(r.marks);
       setWrong(st.current.wrong);
-      if (r.pos >= expected.current.length) mic.stop();
+      if (r.pos >= expected.current.length) {
+        mic.stop();
+        // Wrong notes count against the score: 12 right with 3 wrong = 12/15.
+        const ok = r.marks.filter((m) => m === 'ok').length;
+        record.current({ kind: 'notes', score: ok / (expected.current.length + st.current.wrong), wrong: st.current.wrong });
+      }
     });
     mic.start((f) => tracker.frame(f, expected.current[st.current.pos])).catch(() => setDenied(true));
     return () => mic.stop();
