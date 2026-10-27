@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SESSIONS, TRACKS, TRACK_BY_ID } from '../data/tracks';
+import { SESSIONS, TRACKS, TRACK_BY_ID, hoursText, nextSession, sessionMinutes } from '../data/tracks';
 import { SONGS, SONG_BY_ID } from '../data/songs';
 import { CH, STRUMS } from '../data/guitarLib';
 import { parseSlots } from '../audio/rhythm';
@@ -77,5 +77,22 @@ describe('guitar program', () => {
       const played = f.filter((x) => x > 0);
       if (played.length) expect(Math.max(...played) - Math.min(...played), n).toBeLessThanOrEqual(4);
     }
+  });
+});
+
+describe('session rotation and time', () => {
+  it('suggests the next full hour in the rotation, ignoring the short half hour', () => {
+    expect(nextSession({})).toBe('A');
+    expect(nextSession({ '2026-10-25': ['A'] })).toBe('B');
+    expect(nextSession({ '2026-10-25': ['A', 'B'], '2026-10-26': ['C', 'Q'] })).toBe('A');
+    expect(nextSession({ '2026-10-26': ['Q'], '2026-10-25': ['B'] })).toBe('C');
+    expect(nextSession({ '2026-10-26': ['A'], '2026-10-25': ['C', 'B'] })).toBe('B');
+  });
+  it('counts minutes per session and says them in words', () => {
+    expect(sessionMinutes(['A', 'Q'])).toBe(90);
+    expect(hoursText(30)).toBe('חצי שעה');
+    expect(hoursText(90)).toBe('שעה וחצי');
+    expect(hoursText(120)).toBe('שעתיים');
+    expect(hoursText(150)).toBe('2.5 שעות');
   });
 });

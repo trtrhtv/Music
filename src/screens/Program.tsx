@@ -10,7 +10,7 @@ import { rich } from '../components/rich';
 import { LESSONS } from '../data/curriculum';
 import { GLOSSARY_BY_ID } from '../data/glossary';
 import {
-  SESSIONS, SESSION_BY_ID, TRACKS, TRACK_BY_ID, programIntro,
+  SESSIONS, SESSION_BY_ID, TRACKS, TRACK_BY_ID, hoursText, nextSession, programIntro, sessionMinutes,
   type Exercise, type SessionBlock, type TrackId,
 } from '../data/tracks';
 import { go } from '../router';
@@ -315,18 +315,26 @@ export function ProgramHome() {
     );
   }
   const doneToday = s.prog.sessions[today()] ?? [];
+  const next = nextSession(s.prog.sessions);
+  const minToday = sessionMinutes(doneToday);
   return (
     <div className="screen">
       <h1>🎸 תוכנית גיטרה</h1>
       <h3 className="section-title">התרגול של היום</h3>
-      <p className="muted small">כל שעה עומדת בפני עצמה – אפשר אחת עכשיו ואחת בערב. היום: {doneToday.length ? `${doneToday.length} שעות ✓` : 'עוד לא התחלת'}.</p>
-      {SESSIONS.map((ss) => (
-        <button key={ss.id} className={`lesson-row ${doneToday.includes(ss.id) ? 'passed' : 'open'}`} onClick={() => go('plan/s/' + ss.id)}>
-          <span className="lr-badge">{doneToday.includes(ss.id) ? '✓' : '▶'}</span>
-          <span className="lr-title">{ss.title}<br /><small className="muted">{ss.desc}</small></span>
-          <span className="lr-meta small muted">{ss.blocks.reduce((n, b) => n + b.min, 0)} דק'</span>
-        </button>
-      ))}
+      <p className="muted small">השעות מתחלפות לפי הסדר – טכניקה ומקצב, צוואר ופינגרסטייל, חזרה ותיאוריה – כך שכל מסלול מקבל את שלו. כל שעה עומדת בפני עצמה: אפשר אחת עכשיו ואחת בערב. היום: {minToday ? `${hoursText(minToday)} ✓` : 'עוד לא התחלת'}.</p>
+      {SESSIONS.map((ss) => {
+        const done = doneToday.includes(ss.id);
+        return (
+          <button key={ss.id} className={`lesson-row ${ss.id === next ? 'open next' : done ? 'passed' : ''}`} onClick={() => go('plan/s/' + ss.id)}>
+            <span className="lr-badge">{done ? '✓' : '▶'}</span>
+            <span className="lr-title">
+              {ss.id === next && <span className="next-chip">{done ? 'הבאה בסבב (כבר עשית היום)' : 'מומלץ עכשיו'}</span>}
+              {ss.title}<br /><small className="muted">{ss.desc}</small>
+            </span>
+            <span className="lr-meta small muted">{ss.blocks.reduce((n, b) => n + b.min, 0)} דק'</span>
+          </button>
+        );
+      })}
       <h3 className="section-title">המסלולים</h3>
       <div className="track-grid">
         {TRACKS.map((t) => {
@@ -459,7 +467,7 @@ export function ProgressView() {
   const s = useStore();
   const recs = useRecordings();
   const days = Object.keys(s.prog.sessions).length;
-  const hours = Object.values(s.prog.sessions).flat().reduce((n, id) => n + (SESSION_BY_ID[id]?.blocks.reduce((m, b) => m + b.min, 0) ?? 0), 0) / 60;
+  const hours = sessionMinutes(Object.values(s.prog.sessions).flat()) / 60;
   const exercises = TRACKS.flatMap((t) => t.stages.flatMap((st, i) => st.exercises.filter((ex) => ex.bpm && s.prog.bpm[ex.id]?.length).map((ex) => ({ t, i, ex, log: s.prog.bpm[ex.id] }))));
   return (
     <div className="screen">

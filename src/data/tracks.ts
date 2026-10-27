@@ -426,6 +426,28 @@ export const SESSIONS: Session[] = [
 ];
 export const SESSION_BY_ID = Object.fromEntries(SESSIONS.map((s) => [s.id, s]));
 
+/** The three full hours rotate A → B → C; the short half hour (Q) stands outside the rotation. */
+const ROTATION = ['A', 'B', 'C'];
+
+/** The next hour in the rotation, after the last full hour done (by date, then order within the day). */
+export function nextSession(done: Record<string, string[]>): string {
+  const last = Object.keys(done).sort().flatMap((d) => done[d]).filter((id) => ROTATION.includes(id)).pop();
+  return last ? ROTATION[(ROTATION.indexOf(last) + 1) % ROTATION.length] : ROTATION[0];
+}
+
+/** Minutes of practice in a list of finished sessions. */
+export const sessionMinutes = (ids: string[]) => ids.reduce((n, id) => n + (SESSION_BY_ID[id]?.blocks.reduce((m: number, b: SessionBlock) => m + b.min, 0) ?? 0), 0);
+
+/** "חצי שעה", "שעה", "שעה וחצי", "שעתיים", "2.5 שעות"… */
+export function hoursText(min: number): string {
+  const h = Math.round((min / 60) * 2) / 2;
+  if (h === 0.5) return 'חצי שעה';
+  if (h === 1) return 'שעה';
+  if (h === 1.5) return 'שעה וחצי';
+  if (h === 2) return 'שעתיים';
+  return `${h} שעות`;
+}
+
 export const programIntro: Block[] = [
   p('**ארבעה מסלולים שמתקדמים במקביל:** טכניקה, מקצב, צוואר ואלתור, ופינגרסטייל. כל מסלול בנוי מ-5 שלבים.'),
   list(

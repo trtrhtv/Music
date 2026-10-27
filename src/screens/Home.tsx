@@ -1,5 +1,6 @@
 import { LESSONS, UNIT_TITLES, lessonsFor } from '../data/curriculum';
 import { DOMAIN_ICON, DOMAIN_LABEL, LEVEL_LABEL, type Domain } from '../engine/types';
+import { SESSION_BY_ID, hoursText, nextSession, sessionMinutes } from '../data/tracks';
 import { go } from '../router';
 import { lessonStatus, setHidePiano, streak, today, useStore, type State } from '../state/store';
 import { useRecordings } from '../state/recordings';
@@ -30,10 +31,21 @@ export function Home() {
         </div>
       </header>
 
-      <button className="cta plan-cta" onClick={() => go('plan')}>
-        <span className="cta-icon">🎸</span>
-        <span><b>{s.prog.placed ? 'תרגול גיטרה – השעה הבאה' : 'תוכנית גיטרה – מבחן מיקום'}</b><br /><small>{s.prog.placed ? `היום: ${(s.prog.sessions[today()] ?? []).length} שעות תרגול` : 'נבדוק מאיפה להתחיל בכל מסלול'}</small></span>
-      </button>
+      {s.prog.placed ? (() => {
+        const next = SESSION_BY_ID[nextSession(s.prog.sessions)];
+        const min = sessionMinutes(s.prog.sessions[today()] ?? []);
+        return (
+          <button className="cta plan-cta" onClick={() => go('plan/s/' + next.id)}>
+            <span className="cta-icon">🎸</span>
+            <span><b>השעה הבאה: {next.title}</b><br /><small>{min ? `היום כבר תרגלת ${hoursText(min)} · ` : ''}כל השעות – בלשונית 🎸 גיטרה</small></span>
+          </button>
+        );
+      })() : (
+        <button className="cta plan-cta" onClick={() => go('plan')}>
+          <span className="cta-icon">🎸</span>
+          <span><b>תוכנית גיטרה – מבחן מיקום</b><br /><small>נבדוק מאיפה להתחיל בכל מסלול</small></span>
+        </button>
+      )}
 
       {due.length > 0 && (
         <button className="lesson-row open" onClick={() => go('review')}>

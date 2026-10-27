@@ -186,6 +186,8 @@ h3 { font-size: 1.05rem; }
 .lesson-row.open { border-color: var(--accent); }
 .lr-badge { width: 30px; height: 30px; border-radius: 50%; background: var(--bg2); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0; }
 .lesson-row.passed .lr-badge, .lesson-row.known .lr-badge { background: var(--ok); color: white; }
+.lesson-row.next { border-width: 2px; background: #241f3d; }
+.next-chip { display: inline-block; font-size: 0.75rem; font-weight: 600; color: white; background: var(--accent); border-radius: 999px; padding: 1px 8px; margin-bottom: 4px; margin-inline-end: 6px; }
 .lesson-row.open .lr-badge { background: var(--accent); color: white; }
 .lr-title { flex: 1; font-weight: 600; }
 .lesson-text p { margin: 0.6em 0; }
