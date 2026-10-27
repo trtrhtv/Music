@@ -24,6 +24,7 @@ export function Blocks({ blocks, onTopic }: { blocks: Block[]; onTopic?: (id: st
           case 'p': return <p key={i}>{rich(b.text)}</p>;
           case 'h': return <h3 key={i} className="b-h">{b.text}</h3>;
           case 'tip': return <div key={i} className="b-tip">💡 {rich(b.text)}</div>;
+          case 'reveal': return <details key={i} className="b-reveal"><summary>{b.label}</summary><Blocks blocks={b.blocks} onTopic={onTopic} /></details>;
           case 'list': return <ul key={i} className="b-list">{b.items.map((x, k) => <li key={k}>{rich(x)}</li>)}</ul>;
           case 'table':
             return (

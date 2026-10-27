@@ -251,7 +251,7 @@ export function SessionView({ id }: { id: string }) {
   const goalCard = (
     <section className="session-block">
       <div className="sb-head"><h3>🎯 מטרה לשעה הזאת</h3><span className="muted small">חצי דקה</span></div>
-      {lastNext && <p className="small">בפעם הקודמת כתבת שהמטרה הבאה: <b>{lastNext}</b></p>}
+      {lastNext && <p className="small">מה שרשמת בפעם הקודמת לפעם הבאה: <b>{lastNext}</b></p>}
       <p className="small muted">מטרה אחת, קטנה ומדידה. למשל: "פולק ב-85 נקי", "צורה 2 בלי להסתכל", "תיבות 5–8 של הרומנסה".</p>
       <textarea className="note" rows={2} value={note.goal} onChange={(e) => setNote({ ...note, goal: e.target.value })} placeholder="המטרה שלי עכשיו…" />
     </section>

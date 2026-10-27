@@ -27,7 +27,9 @@ export type Block =
   /** Links inside the app (lessons, practice, glossary…). */
   | { t: 'go'; items: { label: string; to: string }[] }
   /** A row of chord diagrams. */
-  | { t: 'chords'; items: { name: string; frets: number[] }[]; caption?: string };
+  | { t: 'chords'; items: { name: string; frets: number[] }[]; caption?: string }
+  /** Hidden until tapped – an answer to try first. */
+  | { t: 'reveal'; label: string; blocks: Block[] };
 
 // Small helpers to keep content files readable.
 export const p = (text: string): Block => ({ t: 'p', text });

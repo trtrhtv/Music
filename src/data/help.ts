@@ -67,7 +67,7 @@ export const HELP: Record<string, { tip: string; topics: string[] }> = {
   'gt.barre': { tip: 'מצא את השורש על מיתר 6 (צורת E) או על מיתר 5 (צורת A) – שם ההברה.', topics: ['barre'] },
   'gt.pentaPosition': { tip: 'התיבה הראשונה מתחילה בשורש על מיתר 6. A = סריג 5, G = 3, C = 8.', topics: ['barre', 'scales'] },
   'gt.micBarre': { tip: 'אצבע 1 לוחצת ישר על כל המיתרים. בדוק מיתר-מיתר שכולם מצלצלים.', topics: ['barre', 'app'] },
-  'gt.octaves': { tip: 'אוקטבה: 2 מיתרים למעלה ו-2 סריגים ימינה (3 אם עוברים את מיתר B). קווינטה: מיתר אחד למעלה, 2 סריגים ימינה.', topics: ['guitar', 'intervals'] },
+  'gt.octaves': { tip: 'אוקטבה: מדלגים על מיתר אחד ו-2 סריגים קדימה (3 אם עוברים את מיתר 2). קווינטה: המיתר הבא (הדק יותר) ו-2 סריגים קדימה.', topics: ['guitar', 'intervals'] },
   'gt.chordTone': { tip: 'חשב קודם את התו (טרצה = 3/4 חצאי טונים מהשורש, קווינטה = 7) ואז מצא אותו על המיתר.', topics: ['chords', 'guitar'] },
   'gt.modeForChord': { tip: 'דומיננט → מיקסולידי, m7 (ii) → דורי, maj7#11 → לידי, m7b5 → לוקרי, מהלך ספרדי → פריגי.', topics: ['modes'] },
   'gt.cagedA': { tip: 'צורת E – השורש על מיתר 6. צורת A – על מיתר 5. מצא את סריג השורש.', topics: ['barre'] },

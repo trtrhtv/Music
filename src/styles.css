@@ -240,6 +240,8 @@ h3 { font-size: 1.05rem; }
 .blocks p { margin: 0.6em 0; }
 .blocks b.term, .b-tip b.term, .explain b.term { color: #cbbcff; unicode-bidi: isolate; }
 .b-h { margin: 20px 0 6px; }
+.b-reveal { background: #1f1b33; border: 1px solid #3a3360; border-radius: 10px; padding: 10px 12px; margin: 12px 0; }
+.b-reveal > summary { cursor: pointer; font-weight: 600; color: #cbbcff; }
 .b-tip { background: #2a2346; border-inline-start: 4px solid var(--accent); padding: 10px 12px; border-radius: 10px; margin: 12px 0; }
 .b-list { padding-inline-start: 20px; margin: 8px 0; }
 .b-list li { margin: 4px 0; }
