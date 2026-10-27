@@ -127,7 +127,7 @@ const BASE_LESSONS: Lesson[] = [
   {
     id: 'ear5a', domain: 'ear', level: 5, title: 'מהלכי אקורדים',
     intro: ['זהה מהלכים נפוצים. הקשב במיוחד לבס – הוא מגלה את הדרגות.'],
-    drills: [['ear.progression', 10]],
+    drills: [['ear.progFunc4', 4], ['ear.minorProg', 3], ['ear.progression', 3]],
   },
   {
     id: 'ear5b', domain: 'ear', level: 5, title: 'מודוסים באוזן',

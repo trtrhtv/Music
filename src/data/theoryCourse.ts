@@ -3,6 +3,7 @@ import type { Lesson } from './curriculum';
 import { THEORY_EXTRAS } from './theoryExtras';
 import { UNIT_SUMMARIES } from './theorySummaries';
 import { PIANO_SKILLS } from './pianoSkills';
+import { EAR_HARMONY } from './earHarmony';
 import { CH, STRUMS, notesTab } from './guitarLib';
 import { GUITAR_TUNING } from '../theory/theory';
 
@@ -880,4 +881,9 @@ const COURSE: Lesson[] = [
 ];
 
 /** The course, with a spiral summary at the end of every unit. */
-export const THEORY_COURSE: Lesson[] = [...COURSE, ...PIANO_SKILLS, ...UNIT_SUMMARIES];
+const EAR_AFTER: Record<string, string[]> = { t5c: ['t5g', 't5h'], t6c: ['t6d'] };
+const EAR = Object.fromEntries(EAR_HARMONY.map((l) => [l.id, l]));
+/** Ear lessons sit right after the lesson whose chords they train the ear to hear. */
+const WITH_EAR = COURSE.flatMap((l) => [l, ...(EAR_AFTER[l.id] ?? []).map((id) => EAR[id])]);
+
+export const THEORY_COURSE: Lesson[] = [...WITH_EAR, ...PIANO_SKILLS, ...UNIT_SUMMARIES];

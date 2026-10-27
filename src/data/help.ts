@@ -51,6 +51,13 @@ export const HELP: Record<string, { tip: string; topics: string[] }> = {
   'ear.intervalsHarmonic': { tip: 'יחד: סקונדות וספטימות "משפשפות", טרצות וסקסטות מתוקות, קווינטה ואוקטבה "חלולות".', topics: ['intervals'] },
   'ear.sevenths': { tip: 'maj7 – רך וחלומי. 7 – בלוזי ומתוח. m7 – מינור רך. m7b5 – כהה ולא יציב.', topics: ['chords'] },
   'ear.scaleDegree': { tip: 'שמור בראש את הבית (דרגה 1) מהמהלך, ושיר ממנו עד לצליל. 1-3-5 נשמעים יציבים.', topics: ['ear-tips', 'roman'] },
+  'ear.homeTension': { tip: 'שיר בראש את תו הבית מהמהלך הראשון. האקורד האחרון "נח" עליו – בית. רוצה להמשיך – מתח.', topics: ['roman'] },
+  'ear.chordRole': { tip: 'הקשב לבס: כמה רחוק הוא מהבית? I – נח. IV – יציאה רכה. V – מתח שמושך חזרה.', topics: ['roman'] },
+  'ear.chordRole4': { tip: 'קודם צבע: מינור (כהה) = vi. אחרת – לפי הבס: I נח, IV יציאה, V מתח.', topics: ['roman'] },
+  'ear.progFunc': { tip: 'הראשון תמיד I. לכל אקורד הבא: נח (I), יציאה (IV) או מתח (V)? השמע שוב ועקוב אחרי הבס.', topics: ['roman'] },
+  'ear.progFunc4': { tip: 'קודם סמן איפה יש אקורד מינור (vi או ii). vi כמו "בית עצוב"; ii בדרך כלל לפני V.', topics: ['roman'] },
+  'ear.progInG': { tip: 'ב-G: I = G, IV = C, V = D, vi = Em. זהה את התפקידים – ותרגם לאקורדים.', topics: ['roman'] },
+  'ear.minorProg': { tip: 'i = הבית הכהה. V מז\'ורי ומושך חזק הביתה. VI ו-VII בהירים (מז\'ור) – לרוב בדרך חזרה ל-i.', topics: ['roman', 'scales'] },
   'ear.progression': { tip: 'הקשב לבס ולמקום שבו המהלך "חוזר הביתה". ii–V–I קצר (3 אקורדים), השאר 4.', topics: ['roman'] },
   'ear.mode': { tip: 'קודם החלט אם זה מז\'ורי או מינורי, ואז חפש את התו המיוחד: #4 לידי, b7 מיקסולידי, 6 דורי, b2 פריגי.', topics: ['modes'] },
   // Guitar

@@ -4,7 +4,8 @@ import {
   scaleNotes, spellScale,
 } from '../theory/theory';
 import { CHORD_SHAPES, shapesAt, shapesUpTo } from './guitarChords';
-import type { Domain, Exercise, Generator } from './types';
+import type { AudioCue, Domain, Exercise, Generator } from './types';
+import { CH } from '../data/guitarLib';
 import { choice, pcAny, pick, rand, sample, shuffle, spellAbove, spellChord } from './util';
 
 const G: Generator[] = [];
@@ -622,6 +623,121 @@ gen('ear.progression', 'ear', 5, 'זיהוי מהלכים', () => {
   return choice('איזה מהלך אקורדים שמעת?', name, PROGS.map((p) => p[0]), {
     audio: { type: 'prog', chords: voiceProg(55 + rand(6), degs) },
     explain: `${name} – למשל ב-C: ${degs.map((d) => diatonicChord('C', d)).join(' – ')}.`,
+  });
+});
+
+/* Harmonic hearing: chords by their role in a key, played on the guitar the way songs use them. */
+
+const MAJOR_KEYS_GT: Record<string, Record<string, string>> = {
+  C: { I: 'C', ii: 'Dm', IV: 'F', V: 'G', vi: 'Am' },
+  G: { I: 'G', ii: 'Am', IV: 'C', V: 'D', vi: 'Em' },
+  D: { I: 'D', ii: 'Em', IV: 'G', V: 'A', vi: 'Bm' },
+};
+const MINOR_KEYS_GT: Record<string, Record<string, string>> = {
+  Am: { i: 'Am', iv: 'Dm', V: 'E', VI: 'F', VII: 'G' },
+  Em: { i: 'Em', iv: 'Am', V: 'B7', VI: 'C', VII: 'D' },
+};
+const ROLE: Record<string, string> = {
+  I: 'בית', IV: 'יציאה', V: 'מתח', vi: 'הבית העצוב', ii: 'יציאה מינורית',
+  i: 'בית', iv: 'יציאה כהה', VI: 'צבע בהיר', VII: 'צבע בהיר, מוביל חזרה',
+};
+/** Midi notes of a guitar voicing from the chord library. */
+const gtChord = (name: string) => CH[name].map((f, i) => (f < 0 ? -1 : GUITAR_TUNING[i] + f)).filter((m) => m > 0);
+const gtProg = (names: string[], gap = 1.2): AudioCue => ({ type: 'prog', chords: names.map(gtChord), gap });
+const SEP = ' – ';
+
+/** A random progression from `pool`, starting on the home chord, with no chord twice in a row. */
+function randomProg(pool: string[], len = 4): string[] {
+  for (;;) {
+    const p = [pool[0]];
+    while (p.length < len) p.push(pick(pool.filter((x) => x !== p[p.length - 1])));
+    if (new Set(p).size >= Math.min(3, pool.length)) return p;
+  }
+}
+/**
+ * Wrong answers that differ from the progression in one chord (two, only when one isn't enough
+ * for three choices) – they make you listen to every chord, not just the overall mood.
+ */
+function oneOff(p: string[], pool: string[]): string[] {
+  const out = new Set<string>();
+  const vary = (q: string[], i: number) => {
+    const alt = pool.filter((x) => x !== q[i] && x !== q[i - 1] && x !== q[i + 1]);
+    if (alt.length) q[i] = pick(alt);
+  };
+  for (let k = 0; k < 40 && out.size < 6; k++) {
+    const q = [...p];
+    vary(q, 1 + rand(p.length - 1));
+    if (q.join(SEP) !== p.join(SEP)) out.add(q.join(SEP));
+  }
+  for (let k = 0; k < 80 && out.size < 3; k++) {
+    const q = [...p];
+    vary(q, 1 + rand(p.length - 1));
+    vary(q, 1 + rand(p.length - 1));
+    if (q.join(SEP) !== p.join(SEP)) out.add(q.join(SEP));
+  }
+  return [...out];
+}
+
+gen('ear.homeTension', 'ear', 2, 'בית או מתח?', () => {
+  const key = pick(Object.keys(MAJOR_KEYS_GT));
+  const ch = MAJOR_KEYS_GT[key];
+  const target = pick(['I', 'V']);
+  const opts = ['בית (I)', 'מתח (V)'];
+  return choice('קודם מהלך שקובע את הבית, ואז אקורד אחד. האקורד האחרון – בית או מתח?', opts[target === 'I' ? 0 : 1], opts, {
+    n: 2, timbre: 'guitar',
+    audio: { type: 'twoParts', first: gtProg([ch.I, ch.IV, ch.V, ch.I], 0.9), second: { type: 'chord', notes: gtChord(ch[target]) }, pause: 1 },
+    explain: target === 'I'
+      ? `זה **${ch.I}** – הבית (I) ב-${key}. הוא נשמע סגור ונח, אפשר לעצור עליו.`
+      : `זה **${ch.V}** – ה-V ב-${key}. הוא "תלוי באוויר" ורוצה לחזור ל-${ch.I}.`,
+  });
+});
+
+const chordRole = (pool: string[]) => () => {
+  const key = pick(Object.keys(MAJOR_KEYS_GT));
+  const ch = MAJOR_KEYS_GT[key];
+  const target = pick(pool);
+  const label = (r: string) => `${r} – ${ROLE[r]}`;
+  return choice('קודם מהלך שקובע את הבית, ואז אקורד אחד. איזה תפקיד יש לו?', label(target), pool.map(label), {
+    n: pool.length, timbre: 'guitar',
+    audio: { type: 'twoParts', first: gtProg([ch.I, ch.IV, ch.V, ch.I], 0.9), second: { type: 'chord', notes: gtChord(ch[target]) }, pause: 1 },
+    explain: `זה **${ch[target]}** = ${target} ב-${key}. ${target === 'IV' ? 'הבס על דרגה 4 של הסולם – "יציאה" רכה מהבית.' : target === 'V' ? 'הבס על דרגה 5 – מתח שרוצה לחזור הביתה.' : target === 'vi' ? 'אקורד מינור, והבס על דרגה 6 – טרצה מתחת לבית.' : 'זה האקורד שעליו הכול נח.'}`,
+  });
+};
+gen('ear.chordRole', 'ear', 3, 'תפקיד של אקורד: I, IV, V', chordRole(['I', 'IV', 'V']));
+gen('ear.chordRole4', 'ear', 4, 'תפקיד של אקורד: I, IV, V, vi', chordRole(['I', 'IV', 'V', 'vi']));
+
+const progByEar = (pool: string[]) => () => {
+  const key = pick(Object.keys(MAJOR_KEYS_GT));
+  const ch = MAJOR_KEYS_GT[key];
+  const p = randomProg(pool);
+  return choice('איזה מהלך שמעת? (הוא מתחיל בבית – I)', p.join(SEP), oneOff(p, pool), {
+    timbre: 'guitar', audio: gtProg(p.map((r) => ch[r])),
+    explain: `${p.join(SEP)} – כאן ב-${key}: **${p.map((r) => ch[r]).join(SEP)}**. ${p.map((r) => `${r} = ${ROLE[r]}`).filter((x, i, a) => a.indexOf(x) === i).join(', ')}.`,
+  });
+};
+gen('ear.progFunc', 'ear', 3, 'מהלכים מ-I, IV ו-V', progByEar(['I', 'IV', 'V']));
+gen('ear.progFunc4', 'ear', 4, 'מהלכים עם vi ו-ii', progByEar(['I', 'IV', 'V', 'vi', 'ii']));
+
+gen('ear.progInG', 'ear', 4, 'מהשמיעה לגיטרה ב-G', () => {
+  const ch = MAJOR_KEYS_GT.G;
+  const pool = ['I', 'IV', 'V', 'vi'];
+  const p = randomProg(pool);
+  const names = (q: string[]) => q.map((r) => ch[r]).join(SEP);
+  const wrong = oneOff(p, pool).map((x) => names(x.split(SEP)));
+  return choice('השיר ב-G ומתחיל ב-G. אילו אקורדים צריך לנגן?', names(p), wrong, {
+    timbre: 'guitar', audio: gtProg(p.map((r) => ch[r])),
+    explain: `**${names(p)}** = ${p.join(SEP)}. ב-G: I = G, IV = C, V = D, vi = Em.`,
+  });
+});
+
+gen('ear.minorProg', 'ear', 4, 'מהלכים במינור', () => {
+  const key = pick(Object.keys(MINOR_KEYS_GT));
+  const ch = MINOR_KEYS_GT[key];
+  const pool = ['i', 'iv', 'V', 'VI', 'VII'];
+  const p = randomProg(pool);
+  return choice(`מהלך ב-${key}. איזה מהלך שמעת?`, p.join(SEP), oneOff(p, pool), {
+    timbre: 'guitar', audio: gtProg(p.map((r) => ch[r])),
+    explain: `${p.join(SEP)} = **${p.map((r) => ch[r]).join(SEP)}**. ה-V מז'ורי (${ch.V}) ומושך חזק הביתה; VI ו-VII הם אקורדי מז'ור "בהירים" בתוך המינור.`,
   });
 });
 

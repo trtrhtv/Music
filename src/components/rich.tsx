@@ -7,7 +7,11 @@ const TOKEN = '[A-G](?:[#b♯♭]{1,2})?(?:maj7|m7b5|dim|aug|sus[24]|m7|m|7|5|°
 // Arrows join a run too, so "E7 → Am" stays in reading order instead of flipping around the arrow.
 // Counting syllables ("1-e-&-a", "1-2-3") and finger orders ("1-3-2-4") are kept left-to-right as well.
 const COUNT = '[1-6](?:-(?:e|&|a|[1-6]))+(?![\\w])';
-const MUSIC_RUN = new RegExp(`(${TOKEN}(?:(?:\\s*[–\\-→]\\s*|\\s+)${TOKEN})*|${COUNT})`, 'g');
+// Roman numerals for chord degrees (I, IV, V7, vi, vii°, V7/vi, Imaj7…), as whole words only.
+const RN = '(?:VII|VI|IV|V|III|II|I|vii|vi|iv|v|iii|ii|i)';
+const ROMAN = `(?<![A-Za-z'])${RN}(?:maj7|m7b5|7|°|ø)?(?:\\/${RN})?(?![A-Za-z'])`;
+const UNIT = `(?:${TOKEN}|${ROMAN})`;
+const MUSIC_RUN = new RegExp(`(${UNIT}(?:(?:\\s*[–\\-→]\\s*|\\s+)${UNIT})*|${COUNT})`, 'g');
 
 function isolate(text: string, key: string): ReactNode[] {
   return text.split(MUSIC_RUN).map((s, i) => (i % 2 ? <bdi key={`${key}-${i}`}>{s}</bdi> : s));

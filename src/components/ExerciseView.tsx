@@ -99,7 +99,7 @@ function ChoiceBody({ ex, result, finish }: BodyProps<'choice'>) {
   const play = () => {
     if (!ex.audio) return;
     setPlaying(true);
-    const len = playCue(ex.audio);
+    const len = playCue(ex.audio, ex.timbre);
     setTimeout(() => setPlaying(false), len * 1000);
   };
   useEffect(() => {

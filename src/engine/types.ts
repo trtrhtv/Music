@@ -35,6 +35,8 @@ export interface ChoiceEx {
   options: string[];
   answer: number;
   audio?: AudioCue;
+  /** Instrument for the audio (piano by default). */
+  timbre?: 'piano' | 'guitar';
   staff?: StaffSpec;
   diagram?: number[]; // guitar chord diagram, frets from string 6 → 1 (-1 = muted)
   explain?: string;

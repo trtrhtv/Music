@@ -18,7 +18,7 @@ export function choice(
   prompt: string,
   correct: string,
   distractors: string[],
-  extra: { audio?: AudioCue; staff?: StaffSpec; diagram?: number[]; explain?: string; n?: number } = {},
+  extra: { audio?: AudioCue; timbre?: 'piano' | 'guitar'; staff?: StaffSpec; diagram?: number[]; explain?: string; n?: number } = {},
 ): ChoiceEx {
   const n = extra.n ?? 4;
   const uniq = shuffle([...new Set(distractors.filter((d) => d !== correct))]).slice(0, n - 1);
@@ -32,6 +32,7 @@ export function choice(
     options,
     answer: options.indexOf(correct),
     audio: extra.audio,
+    timbre: extra.timbre,
     staff: extra.staff,
     diagram: extra.diagram,
     explain: extra.explain,
