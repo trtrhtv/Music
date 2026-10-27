@@ -81,6 +81,13 @@ function ExerciseCard({ ex, label, open: initial = false }: { ex: Exercise; labe
       </div>
       {open && (
         <div className="pb-body">
+          {(ex.basics || ex.learn) && (
+            <details className="basics" open>
+              <summary>📘 מה צריך לדעת לפני</summary>
+              {ex.basics && <ul>{ex.basics.map((t, i) => <li key={i}>{rich(t)}</li>)}</ul>}
+              {ex.learn && <Blocks blocks={[{ t: 'go', items: ex.learn }]} />}
+            </details>
+          )}
           <ol className="pb-steps">{ex.steps.map((st, i) => <li key={i}>{rich(st)}</li>)}</ol>
           {ex.vary && <p className="vary small">🔄 <b>הווריאציה של היום:</b> {rich(ex.vary[dayIndex() % ex.vary.length])}</p>}
           {ex.content && <Blocks blocks={ex.content} />}

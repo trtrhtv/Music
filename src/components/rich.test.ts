@@ -16,4 +16,9 @@ describe('rich text: note names and chord degrees inside Hebrew', () => {
     expect(runs('Oye Como Va')).toEqual([]);
     expect(runs('Twinkle Twinkle')).toEqual([]);
   });
+  it('keeps whole number runs together (frets, fingers, counting)', () => {
+    expect(runs('סריגים 3-5-7-8-10 על מיתר 6')).toEqual(['3-5-7-8-10']);
+    expect(runs('מהפתוח: 0-2-4-5-7-9-11-12.')).toEqual(['0-2-4-5-7-9-11-12']);
+    expect(runs('סופרים 1-e-&-a ו-1-3-2-4')).toEqual(['1-e-&-a', '1-3-2-4']);
+  });
 });

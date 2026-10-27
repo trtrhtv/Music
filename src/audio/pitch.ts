@@ -4,7 +4,7 @@
  * Monophonic pitch detection using the YIN difference function.
  * Returns frequency in Hz, or null when the frame has no clear pitch.
  */
-export function detectPitch(buf: Float32Array, sampleRate: number, minHz = 60, maxHz = 1400, minRms = 0.01): number | null {
+export function detectPitch(buf: Float32Array, sampleRate: number, minHz = 60, maxHz = 1400, minRms = 0.001): number | null {
   let rms = 0;
   for (let i = 0; i < buf.length; i++) rms += buf[i] * buf[i];
   rms = Math.sqrt(rms / buf.length);

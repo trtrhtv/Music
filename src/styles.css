@@ -242,6 +242,10 @@ h3 { font-size: 1.05rem; }
 .blocks p { margin: 0.6em 0; }
 .blocks b.term, .b-tip b.term, .explain b.term { color: #cbbcff; unicode-bidi: isolate; }
 .b-h { margin: 20px 0 6px; }
+.basics { background: #1d2a3a; border: 1px solid #2f4a66; border-radius: 10px; padding: 10px 12px; margin: 4px 0 12px; }
+.basics > summary { cursor: pointer; font-weight: 600; color: #9cc8ff; }
+.basics ul { margin: 8px 0 4px; padding-inline-start: 18px; }
+.basics li { margin: 4px 0; }
 .b-reveal { background: #1f1b33; border: 1px solid #3a3360; border-radius: 10px; padding: 10px 12px; margin: 12px 0; }
 .b-reveal > summary { cursor: pointer; font-weight: 600; color: #cbbcff; }
 .b-tip { background: #2a2346; border-inline-start: 4px solid var(--accent); padding: 10px 12px; border-radius: 10px; margin: 12px 0; }
@@ -265,7 +269,9 @@ h3 { font-size: 1.05rem; }
 .sheet-head { display: flex; justify-content: space-between; align-items: center; }
 .sheet-close { background: none; border: none; font-size: 1.2rem; color: var(--muted); padding: 6px; }
 .tabbar button { padding: 4px 8px; }
-.prompt bdi, .explain bdi, .option bdi, .b-tip bdi, .blocks bdi { white-space: nowrap; }
+.prompt bdi, .explain bdi, .b-tip bdi, .blocks bdi { white-space: nowrap; }
+/* Answer buttons are narrow (two per row): a long run of note names may wrap there. */
+.option bdi { white-space: normal; }
 
 /* Rhythm tools */
 .rt-box { background: var(--bg2); border: 1px solid var(--line); border-radius: 14px; padding: 12px; margin: 10px 0; }

@@ -36,7 +36,9 @@ export class NoteTracker {
    * pitch tracker can't tell them apart, so after an attack we also check whether what just got
    * louder is that note's harmonic series.
    */
-  frame(f: Pick<MicFrame, 'freq' | 'level' | 'spec' | 'binHz'>, expected?: number) {
+  frame(f: Pick<MicFrame, 'freq' | 'level' | 'spec' | 'binHz'> & { gate?: number }, expected?: number) {
+    // Silence is relative to the room when the mic reports its gate; a fixed bar otherwise.
+    const quiet = f.gate ?? 0.004;
     const lin = f.spec ? Float32Array.from(f.spec, (db) => Math.pow(10, db / 20)) : null;
     // An attack: the level jumps, or (with notes still ringing) a burst of new energy in the spectrum.
     let flux = 0;
@@ -45,7 +47,7 @@ export class NoteTracker {
       for (let i = 3; i < lin.length / 4; i++) { up += Math.max(0, lin[i] - this.prev[i]); all += lin[i]; }
       flux = up / (all + 1e-9);
     }
-    const attack = (f.level > 0.008 && f.level > this.avg * 1.8) || (flux > FLUX_ATTACK && this.flux <= FLUX_ATTACK);
+    const attack = (f.level > quiet * 2 && f.level > this.avg * 1.8) || (flux > FLUX_ATTACK && this.flux <= FLUX_ATTACK);
     this.flux = flux;
     this.sinceNote++;
     if (attack && this.sinceNote > REFRACTORY) {
@@ -67,14 +69,16 @@ export class NoteTracker {
     }
     this.prev = lin;
     this.avg = this.avg * 0.85 + f.level * 0.15;
-    if (!f.freq || f.level < 0.004) { this.candidate = null; this.steady = 0; if (this.sinceNote > REFRACTORY) this.armed = true; return; }
+    if (!f.freq || f.level < quiet) { this.candidate = null; this.steady = 0; if (this.sinceNote > REFRACTORY) this.armed = true; return; }
     const mf = freqToMidiFloat(f.freq);
     const m = Math.round(mf);
     if (Math.abs(mf - m) > 0.35) return;
     this.steady = m === this.candidate ? this.steady + 1 : 1;
     this.candidate = m;
     const need = expected === undefined || m === expected || Math.abs(m - expected) === 12 ? 3 : OTHER_FRAMES;
-    if (this.steady === need && (this.armed || m !== this.last)) {
+    // The note reported last, heard again while another one is expected, is almost always still ringing.
+    const ringing = m === this.last && expected !== undefined && m !== expected && Math.abs(m - expected) !== 12;
+    if (this.steady === need && !ringing && (this.armed || m !== this.last)) {
       this.last = m;
       this.armed = false;
       this.sinceNote = 0;

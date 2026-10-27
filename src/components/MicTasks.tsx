@@ -66,7 +66,7 @@ export function MicChordTask({ pcs, names, onSuccess }: { pcs: number[]; names: 
   const [heardPcs, setHeardPcs] = useState<number[]>([]);
   const [done, setDone] = useState(false);
   const [status, setStatus] = useMic(!done, (f) => {
-    if (f.level < 0.01) {
+    if (f.level < f.gate) {
       if (frames.current.length > 0) frames.current = frames.current.slice(1);
       return;
     }
