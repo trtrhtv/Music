@@ -48,21 +48,21 @@ const chordsOf = (...items: [string, number[]][]): Block => ({ t: 'chords', item
 const ch = (...names: string[]): Block => chordsOf(...names.map((n) => [n, CH[n]] as [string, number[]]));
 
 /** One figure (e.g. "5h7p5") played on every string from 6 to 1. */
-function figureOnStrings(figure: string, strings = [6, 5, 4, 3, 2, 1]): string[] {
+export function figureOnStrings(figure: string, strings = [6, 5, 4, 3, 2, 1]): string[] {
   const w = figure.length + 1;
   const lines = Array.from({ length: 6 }, () => '-');
   for (const s of strings) for (let i = 0; i < 6; i++) lines[i] += i === s - 1 ? figure + '-' : '-'.repeat(w);
   return lines;
 }
-const run = (...cols: [number, number][]) => notesTab(cols, 3);
+export const run = (...cols: [number, number][]) => notesTab(cols, 3);
 
-const CHROMATIC = notesTab([6, 5, 4, 3, 2, 1].flatMap((s) => [1, 2, 3, 4].map((f) => [s, f] as [number, number])), 2);
-const SPIDER = notesTab([6, 5, 4, 3, 2, 1].flatMap((s) => [1, 3, 2, 4].map((f) => [s, f] as [number, number])), 2);
+export const CHROMATIC = notesTab([6, 5, 4, 3, 2, 1].flatMap((s) => [1, 2, 3, 4].map((f) => [s, f] as [number, number])), 2);
+export const SPIDER = notesTab([6, 5, 4, 3, 2, 1].flatMap((s) => [1, 3, 2, 4].map((f) => [s, f] as [number, number])), 2);
 // Shifting "ladder": 1-2-3-4 on string 6, moving up one fret each time.
-const LADDER = notesTab([1, 2, 3, 4, 5].flatMap((start) => [0, 1, 2, 3].map((k) => [6, start + k] as [number, number])), 2);
+export const LADDER = notesTab([1, 2, 3, 4, 5].flatMap((start) => [0, 1, 2, 3].map((k) => [6, start + k] as [number, number])), 2);
 
 // A minor pentatonic – the five shapes (shape 5 written in its low position, frets 2–5).
-const PENTA: [number, number][][] = [
+export const PENTA: [number, number][][] = [
   [[6, 5], [6, 8], [5, 5], [5, 7], [4, 5], [4, 7], [3, 5], [3, 7], [2, 5], [2, 8], [1, 5], [1, 8]],
   [[6, 8], [6, 10], [5, 7], [5, 10], [4, 7], [4, 10], [3, 7], [3, 9], [2, 8], [2, 10], [1, 8], [1, 10]],
   [[6, 10], [6, 12], [5, 10], [5, 12], [4, 10], [4, 12], [3, 9], [3, 12], [2, 10], [2, 13], [1, 10], [1, 12]],
@@ -70,18 +70,18 @@ const PENTA: [number, number][][] = [
   [[6, 3], [6, 5], [5, 3], [5, 5], [4, 2], [4, 5], [3, 2], [3, 5], [2, 3], [2, 5], [1, 3], [1, 5]],
 ];
 const PENTA_FRETS = ['5–8', '7–10', '9–13', '12–15', '2–5 (או 14–17)'];
-const BLUES_A = run([6, 5], [6, 8], [5, 5], [5, 6], [5, 7], [4, 5], [4, 7], [3, 5], [3, 7], [3, 8], [2, 5], [2, 8], [1, 5], [1, 8]);
-const G_MAJOR = run([6, 3], [6, 5], [5, 2], [5, 3], [5, 5], [4, 2], [4, 4], [4, 5], [3, 2], [3, 4], [3, 5], [2, 3], [2, 5], [1, 2], [1, 3]);
-const ARP_G = run([6, 3], [5, 2], [5, 5], [4, 5], [3, 4], [2, 3], [1, 3]);
-const ARP_C = run([5, 3], [4, 2], [4, 5], [3, 5], [2, 5], [1, 3]);
-const ARP_D = run([5, 5], [4, 4], [3, 2], [2, 3], [1, 2], [1, 5]);
+export const BLUES_A = run([6, 5], [6, 8], [5, 5], [5, 6], [5, 7], [4, 5], [4, 7], [3, 5], [3, 7], [3, 8], [2, 5], [2, 8], [1, 5], [1, 8]);
+export const G_MAJOR = run([6, 3], [6, 5], [5, 2], [5, 3], [5, 5], [4, 2], [4, 4], [4, 5], [3, 2], [3, 4], [3, 5], [2, 3], [2, 5], [1, 2], [1, 3]);
+export const ARP_G = run([6, 3], [5, 2], [5, 5], [4, 5], [3, 4], [2, 3], [1, 3]);
+export const ARP_C = run([5, 3], [4, 2], [4, 5], [3, 5], [2, 5], [1, 3]);
+export const ARP_D = run([5, 5], [4, 4], [3, 2], [2, 3], [1, 2], [1, 5]);
 
-const PIMA = (bass: [number, number], i: number, m: number, a: number) => tabFrom([[bass], [[3, i]], [[2, m]], [[1, a]], [[2, m]], [[3, i]]], 3);
-const PAMI = (bass: [number, number], i: number, m: number, a: number) => tabFrom([[bass], [[1, a]], [[2, m]], [[3, i]], [[2, m]], [[1, a]]], 3);
-const TRAVIS_C = tabFrom([[[5, 3], [2, 1]], [[3, 0]], [[4, 2]], [[2, 1]], [[5, 3]], [[3, 0]], [[4, 2]], [[2, 1]]], 3);
-const TRAVIS_AM = tabFrom([[[5, 0], [2, 1]], [[3, 2]], [[4, 2]], [[2, 1]], [[5, 0]], [[3, 2]], [[4, 2]], [[2, 1]]], 3);
-const TRAVIS_G = tabFrom([[[6, 3], [1, 3]], [[3, 0]], [[4, 0]], [[2, 0]], [[6, 3]], [[3, 0]], [[4, 0]], [[1, 3]]], 3);
-const BLUES12 = ['A7', 'A7', 'A7', 'A7', 'D7', 'D7', 'A7', 'A7', 'E7', 'D7', 'A7', 'E7'];
+export const PIMA = (bass: [number, number], i: number, m: number, a: number) => tabFrom([[bass], [[3, i]], [[2, m]], [[1, a]], [[2, m]], [[3, i]]], 3);
+export const PAMI = (bass: [number, number], i: number, m: number, a: number) => tabFrom([[bass], [[1, a]], [[2, m]], [[3, i]], [[2, m]], [[1, a]]], 3);
+export const TRAVIS_C = tabFrom([[[5, 3], [2, 1]], [[3, 0]], [[4, 2]], [[2, 1]], [[5, 3]], [[3, 0]], [[4, 2]], [[2, 1]]], 3);
+export const TRAVIS_AM = tabFrom([[[5, 0], [2, 1]], [[3, 2]], [[4, 2]], [[2, 1]], [[5, 0]], [[3, 2]], [[4, 2]], [[2, 1]]], 3);
+export const TRAVIS_G = tabFrom([[[6, 3], [1, 3]], [[3, 0]], [[4, 0]], [[2, 0]], [[6, 3]], [[3, 0]], [[4, 0]], [[1, 3]]], 3);
+export const BLUES12 = ['A7', 'A7', 'A7', 'A7', 'D7', 'D7', 'A7', 'A7', 'E7', 'D7', 'A7', 'E7'];
 
 const BOTH_HANDS = 'מפרט: למטה-למעלה לסירוגין. אצבעות: i ו-m לסירוגין (לעולם לא אותה אצבע פעמיים).';
 

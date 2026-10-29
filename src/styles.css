@@ -429,3 +429,18 @@ textarea.note { width: 100%; box-sizing: border-box; background: var(--card); co
 .advice ul { margin: 6px 0; padding-inline-start: 18px; }
 .advice li { margin: 3px 0; }
 .coach-tempo { margin-top: 6px; color: #9cc8ff; }
+
+.daily-row { background: var(--card); border: 1px solid var(--line); border-radius: 14px; margin: 8px 0; }
+.daily-row.done { opacity: 0.6; }
+.dr-head { display: flex; align-items: center; gap: 10px; padding: 12px; }
+.dr-check { width: 32px; height: 32px; flex-shrink: 0; border-radius: 8px; border: 2px solid var(--accent); background: transparent; color: white; font-size: 1.1rem; }
+.daily-row.done .dr-check { background: var(--ok); border-color: var(--ok); }
+.dr-main { flex: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; text-align: start; background: none; border: 0; color: inherit; padding: 0; }
+.dr-cat { font-size: 0.8rem; color: var(--muted, #a9a3c4); }
+.dr-title { font-weight: 600; line-height: 1.4; }
+.dr-body { padding: 0 12px 12px; }
+.dr-actions { margin-top: 10px; }
+.hour3 { margin: 18px 0; }
+
+/* A long run (e.g. the 12 chords of a blues) may wrap; the isolate keeps it in order. */
+.blocks bdi.wrap { white-space: normal; }

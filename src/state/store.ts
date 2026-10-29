@@ -2,6 +2,7 @@ import { useSyncExternalStore } from 'react';
 import { lessonsFor } from '../data/curriculum';
 import type { Domain } from '../engine/types';
 import type { TrackId } from '../data/tracks';
+import type { DailyCatId } from '../data/daily';
 
 export interface Profile {
   guitarExp: number; // 0..4
@@ -50,6 +51,12 @@ export interface State {
   prefs: { hidePiano: boolean };
   /** Spaced review of passed theory lessons: Leitner box and next due date per lesson. */
   review: Record<string, { box: number; due: string }>;
+  /**
+   * The daily practice list: level per category (moved only by the player), what was checked off
+   * per date ("set:category"), how many sets were started per date (more than one when the player
+   * went on to the next day's list), and which items were already seen (their intro shows once).
+   */
+  daily: { level: Partial<Record<DailyCatId, number>>; checks: Record<string, string[]>; sets: Record<string, number>; seen: string[] };
   prog: {
     placed: boolean;
     stage: Record<TrackId, number>;
@@ -79,12 +86,13 @@ const fresh = (): State => ({
   xp: 0,
   prefs: { hidePiano: false },
   review: {},
+  daily: { level: {}, checks: {}, sets: {}, seen: [] },
   prog: { placed: false, stage: { tech: 1, rhythm: 1, neck: 1, finger: 1 }, passes: {}, bpm: {}, sessions: {}, journal: [], heard: [], coachSeen: '', tempo: {} },
 });
 
 /** Fills in fields added after the data was saved. */
 const withDefaults = (saved: Partial<State>): State =>
-  ({ ...fresh(), ...saved, prog: { ...fresh().prog, ...saved.prog }, prefs: { ...fresh().prefs, ...saved.prefs } });
+  ({ ...fresh(), ...saved, prog: { ...fresh().prog, ...saved.prog }, prefs: { ...fresh().prefs, ...saved.prefs }, daily: { ...fresh().daily, ...saved.daily } });
 
 function load(): State {
   try {
@@ -273,6 +281,33 @@ export function setTrackTempo(track: TrackId, bpm: number | undefined) {
     if (bpm === undefined) delete tempo[track]; else tempo[track] = bpm;
     return { ...s, prog: { ...s.prog, tempo } };
   });
+}
+
+/* ───────── Daily practice list ───────── */
+
+/** Practice-day number of today's first list: every earlier day with something checked counts its sets. */
+export function dailyBase(s: State, date = today()): number {
+  return Object.keys(s.daily.checks).filter((d) => d < date && s.daily.checks[d].length).reduce((n, d) => n + (s.daily.sets[d] ?? 1), 0);
+}
+/** How many lists are open today (1, or more after "next day's exercises"). */
+export const dailySetsToday = (s: State) => s.daily.sets[today()] ?? 1;
+
+export function toggleDailyCheck(set: number, cat: DailyCatId) {
+  update((s) => {
+    const k = `${set}:${cat}`;
+    const cur = s.daily.checks[today()] ?? [];
+    const next = cur.includes(k) ? cur.filter((x) => x !== k) : [...cur, k];
+    return { ...s, days: touchDay(s), daily: { ...s.daily, checks: { ...s.daily.checks, [today()]: next } } };
+  });
+}
+export function startNextDailySet() {
+  update((s) => ({ ...s, daily: { ...s.daily, sets: { ...s.daily.sets, [today()]: dailySetsToday(s) + 1 } } }));
+}
+export function setDailyLevel(cat: DailyCatId, level: number) {
+  update((s) => ({ ...s, daily: { ...s.daily, level: { ...s.daily.level, [cat]: Math.max(0, level) } } }));
+}
+export function markDailySeen(id: string) {
+  update((s) => (s.daily.seen.includes(id) ? s : { ...s, daily: { ...s.daily, seen: [...s.daily.seen, id] } }));
 }
 
 export function setHidePiano(hidePiano: boolean) {

@@ -660,8 +660,10 @@ function randomProg(pool: string[], len = 4): string[] {
  */
 function oneOff(p: string[], pool: string[]): string[] {
   const out = new Set<string>();
-  const vary = (q: string[], i: number) => {
-    const alt = pool.filter((x) => x !== q[i] && x !== q[i - 1] && x !== q[i + 1]);
+  // Strict: no chord twice in a row. Loose (only when strict can't give three choices, e.g. I–IV–V–I
+  // from three chords): any other chord.
+  const vary = (q: string[], i: number, strict = true) => {
+    const alt = pool.filter((x) => x !== q[i] && (!strict || (x !== q[i - 1] && x !== q[i + 1])));
     if (alt.length) q[i] = pick(alt);
   };
   for (let k = 0; k < 40 && out.size < 6; k++) {
@@ -673,6 +675,11 @@ function oneOff(p: string[], pool: string[]): string[] {
     const q = [...p];
     vary(q, 1 + rand(p.length - 1));
     vary(q, 1 + rand(p.length - 1));
+    if (q.join(SEP) !== p.join(SEP)) out.add(q.join(SEP));
+  }
+  for (let k = 0; k < 80 && out.size < 3; k++) {
+    const q = [...p];
+    vary(q, 1 + rand(p.length - 1), false);
     if (q.join(SEP) !== p.join(SEP)) out.add(q.join(SEP));
   }
   return [...out];

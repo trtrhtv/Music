@@ -1,6 +1,6 @@
 import { LESSONS, UNIT_TITLES, lessonsFor } from '../data/curriculum';
 import { DOMAIN_ICON, DOMAIN_LABEL, LEVEL_LABEL, type Domain } from '../engine/types';
-import { SESSION_BY_ID, hoursText, nextSession, sessionMinutes } from '../data/tracks';
+import { DAILY } from '../data/daily';
 import { go } from '../router';
 import { coachDue } from '../engine/coach';
 import { lessonStatus, setHidePiano, streak, today, useStore, type State } from '../state/store';
@@ -32,21 +32,15 @@ export function Home() {
         </div>
       </header>
 
-      {s.prog.placed ? (() => {
-        const next = SESSION_BY_ID[nextSession(s.prog.sessions)];
-        const min = sessionMinutes(s.prog.sessions[today()] ?? []);
+      {(() => {
+        const done = (s.daily.checks[today()] ?? []).filter((k) => k.startsWith('0:')).length;
         return (
-          <button className="cta plan-cta" onClick={() => go('plan/s/' + next.id)}>
+          <button className="cta plan-cta" onClick={() => go('daily')}>
             <span className="cta-icon">🎸</span>
-            <span><b>השעה הבאה: {next.title}</b><br /><small>{min ? `היום כבר תרגלת ${hoursText(min)} · ` : ''}כל השעות – בלשונית 🎸 גיטרה</small></span>
+            <span><b>התרגול של היום</b><br /><small>{done ? `${done}/${DAILY.length} הושלמו – להמשיך` : 'רשימה של כשעתיים: חימום, סולמות, אקורדים, פריטה, מקצב, פלמנקו, יצירה ושיר'}</small></span>
           </button>
         );
-      })() : (
-        <button className="cta plan-cta" onClick={() => go('plan')}>
-          <span className="cta-icon">🎸</span>
-          <span><b>תוכנית גיטרה – מבחן מיקום</b><br /><small>נבדוק מאיפה להתחיל בכל מסלול</small></span>
-        </button>
-      )}
+      })()}
 
       {s.prog.placed && coachDue(s, today()) && (
         <button className="lesson-row open" onClick={() => go('plan/coach')}>
