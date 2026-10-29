@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { DAILY, itemFor } from '../data/daily';
+import { BARRE, DAILY, itemFor } from '../data/daily';
+import { GUITAR_TUNING } from '../theory/theory';
 import { parseTab } from '../audio/tabPlayer';
 import { checkBlocks } from './checkBlocks';
 import { dailyBase, getState, type State } from '../state/store';
@@ -27,6 +28,14 @@ describe('daily practice list', () => {
     expect(new Set(days).size).toBe(6);
     expect(itemFor(warm, 1, 0).id).not.toBe(itemFor(warm, 0, 0).id);
     expect(itemFor(warm, 99, 0).id).toBe(itemFor(warm, warm.levels.length - 1, 0).id);
+  });
+  it('the full barre versions are the right chords, with the root in the bass', () => {
+    const want: Record<string, number[]> = { G: [7, 11, 2], A: [9, 1, 4], F: [5, 9, 0], Am: [9, 0, 4], C: [0, 4, 7], D: [2, 6, 9], E: [4, 8, 11], Bm: [11, 2, 6], Em: [4, 7, 11], Dm: [2, 5, 9] };
+    for (const [name, [, frets]] of Object.entries(BARRE)) {
+      const midis = frets.map((f, i) => (f < 0 ? -1 : GUITAR_TUNING[i] + f)).filter((m) => m >= 0);
+      expect([...new Set(midis.map((m) => m % 12))].sort(), name).toEqual([...want[name]].sort());
+      expect(Math.min(...midis) % 12, `${name} root in the bass`).toBe(want[name][0]);
+    }
   });
   it('the whole of Romanza is covered, chunk by chunk', () => {
     const rom = DAILY.find((c) => c.id === 'romanza')!;
