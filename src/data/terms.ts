@@ -2,7 +2,7 @@
  * Every practice word, explained from zero in one or two plain sentences. An exercise shows the
  * ones its own text uses, so no word is ever left unexplained – however the exercise is phrased.
  */
-export interface Term { id: string; word: string; find: RegExp; text: string }
+export interface Term { id: string; word: string; find: RegExp; text: string; /** Only for exercises on this instrument (finger numbers differ). */ only?: 'guitar' | 'piano' }
 
 export const TERMS: Term[] = [
   { id: 'metro', word: 'מטרונום', find: /מטרונום|קליק/, text: 'שעון קצב שמקליק שוב ושוב באותה מהירות. מנגנים יחד עם הקליק – הוא שומר שהקצב לא יאט ולא יאיץ. יש מטרונום בתוך התרגיל.' },
@@ -15,8 +15,11 @@ export const TERMS: Term[] = [
   { id: 'alt', word: 'למטה-למעלה לסירוגין', find: /למטה-למעלה|לסירוגין/, text: 'מכה אחת כלפי מטה (לכיוון הרצפה), הבאה כלפי מעלה, וכך הלאה – תמיד מתחלפים, גם כשעוברים מיתר.' },
   { id: 'string', word: 'מספרי המיתרים', find: /מיתר(ים)? \d/, text: 'מיתר 1 = הדק ביותר (הכי קרוב לרצפה כשמחזיקים את הגיטרה). מיתר 6 = העבה ביותר.' },
   { id: 'fret', word: 'סריג', find: /סריג/, text: 'המשבצת בין שני פסי מתכת על הצוואר. "סריג 5" = המשבצת החמישית מהקצה של הצוואר. לוחצים קרוב לפס, לא באמצע.' },
-  { id: 'fingers', word: 'מספרי האצבעות', find: /אצבע \d|אצבעות \d|\b[1-4]-[1-4]-[1-4]-[1-4]\b/, text: 'ביד שמאל: 1 = מורה, 2 = אמה, 3 = קמיצה, 4 = זרת. "1-2-3-4" = האצבעות בסדר הזה.' },
-  { id: 'pima', word: 'p, i, m, a', find: /\bp-i|\bi-m\b|\bp\b|\bi\b.*\bm\b/, text: 'אצבעות יד ימין בפריטה בלי מפרט: p = אגודל, i = מורה, m = אמה, a = קמיצה.' },
+  { id: 'fingers', only: 'guitar', word: 'מספרי האצבעות', find: /אצבע \d|אצבעות \d|\b[1-4]-[1-4]-[1-4]-[1-4]\b/, text: 'ביד שמאל: 1 = מורה, 2 = אמה, 3 = קמיצה, 4 = זרת. "1-2-3-4" = האצבעות בסדר הזה.' },
+  { id: 'pfingers', only: 'piano', word: 'מספרי האצבעות בפסנתר', find: /אצבע \d|אצבעות|\(\d\)|\d-\d-\d/, text: 'בשתי הידיים: 1 = אגודל, 2 = מורה, 3 = אמה, 4 = קמיצה, 5 = זרת. "1-3-5" = אגודל, אמה וזרת.' },
+  { id: 'middleC', only: 'piano', word: 'C האמצעי', find: /C האמצעי/, text: 'ה-C שבאמצע המקלדת – משמאל לזוג הקלידים השחורים שבמרכז. ממנו מתחילים רוב התרגילים.' },
+  { id: 'thumb', only: 'piano', word: 'העברת אגודל', find: /אגודל (עובר|מתחת)|עוברת מעל/, text: 'כדי לנגן סולם שלם בחמש אצבעות: ביד ימין בעלייה האגודל מחליק מתחת ליד לקליד הבא; בירידה אצבע 3 עוברת מעליו. היד לא קופצת.' },
+  { id: 'pima', only: 'guitar', word: 'p, i, m, a', find: /\bp-i|\bi-m\b|\bp\b|\bi\b.*\bm\b/, text: 'אצבעות יד ימין בפריטה בלי מפרט: p = אגודל, i = מורה, m = אמה, a = קמיצה.' },
   { id: 'arp', word: 'מפורט / ארפג\'', find: /מפורט|ארפג'/, text: 'מנגנים את תווי האקורד אחד אחרי השני, מיתר אחרי מיתר, במקום כולם ביחד.' },
   { id: 'tab', word: 'טאב', find: /טאב/, text: 'כל שורה = מיתר (העליונה = מיתר 1, הדק). המספר = הסריג שלוחצים; 0 = מיתר פתוח. קוראים משמאל לימין. ▶ השמע = האפליקציה מנגנת לך את הטאב, כדי לשמוע איך זה צריך להישמע.' },
   { id: 'position', word: 'עמדה', find: /עמדה/, text: '"עמדה 2" = אצבע 1 על סריג 2, וכל אצבע אחראית על סריג אחד אחריו. היד לא זזה.' },
@@ -40,5 +43,5 @@ export const TERMS: Term[] = [
   { id: 'travis', word: 'Travis', find: /Travis/, text: 'פריטה שבה האגודל מנגן בס קבוע לסירוגין בין שני מיתרים, כמו תקתוק של שעון, והאצבעות מוסיפות תווים ביניהם.' },
 ];
 
-/** The terms a piece of text uses, in the order of the list. */
-export const termsIn = (text: string) => TERMS.filter((t) => t.find.test(text));
+/** The terms a piece of text uses, in the order of the list (for exercises on that instrument). */
+export const termsIn = (text: string, instrument: 'guitar' | 'piano' = 'guitar') => TERMS.filter((t) => (!t.only || t.only === instrument) && t.find.test(text));

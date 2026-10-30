@@ -1,6 +1,6 @@
 import { LESSONS, UNIT_TITLES, lessonsFor } from '../data/curriculum';
 import { DOMAIN_ICON, DOMAIN_LABEL, LEVEL_LABEL, type Domain } from '../engine/types';
-import { DAILY } from '../data/daily';
+import { dailyCats } from '../data/daily';
 import { go } from '../router';
 import { coachDue } from '../engine/coach';
 import { lessonStatus, setHidePiano, streak, today, useStore, type State } from '../state/store';
@@ -33,11 +33,12 @@ export function Home() {
       </header>
 
       {(() => {
-        const done = (s.daily.checks[today()] ?? []).filter((k) => k.startsWith('0:')).length;
+        const cats = dailyCats(s.prefs.hidePiano);
+        const done = cats.filter((c) => (s.daily.checks[today()] ?? []).includes(`0:${c.id}`)).length;
         return (
           <button className="cta plan-cta" onClick={() => go('daily')}>
             <span className="cta-icon">🎸</span>
-            <span><b>התרגול של היום</b><br /><small>{done ? `${done}/${DAILY.length} הושלמו – להמשיך` : 'רשימה של כשעתיים: חימום, סולמות, אקורדים, פריטה, מקצב, פלמנקו, יצירה ושיר'}</small></span>
+            <span><b>התרגול של היום</b><br /><small>{done ? `${done}/${cats.length} הושלמו – להמשיך` : `רשימה של כשעתיים: חימום, סולמות, אקורדים, פריטה, מקצב, פלמנקו, יצירה, שיר${s.prefs.hidePiano ? '' : ' ופסנתר'}`}</small></span>
           </button>
         );
       })()}

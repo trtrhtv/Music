@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Blocks } from '../components/Blocks';
 import { Timer } from '../components/RhythmTools';
 import { rich } from '../components/rich';
-import { DAILY, DAILY_INTRO, itemFor, type DailyCat } from '../data/daily';
+import { DAILY_INTRO, dailyCats, itemFor, type DailyCat } from '../data/daily';
 import { termsIn } from '../data/terms';
 import type { Block } from '../data/blocks';
 import { go } from '../router';
@@ -14,7 +14,7 @@ const HOURS: { hour: 1 | 2; title: string }[] = [
   { hour: 1, title: 'שעה 1 · הבסיס' },
   { hour: 2, title: 'שעה 2 · נגינה' },
 ];
-const minutes = (hour: 1 | 2) => DAILY.filter((c) => c.hour === hour).reduce((n, c) => n + c.min, 0);
+const minutes = (cats: DailyCat[], hour: 1 | 2) => cats.filter((c) => c.hour === hour).reduce((n, c) => n + c.min, 0);
 
 /** One line of the list: what to play today in this category, with everything needed to do it. */
 function DailyRow({ cat, set, day }: { cat: DailyCat; set: number; day: number }) {
@@ -29,7 +29,7 @@ function DailyRow({ cat, set, day }: { cat: DailyCat; set: number; day: number }
   const next = cat.levels[level + 1];
   // Every word the exercise uses gets explained, unless its own intro already does.
   const text = [item.title, ...item.how, ...(item.first ?? [])].join(' ') + (item.content?.some((b) => b.t === 'tab') ? ' טאב' : '');
-  const terms = termsIn(text).filter((t) => !(item.first ?? []).some((f) => f.includes(`**${t.word}`)));
+  const terms = termsIn(text, cat.piano ? 'piano' : 'guitar').filter((t) => !(item.first ?? []).some((f) => f.includes(`**${t.word}`)));
   // The tab player starts at the exercise's tempo (the metronome's), not a default of its own.
   const tempo = item.content?.find((b): b is Extract<Block, { t: 'metronome' }> => b.t === 'metronome')?.bpm;
   const content = item.content?.map((b) => (b.t === 'tab' && b.bpm === undefined && tempo ? { ...b, bpm: tempo } : b));
@@ -74,12 +74,13 @@ function DailyRow({ cat, set, day }: { cat: DailyCat; set: number; day: number }
 }
 
 function DailyList({ set, day }: { set: number; day: number }) {
+  const cats = dailyCats(useStore().prefs.hidePiano);
   return (
     <>
       {HOURS.map(({ hour, title }) => (
         <section key={hour}>
-          <h3 className="section-title">{title} <small className="muted">({minutes(hour)} דק')</small></h3>
-          {DAILY.filter((c) => c.hour === hour).map((c) => <DailyRow key={c.id} cat={c} set={set} day={day} />)}
+          <h3 className="section-title">{title} <small className="muted">({minutes(cats, hour)} דק')</small></h3>
+          {cats.filter((c) => c.hour === hour).map((c) => <DailyRow key={c.id} cat={c} set={set} day={day} />)}
         </section>
       ))}
     </>
@@ -91,12 +92,13 @@ export function DailyView() {
   const base = dailyBase(s);
   const sets = dailySetsToday(s);
   const checks = s.daily.checks[today()] ?? [];
-  const doneIn = (set: number) => DAILY.filter((c) => checks.includes(`${set}:${c.id}`)).length;
-  const lastDone = doneIn(sets - 1) === DAILY.length;
+  const cats = dailyCats(s.prefs.hidePiano);
+  const doneIn = (set: number) => cats.filter((c) => checks.includes(`${set}:${c.id}`)).length;
+  const lastDone = doneIn(sets - 1) === cats.length;
   return (
     <div className="screen">
       <h1>🎸 התרגול של היום</h1>
-      <p className="muted small">יום תרגול {base + 1} · {doneIn(0)}/{DAILY.length} הושלמו · כשעתיים</p>
+      <p className="muted small">יום תרגול {base + 1} · {doneIn(0)}/{cats.length} הושלמו · כ-{Math.round(cats.reduce((n, c) => n + c.min, 0) / 6) / 10} שעות</p>
       <details className="plan-intro"><summary>איך זה עובד</summary><Blocks blocks={DAILY_INTRO} /></details>
 
       <DailyList set={0} day={base} />

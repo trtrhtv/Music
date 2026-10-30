@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BARRE, DAILY, itemFor } from '../data/daily';
+import { BARRE, DAILY, dailyCats, itemFor } from '../data/daily';
 import { GUITAR_TUNING } from '../theory/theory';
 import { parseTab } from '../audio/tabPlayer';
 import { checkBlocks } from './checkBlocks';
@@ -7,10 +7,13 @@ import { dailyBase, getState, type State } from '../state/store';
 
 describe('daily practice list', () => {
   it('has the base categories, about two hours, every item explained and well-formed', () => {
-    expect(DAILY.map((c) => c.id)).toEqual(['warm', 'scales', 'chords', 'hand', 'neck', 'rhythm', 'flamenco', 'romanza', 'song']);
+    expect(DAILY.map((c) => c.id)).toEqual(['warm', 'scales', 'chords', 'hand', 'neck', 'rhythm', 'flamenco', 'romanza', 'song', 'piano']);
     const total = DAILY.reduce((n, c) => n + c.min, 0);
     expect(total).toBeGreaterThanOrEqual(110);
-    expect(total).toBeLessThanOrEqual(125);
+    expect(total).toBeLessThanOrEqual(135);
+    // Hiding the piano hides only its category.
+    expect(dailyCats(true).map((c) => c.id)).not.toContain('piano');
+    expect(dailyCats(false)).toHaveLength(DAILY.length);
     for (const c of DAILY) {
       expect(c.levels.length, c.id).toBeGreaterThan(1);
       for (const lv of c.levels) for (const it of lv.items) {
@@ -56,6 +59,10 @@ describe('every word explained', () => {
     expect(words('דקה בשמיניות, דקה בשש-עשריות ב-70')).toEqual(expect.arrayContaining(['eighths', 'sixteenths', 'bpm']));
     expect(words('סריגים 3-5-7-8-10')).not.toContain('fingers');
     expect(words('כרומטי 1-2-3-4')).toContain('fingers');
+    // Finger numbers mean different fingers on the piano (1 = thumb).
+    const piano = (t: string) => termsIn(t, 'piano').map((x) => x.id);
+    expect(piano('אגודל (1) על C האמצעי, אצבעות 1-3-5')).toEqual(expect.arrayContaining(['pfingers', 'middleC']));
+    expect(piano('אצבעות 1-3-5')).not.toContain('fingers');
   });
   it('the right-hand pick exercise explains eighths and sixteenths step by step', () => {
     const it = DAILY.find((c) => c.id === 'hand')!.levels[0].items[0];
