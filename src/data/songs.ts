@@ -94,6 +94,9 @@ export const ROMANZA_CHUNKS: { bars: [number, number]; title: string; lines: str
   { bars: [29, 32], title: 'תיבות 29–32 (29–30: הברה בסריג 2; ב-31 הבס יורד בכל פעמה)', lines: romTabB(29, 31).map((l, i) => l + '|' + ROMANZA_B_END[i].slice(1)) },
 ];
 
+/** The whole of Romanza in one tab: part A (1–16) and part B (17–32); then A again to bar 16. */
+export const ROMANZA_ALL: string[] = Array.from({ length: 6 }, (_, k) => ROMANZA_CHUNKS.map((c) => c.lines[k]).join('|'));
+
 export const SONGS: Song[] = [
   {
     id: 'romanza', title: 'Romanza (רומנסה ספרדית)', artist: 'אנונימי', kind: 'piece', status: 'verified', key: 'Em → E',
@@ -102,10 +105,11 @@ export const SONGS: Song[] = [
       p('יצירה במשקל 3/4: כל פעמה היא **שלישייה** – המנגינה על מיתר 1 (אצבע a), ואחריה מיתר 2 (m) ומיתר 3 (i). על הפעמה הראשונה האגודל מנגן בס יחד עם המנגינה.'),
       p('היצירה בנויה משני חלקים: **חלק A במי מינור** (תיבות 1–16, כהה ועצוב) ו**חלק B במי מז\'ור** (תיבות 17–32, בהיר). אחרי חלק B חוזרים לחלק A, ומסיימים בתיבה 16. שני החלקים כתובים כאן בטאב.'),
       { t: 'tab', sub: 3, title: 'יד ימין על מיתרים פתוחים – בס+a, m, i', lines: tabFrom([[[6, 0], [1, 0]], [[2, 0]], [[3, 0]], [[1, 0]], [[2, 0]], [[3, 0]], [[1, 0]], [[2, 0]], [[3, 0]]], 3) },
-      ...ROMANZA_CHUNKS.slice(0, 4).map((c) => ({ t: 'tab' as const, sub: 3, title: c.title, lines: c.lines })),
+      { t: 'tab', sub: 3, title: 'כל היצירה – תיבות 1–32 (אחרי 32 חוזרים ל-1 ומסיימים ב-16)', lines: ROMANZA_ALL, barFrom: 1 },
+      ...ROMANZA_CHUNKS.slice(0, 4).map((c) => ({ t: 'tab' as const, sub: 3, title: c.title, lines: c.lines, barFrom: c.bars[0] })),
       { t: 'h', text: 'חלק B – מי מז\'ור' },
       p('אותה תבנית של יד ימין: מנגינה, ואחריה שני תווים פנימיים. ההבדל: בתיבות 19–20 **המנגינה עוברת למיתר 2**, והתווים הפנימיים יורדים למיתרים 3 ו-4 – אז האצבעות של יד ימין זזות מיתר אחד למטה (a על מיתר 2, m על 3, i על 4).'),
-      ...ROMANZA_CHUNKS.slice(4).map((c) => ({ t: 'tab' as const, sub: 3, title: c.title, lines: c.lines })),
+      ...ROMANZA_CHUNKS.slice(4).map((c) => ({ t: 'tab' as const, sub: 3, title: c.title, lines: c.lines, barFrom: c.bars[0] })),
       list('**מהירות:** התחל ב-50 BPM, כשכל קליק = שלישייה אחת (3 תווים). היעד לסוף התוכנית: 80–90.', 'המנגינה צריכה להישמע **חזק יותר** מהמיתרים הפנימיים – זה כל הקסם.', 'בהברות (תיבות 7–10, 21–22, 27–30) – לחץ רק כמה שצריך כדי שהתווים יצלצלו, ושחרר את היד בין התיבות.'),
       tip('הטאב כאן נכתב לפי תווי היצירה (נחלת הכלל) ונבדק תיבה-תיבה מול המהדורה של Werner. את האצבוע של יד שמאל (איזו אצבע על כל תו) – כדאי לקחת מה-PDF.'),
     ],

@@ -1,7 +1,7 @@
 import type { Rhythm } from '../audio/rhythm';
 import { p, tip, type Block } from './blocks';
 import { CH, STRUMS, notesTab, tabFrom } from './guitarLib';
-import { ROMANZA_CHUNKS } from './songs';
+import { ROMANZA_ALL, ROMANZA_CHUNKS } from './songs';
 import {
   BLUES12, CHROMATIC, G_MAJOR, LADDER, PAMI, PENTA, PIMA, SPIDER, TRAVIS_AM, TRAVIS_C, TRAVIS_G, figureOnStrings, run,
 } from './tracks';
@@ -28,7 +28,8 @@ export type DailyCatId = 'warm' | 'scales' | 'chords' | 'hand' | 'neck' | 'rhyth
 export interface DailyCat { id: DailyCatId; icon: string; title: string; min: number; hour: 1 | 2; why: string; levels: DailyLevel[]; /** Played on the piano (hidden while the piano is hidden). */ piano?: boolean }
 
 /* ───────── helpers ───────── */
-const tab = (title: string, lines: string[], sub?: number): Block => ({ t: 'tab', title, lines, sub });
+const tab = (title: string, lines: string[], sub?: number, barFrom?: number): Block => ({ t: 'tab', title, lines, sub, barFrom });
+const WHOLE_ROMANZA = tab('כל היצירה – תיבות 1–32 (אחרי 32 חוזרים ל-1 ומסיימים ב-16)', ROMANZA_ALL, 3, 1);
 const metro = (bpm: number): Block => ({ t: 'metronome', bpm });
 const chords = (...names: (string | [string, number[]])[]): Block => ({ t: 'chords', items: names.map((n) => (typeof n === 'string' ? { name: n, frets: CH[n] } : { name: n[0], frets: n[1] })) });
 const strum = (r: Rhythm, name: string, names: string[], bpm: number, note?: string): Block => ({ t: 'strum', name, rhythm: r, bpm, chords: names.map((n) => CH[n] ?? EXTRA[n]), chordNames: names, note });
@@ -373,13 +374,13 @@ export const DAILY: DailyCat[] = [
             'בסוף – חבר: 4 התיבות הקודמות והחדשות ברצף.',
             'המנגינה (מיתר 1, אצבע a) חזקה מהשאר.',
           ],
-          content: [...(i === 0 ? [tab('יד ימין על מיתרים פתוחים', RH_OPEN, 3)] : []), tab(c.title, c.lines, 3), metro(45), go(['🎼 היצירה המלאה', 'songs/romanza'])],
+          content: [...(i === 0 ? [tab('יד ימין על מיתרים פתוחים', RH_OPEN, 3)] : []), tab(c.title, c.lines, 3, c.bars[0]), metro(45), WHOLE_ROMANZA],
         }],
       })),
-      { name: 'חלק A מלא', items: [{ id: 'rom-A', title: 'חלק A מלא (תיבות 1–16), ב-50', how: ['כוון את המטרונום ל-50 והפעל אותו.', 'נגן את כל חלק A (תיבות 1–16) פעם אחת, גם אם יש טעויות. סמן את 2 המקומות שנשברו.', 'כל מקום כזה – 5 פעמים לאט (40), ואז עם תיבה לפניו ותיבה אחריו.', 'שוב את כל חלק A.'], content: [...ROMANZA_CHUNKS.slice(0, 4).map((c) => tab(c.title, c.lines, 3)), metro(50)] }] },
-      { name: 'חלק B מלא', items: [{ id: 'rom-B', title: 'חלק B מלא (תיבות 17–32), ב-50', how: ['כוון את המטרונום ל-50 והפעל אותו.', 'נגן את כל חלק B (תיבות 17–32) פעם אחת, גם אם יש טעויות. סמן את 2 המקומות שנשברו.', 'כל מקום כזה – 5 פעמים לאט (40), ואז עם תיבה לפניו ותיבה אחריו.', 'שוב את כל חלק B.'], content: [...ROMANZA_CHUNKS.slice(4).map((c) => tab(c.title, c.lines, 3)), metro(50)] }] },
-      { name: 'כל היצירה', items: [{ id: 'rom-all', title: 'כל היצירה – A, B, ושוב A – ב-55 ומעלה', how: ['כוון את המטרונום ל-55 והפעל אותו.', 'כל היצירה: חלק A, חלק B, ושוב חלק A עד תיבה 16.', 'פעם אחת לאט, פעם בקצב הכי גבוה שעדיין נקי.', 'צבע: חלק A שקט ועצוב, חלק B בהיר ומלא.'], content: [go(['🎼 היצירה המלאה', 'songs/romanza']), metro(55)] }] },
-      { name: 'ביצוע', items: [{ id: 'rom-perf', title: 'Romanza כמו בהופעה – 70 ומעלה, והקלטה', how: ['כוון את המטרונום ל-70 לחימום, ואז כבה אותו.', 'נגן את כל היצירה כמו בהופעה – מההתחלה עד הסוף, בלי לעצור גם אם יש טעות.', 'הקלט את עצמך (בטלפון, או "הקלטה עכשיו" במסך ההתקדמות) והקשב: המנגינה נשמעת מעל הליווי?'], content: [go(['🎼 היצירה המלאה', 'songs/romanza']), metro(70)] }] },
+      { name: 'חלק A מלא', items: [{ id: 'rom-A', title: 'חלק A מלא (תיבות 1–16), ב-50', how: ['כוון את המטרונום ל-50 והפעל אותו.', 'נגן את כל חלק A (תיבות 1–16) פעם אחת, גם אם יש טעויות. סמן את 2 המקומות שנשברו.', 'כל מקום כזה – 5 פעמים לאט (40), ואז עם תיבה לפניו ותיבה אחריו.', 'שוב את כל חלק A.'], content: [...ROMANZA_CHUNKS.slice(0, 4).map((c) => tab(c.title, c.lines, 3, c.bars[0])), metro(50), WHOLE_ROMANZA] }] },
+      { name: 'חלק B מלא', items: [{ id: 'rom-B', title: 'חלק B מלא (תיבות 17–32), ב-50', how: ['כוון את המטרונום ל-50 והפעל אותו.', 'נגן את כל חלק B (תיבות 17–32) פעם אחת, גם אם יש טעויות. סמן את 2 המקומות שנשברו.', 'כל מקום כזה – 5 פעמים לאט (40), ואז עם תיבה לפניו ותיבה אחריו.', 'שוב את כל חלק B.'], content: [...ROMANZA_CHUNKS.slice(4).map((c) => tab(c.title, c.lines, 3, c.bars[0])), metro(50), WHOLE_ROMANZA] }] },
+      { name: 'כל היצירה', items: [{ id: 'rom-all', title: 'כל היצירה – A, B, ושוב A – ב-55 ומעלה', how: ['כוון את המטרונום ל-55 והפעל אותו.', 'כל היצירה: חלק A, חלק B, ושוב חלק A עד תיבה 16.', 'פעם אחת לאט, פעם בקצב הכי גבוה שעדיין נקי.', 'צבע: חלק A שקט ועצוב, חלק B בהיר ומלא.'], content: [WHOLE_ROMANZA, metro(55)] }] },
+      { name: 'ביצוע', items: [{ id: 'rom-perf', title: 'Romanza כמו בהופעה – 70 ומעלה, והקלטה', how: ['כוון את המטרונום ל-70 לחימום, ואז כבה אותו.', 'נגן את כל היצירה כמו בהופעה – מההתחלה עד הסוף, בלי לעצור גם אם יש טעות.', 'הקלט את עצמך (בטלפון, או "הקלטה עכשיו" במסך ההתקדמות) והקשב: המנגינה נשמעת מעל הליווי?'], content: [WHOLE_ROMANZA, metro(70)] }] },
     ],
   },
   {

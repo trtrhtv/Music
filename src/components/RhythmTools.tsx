@@ -162,6 +162,12 @@ const TAB_NAMES = ['e', 'B', 'G', 'D', 'A', 'E'];
 type Orient = 'land' | 'port';
 const ORIENT_KEY = 'tab-orient';
 const savedOrient = (): Orient => { try { return localStorage.getItem(ORIENT_KEY) === 'port' ? 'port' : 'land'; } catch { return 'land'; } };
+const PER_ROW = [2, 4, 6, 8];
+const PER_ROW_KEY = 'tab-per-row';
+/** Bars per row, chosen separately for upright and sideways (remembered). */
+const savedPerRow = (): Record<Orient, number> => {
+  try { return { port: 2, land: 4, ...JSON.parse(localStorage.getItem(PER_ROW_KEY) ?? '{}') }; } catch { return { port: 2, land: 4 }; }
+};
 type LockableOrientation = ScreenOrientation & { lock?: (o: string) => Promise<void> };
 
 /**
@@ -169,7 +175,7 @@ type LockableOrientation = ScreenOrientation & { lock?: (o: string) => Promise<v
  * Android can lock the screen that way; where it can't (iPhone, or a phone with rotation locked)
  * the tab itself is turned, so you just turn the phone.
  */
-function TabFull({ lines, title, onClose }: { lines: string[]; title?: string; onClose: () => void }) {
+function TabFull({ lines, title, onClose, barFrom }: { lines: string[]; title?: string; onClose: () => void; barFrom?: number }) {
   const box = useRef<HTMLDivElement>(null);
   const [portrait, setPortrait] = useState(() => matchMedia('(orientation: portrait)').matches);
   const [orient, setOrient] = useState<Orient>(savedOrient);
@@ -200,10 +206,20 @@ function TabFull({ lines, title, onClose }: { lines: string[]; title?: string; o
   const rotated = (orient === 'land') === portrait;
   const sideways = orient === 'land';
   const width = rotated ? '100vh' : '100vw';
-  const perRow = sideways ? 99 : 2;
+  const [perRowBy, setPerRowBy] = useState<Record<Orient, number>>(savedPerRow);
+  const perRow = perRowBy[orient];
+  const choosePerRow = (n: number) => {
+    const next = { ...perRowBy, [orient]: n };
+    setPerRowBy(next);
+    try { localStorage.setItem(PER_ROW_KEY, JSON.stringify(next)); } catch { /* storage unavailable */ }
+  };
   const bars = lines.map((l) => l.split('|'));
-  const rows: string[][] = [];
-  for (let i = 0; i < bars[0].length; i += perRow) rows.push(bars.map((b) => b.slice(i, i + perRow).join('|')));
+  const total = bars[0].length;
+  const rows: { from: number; lines: string[] }[] = [];
+  for (let i = 0; i < total; i += perRow) rows.push({ from: i, lines: bars.map((b) => b.slice(i, i + perRow).join('|')) });
+  // One size for every row (the widest one fits), so a short last row doesn't jump bigger.
+  const widest = Math.max(...rows.flatMap((r) => r.lines.map((l) => l.length)));
+  const fontSize = `min(calc((${width} - 48px) / ${(widest + 3) * 0.6}), 26px)`;
   return (
     // The full-screen element itself can't be transformed (browsers force it upright), so an inner box turns.
     <div className={`tab-full ${rotated ? 'turned' : ''}`} ref={box}>
@@ -217,18 +233,28 @@ function TabFull({ lines, title, onClose }: { lines: string[]; title?: string; o
         </div>
       </div>
       {rotated && <p className="muted small">🔄 סובב את הטלפון {sideways ? 'לרוחב' : 'לאורך'}.</p>}
-      {/* Upright: two bars per row so it stays readable. Monospace glyphs are ~0.6em wide, so the font size is the one that fits a row. */}
-      {rows.map((r, i) => (
-        <pre key={i} className="tab" dir="ltr" style={{ fontSize: `min(calc((${width} - 48px) / ${(Math.max(...r.map((l) => l.length)) + 3) * 0.6}), 26px)` }}>
-          {r.map((l, k) => `${TAB_NAMES[k]}|${l}|`).join('\n')}
-        </pre>
+      {total > 2 && (
+        <div className="row tight tf-per-row">
+          <span className="small muted">תיבות בשורה:</span>
+          {PER_ROW.filter((n) => n < total || n === PER_ROW[0]).map((n) => <button key={n} className={`btn small ${perRow === n ? 'primary' : 'ghost'}`} onClick={() => choosePerRow(n)}>{n}</button>)}
+          <button className={`btn small ${perRow >= total ? 'primary' : 'ghost'}`} onClick={() => choosePerRow(99)}>הכול</button>
+        </div>
+      )}
+      {/* Monospace glyphs are ~0.6em wide, so the font size is the one that fits a row to the width. */}
+      {rows.map((r) => (
+        <div key={r.from} className="tf-row">
+          {barFrom !== undefined && rows.length > 1 && <div className="tf-bars small muted">תיבות {barFrom + r.from}–{barFrom + Math.min(total, r.from + perRow) - 1}</div>}
+          <pre className="tab" dir="ltr" style={{ fontSize }}>
+            {r.lines.map((l, k) => `${TAB_NAMES[k]}|${l}|`).join('\n')}
+          </pre>
+        </div>
       ))}
       </div>
     </div>
   );
 }
 
-export function TabView({ lines, title, sub = 2, bpm: initialBpm }: { lines: string[]; title?: string; sub?: number; bpm?: number }) {
+export function TabView({ lines, title, sub = 2, bpm: initialBpm, barFrom }: { lines: string[]; title?: string; sub?: number; bpm?: number; barFrom?: number }) {
   const [full, setFull] = useState(false);
   const [bpm, setBpm] = useState(initialBpm ?? (sub === 3 ? 50 : 60));
   const [step, setStep] = useState(-1);
@@ -260,7 +286,7 @@ export function TabView({ lines, title, sub = 2, bpm: initialBpm }: { lines: str
       </div>
       {checking && melody && <NoteCheck notes={melody} onClose={() => setChecking(false)} />}
       <pre className="tab" dir="ltr">{text}</pre>
-      {full && <TabFull lines={lines} title={title} onClose={() => setFull(false)} />}
+      {full && <TabFull lines={lines} title={title} barFrom={barFrom} onClose={() => setFull(false)} />}
     </figure>
   );
 }

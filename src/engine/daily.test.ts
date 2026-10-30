@@ -85,3 +85,12 @@ describe('every exercise is spelled out', () => {
     }
   });
 });
+
+describe('the whole of Romanza in one tab', () => {
+  it('has all 32 bars on every string', async () => {
+    const { ROMANZA_ALL } = await import('../data/songs');
+    expect(ROMANZA_ALL).toHaveLength(6);
+    for (const l of ROMANZA_ALL) expect(l.split('|')).toHaveLength(32);
+    expect(new Set(ROMANZA_ALL.map((l) => l.length)).size).toBe(1);
+  });
+});

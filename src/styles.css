@@ -453,3 +453,8 @@ textarea.note { width: 100%; box-sizing: border-box; background: var(--card); co
 .timer-up { color: #ffb86b; font-weight: 700; animation: blink 1s steps(2) 6; }
 @keyframes blink { 50% { opacity: 0.2; } }
 .basics .terms { margin-top: 4px; }
+
+.tf-per-row { flex-wrap: wrap; align-items: center; }
+.tf-row { display: flex; flex-direction: column; gap: 2px; }
+.tf-bars { padding-inline-start: 4px; }
+.tab-full .tab { margin: 0; }
