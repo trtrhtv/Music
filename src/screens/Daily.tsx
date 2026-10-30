@@ -3,6 +3,8 @@ import { Blocks } from '../components/Blocks';
 import { Timer } from '../components/RhythmTools';
 import { rich } from '../components/rich';
 import { DAILY, DAILY_INTRO, itemFor, type DailyCat } from '../data/daily';
+import { termsIn } from '../data/terms';
+import type { Block } from '../data/blocks';
 import { go } from '../router';
 import {
   dailyBase, dailySetsToday, markDailySeen, setDailyLevel, startNextDailySet, today, toggleDailyCheck, useStore,
@@ -25,6 +27,12 @@ function DailyRow({ cat, set, day }: { cat: DailyCat; set: number; day: number }
   const [moved, setMoved] = useState('');
   const check = () => { toggleDailyCheck(set, cat.id); markDailySeen(item.id); if (!done) setOpen(false); };
   const next = cat.levels[level + 1];
+  // Every word the exercise uses gets explained, unless its own intro already does.
+  const text = [item.title, ...item.how, ...(item.first ?? [])].join(' ') + (item.content?.some((b) => b.t === 'tab') ? ' טאב' : '');
+  const terms = termsIn(text).filter((t) => !(item.first ?? []).some((f) => f.includes(`**${t.word}`)));
+  // The tab player starts at the exercise's tempo (the metronome's), not a default of its own.
+  const tempo = item.content?.find((b): b is Extract<Block, { t: 'metronome' }> => b.t === 'metronome')?.bpm;
+  const content = item.content?.map((b) => (b.t === 'tab' && b.bpm === undefined && tempo ? { ...b, bpm: tempo } : b));
   return (
     <div className={`daily-row ${done ? 'done' : ''}`}>
       <div className="dr-head">
@@ -37,14 +45,20 @@ function DailyRow({ cat, set, day }: { cat: DailyCat; set: number; day: number }
       </div>
       {open && (
         <div className="dr-body">
-          {item.first && (
+          {(item.first || terms.length > 0) && (
             <details className="basics" open={!seen}>
-              <summary>📘 {seen ? 'הסבר מאפס' : 'פעם ראשונה? מה צריך לדעת'}</summary>
-              <ul>{item.first.map((t, i) => <li key={i}>{rich(t)}</li>)}</ul>
+              <summary>📘 {seen ? 'מה צריך לדעת' : 'פעם ראשונה? מה צריך לדעת'}</summary>
+              {item.first && <ul>{item.first.map((t, i) => <li key={i}>{rich(t)}</li>)}</ul>}
+              {terms.length > 0 && (
+                <>
+                  <div className="small muted">מילים בתרגיל:</div>
+                  <ul className="terms">{terms.map((t) => <li key={t.id}><b className="term">{t.word}</b> – {rich(t.text)}</li>)}</ul>
+                </>
+              )}
             </details>
           )}
           <ol className="pb-steps">{item.how.map((t, i) => <li key={i}>{rich(t)}</li>)}</ol>
-          {item.content && <Blocks blocks={item.content} />}
+          {content && <Blocks blocks={content} />}
           <Timer minutes={cat.min} />
           <div className="row wrap tight dr-actions">
             <button className="btn small primary" onClick={check}>{done ? 'בטל ✓' : '✓ סיימתי'}</button>

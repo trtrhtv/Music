@@ -78,7 +78,7 @@ export function Blocks({ blocks, onTopic }: { blocks: Block[]; onTopic?: (id: st
                 ))}
               </div>
             );
-          case 'tab': return <TabView key={i} lines={b.lines} title={b.title} sub={b.sub} />;
+          case 'tab': return <TabView key={i} lines={b.lines} title={b.title} sub={b.sub} bpm={b.bpm} />;
           case 'strum': return <StrumPattern key={i} name={b.name} rhythm={b.rhythm} bpm={b.bpm} chords={b.chords} chordNames={b.chordNames} note={b.note} />;
           case 'metronome': return <Metronome key={i} initial={b.bpm} beats={b.beats} />;
           case 'links':

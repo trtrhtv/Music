@@ -48,3 +48,20 @@ describe('daily practice list', () => {
     expect(dailyBase(s, '2026-10-03')).toBe(1);
   });
 });
+
+describe('every word explained', () => {
+  it('finds the practice words an exercise uses', async () => {
+    const { termsIn } = await import('../data/terms');
+    const words = (t: string) => termsIn(t).map((x) => x.id);
+    expect(words('דקה בשמיניות, דקה בשש-עשריות ב-70')).toEqual(expect.arrayContaining(['eighths', 'sixteenths', 'bpm']));
+    expect(words('סריגים 3-5-7-8-10')).not.toContain('fingers');
+    expect(words('כרומטי 1-2-3-4')).toContain('fingers');
+  });
+  it('the right-hand pick exercise explains eighths and sixteenths step by step', () => {
+    const it = DAILY.find((c) => c.id === 'hand')!.levels[0].items[0];
+    const all = [it.title, ...it.how].join(' ');
+    expect(all).toContain('שמיניות');
+    expect(all).toContain('שש-עשריות');
+    expect(all).not.toMatch(/\d→\d/);
+  });
+});

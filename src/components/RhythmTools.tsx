@@ -102,23 +102,30 @@ export function StrumPattern({ name, rhythm, bpm: initialBpm = 70, chords, chord
   );
 }
 
-function chime() {
+function chime(rounds = 1) {
   const c = audio();
-  [880, 1320].forEach((f, i) => {
-    const o = c.createOscillator();
-    const g = c.createGain();
-    const t = c.currentTime + i * 0.18;
-    o.frequency.value = f;
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(0.25, t + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
-    o.connect(g).connect(output());
-    o.start(t);
-    o.stop(t + 0.7);
-  });
+  for (let r = 0; r < rounds; r++) {
+    [880, 1320, 1760].forEach((f, i) => {
+      const o = c.createOscillator();
+      const g = c.createGain();
+      const t = c.currentTime + r * 0.9 + i * 0.16;
+      o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.5, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.55);
+      o.connect(g).connect(output());
+      o.start(t);
+      o.stop(t + 0.6);
+    });
+  }
 }
 
-/** Countdown timer for a practice block. */
+/** The end of a practice block: an alarm you hear over the guitar (four rounds), and a buzz on phones. */
+function timeUp() {
+  chime(4);
+  navigator.vibrate?.([400, 200, 400, 200, 400]);
+}
+
 export function Timer({ minutes, onDone }: { minutes: number; onDone?: () => void }) {
   const [left, setLeft] = useState(minutes * 60);
   const [on, setOn] = useState(false);
@@ -127,7 +134,7 @@ export function Timer({ minutes, onDone }: { minutes: number; onDone?: () => voi
     const t = setInterval(() => setLeft((x) => {
       if (x <= 1) {
         setOn(false);
-        chime();
+        timeUp();
         return 0;
       }
       return x - 1;
@@ -143,6 +150,7 @@ export function Timer({ minutes, onDone }: { minutes: number; onDone?: () => voi
       <span className={`timer-val ${left === 0 ? 'done' : ''}`}>{mm}:{ss}</span>
       <button className="btn small" onClick={() => setOn(!on)}>{on ? '⏸' : '▶'}</button>
       <button className="btn ghost small" onClick={() => { setOn(false); setLeft(minutes * 60); }}>↺</button>
+      {left === 0 && <span className="timer-up">⏰ הזמן נגמר</span>}
     </div>
   );
 }
@@ -194,9 +202,9 @@ function TabFull({ lines, title, onClose }: { lines: string[]; title?: string; o
   );
 }
 
-export function TabView({ lines, title, sub = 2 }: { lines: string[]; title?: string; sub?: number }) {
+export function TabView({ lines, title, sub = 2, bpm: initialBpm }: { lines: string[]; title?: string; sub?: number; bpm?: number }) {
   const [full, setFull] = useState(false);
-  const [bpm, setBpm] = useState(sub === 3 ? 50 : 60);
+  const [bpm, setBpm] = useState(initialBpm ?? (sub === 3 ? 50 : 60));
   const [step, setStep] = useState(-1);
   const [playing, setPlaying] = useState(false);
   const [checking, setChecking] = useState(false);

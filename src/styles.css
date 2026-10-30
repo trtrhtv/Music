@@ -269,7 +269,7 @@ h3 { font-size: 1.05rem; }
 .sheet-head { display: flex; justify-content: space-between; align-items: center; }
 .sheet-close { background: none; border: none; font-size: 1.2rem; color: var(--muted); padding: 6px; }
 .tabbar button { padding: 4px 8px; }
-.prompt bdi, .explain bdi, .b-tip bdi, .blocks bdi { white-space: nowrap; }
+.prompt bdi, .explain bdi, .b-tip bdi, .blocks bdi, .basics bdi, .pb-steps bdi, .dr-title bdi { white-space: nowrap; }
 /* Answer buttons are narrow (two per row): a long run of note names may wrap there. */
 .option bdi { white-space: normal; }
 
@@ -444,3 +444,7 @@ textarea.note { width: 100%; box-sizing: border-box; background: var(--card); co
 
 /* A long run (e.g. the 12 chords of a blues) may wrap; the isolate keeps it in order. */
 .blocks bdi.wrap { white-space: normal; }
+
+.timer-up { color: #ffb86b; font-weight: 700; animation: blink 1s steps(2) 6; }
+@keyframes blink { 50% { opacity: 0.2; } }
+.basics .terms { margin-top: 4px; }
