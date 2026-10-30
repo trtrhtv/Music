@@ -65,3 +65,16 @@ describe('every word explained', () => {
     expect(all).not.toMatch(/\d→\d/);
   });
 });
+
+describe('every exercise is spelled out', () => {
+  it('says how to set the metronome or the loop it comes with, in at least two steps', () => {
+    for (const c of DAILY) for (const lv of c.levels) for (const it of lv.items) {
+      const how = it.how.join(' ');
+      const where = `${c.id}/${it.id}`;
+      expect(it.how.length, where).toBeGreaterThanOrEqual(2);
+      if (it.content?.some((b) => b.t === 'metronome')) expect(how, `${where}: metronome setting`).toMatch(/מטרונום/);
+      if (it.content?.some((b) => b.t === 'strum')) expect(how, `${where}: loop`).toMatch(/לופ|מטרונום/);
+      expect(how, `${where}: no bare arrows between numbers`).not.toMatch(/\d ?→ ?\d/);
+    }
+  });
+});

@@ -159,16 +159,25 @@ export function Timer({ minutes, onDone }: { minutes: number; onDone?: () => voi
 const TAB_NAMES = ['e', 'B', 'G', 'D', 'A', 'E'];
 
 /** Full-screen tab, sized so the whole line fits the width; tries to turn the screen sideways. */
+type Orient = 'land' | 'port';
+const ORIENT_KEY = 'tab-orient';
+const savedOrient = (): Orient => { try { return localStorage.getItem(ORIENT_KEY) === 'port' ? 'port' : 'land'; } catch { return 'land'; } };
+type LockableOrientation = ScreenOrientation & { lock?: (o: string) => Promise<void> };
+
+/**
+ * Full-screen tab, upright or sideways – the player chooses (and it's remembered).
+ * Android can lock the screen that way; where it can't (iPhone, or a phone with rotation locked)
+ * the tab itself is turned, so you just turn the phone.
+ */
 function TabFull({ lines, title, onClose }: { lines: string[]; title?: string; onClose: () => void }) {
   const box = useRef<HTMLDivElement>(null);
   const [portrait, setPortrait] = useState(() => matchMedia('(orientation: portrait)').matches);
+  const [orient, setOrient] = useState<Orient>(savedOrient);
   // Keep the latest onClose without re-running the effect (that would leave full screen on every render).
   const close = useRef(onClose);
   useEffect(() => { close.current = onClose; });
   useEffect(() => {
-    const el = box.current;
-    // Android: full screen + landscape lock. iPhone can't lock, so we show a hint instead.
-    el?.requestFullscreen?.().then(() => (screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> }).lock?.('landscape')).catch(() => {});
+    box.current?.requestFullscreen?.().catch(() => {});
     const mq = matchMedia('(orientation: portrait)');
     const on = () => setPortrait(mq.matches);
     mq.addEventListener('change', on);
@@ -181,23 +190,40 @@ function TabFull({ lines, title, onClose }: { lines: string[]; title?: string; o
       if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     };
   }, []);
-  const perRow = portrait ? 2 : 99;
+  useEffect(() => {
+    try { localStorage.setItem(ORIENT_KEY, orient); } catch { /* storage unavailable */ }
+    // Ask the phone to turn the screen; if it can't, the CSS rotation below does it.
+    const lock = () => (screen.orientation as LockableOrientation).lock?.(orient === 'land' ? 'landscape' : 'portrait').catch(() => {});
+    if (document.fullscreenElement) lock(); else setTimeout(lock, 300);
+  }, [orient]);
+  // Turn the tab when the phone is held differently from the chosen orientation.
+  const rotated = (orient === 'land') === portrait;
+  const sideways = orient === 'land';
+  const width = rotated ? '100vh' : '100vw';
+  const perRow = sideways ? 99 : 2;
   const bars = lines.map((l) => l.split('|'));
   const rows: string[][] = [];
   for (let i = 0; i < bars[0].length; i += perRow) rows.push(bars.map((b) => b.slice(i, i + perRow).join('|')));
   return (
-    <div className="tab-full" ref={box}>
+    // The full-screen element itself can't be transformed (browsers force it upright), so an inner box turns.
+    <div className={`tab-full ${rotated ? 'turned' : ''}`} ref={box}>
+      <div className={`tf-inner ${rotated ? (sideways ? 'rot' : 'rot-back') : ''}`}>
       <div className="tab-full-bar">
         <span className="small">{title}</span>
-        <button className="btn small" onClick={onClose}>✕ סגור</button>
+        <div className="row tight">
+          <button className={`btn small ${orient === 'port' ? 'primary' : 'ghost'}`} onClick={() => setOrient('port')}>▯ עומד</button>
+          <button className={`btn small ${orient === 'land' ? 'primary' : 'ghost'}`} onClick={() => setOrient('land')}>▭ שוכב</button>
+          <button className="btn small" onClick={onClose}>✕</button>
+        </div>
       </div>
-      {portrait && <p className="muted small">💡 סובב את הטלפון לרוחב – כל השורה תיכנס, והטאב יהיה גדול יותר.</p>}
+      {rotated && <p className="muted small">🔄 סובב את הטלפון {sideways ? 'לרוחב' : 'לאורך'}.</p>}
       {/* Upright: two bars per row so it stays readable. Monospace glyphs are ~0.6em wide, so the font size is the one that fits a row. */}
       {rows.map((r, i) => (
-        <pre key={i} className="tab" dir="ltr" style={{ fontSize: `min(calc((100vw - 48px) / ${(Math.max(...r.map((l) => l.length)) + 3) * 0.6}), 26px)` }}>
+        <pre key={i} className="tab" dir="ltr" style={{ fontSize: `min(calc((${width} - 48px) / ${(Math.max(...r.map((l) => l.length)) + 3) * 0.6}), 26px)` }}>
           {r.map((l, k) => `${TAB_NAMES[k]}|${l}|`).join('\n')}
         </pre>
       ))}
+      </div>
     </div>
   );
 }

@@ -360,7 +360,12 @@ h3 { font-size: 1.05rem; }
 @keyframes rec-pulse { 50% { opacity: 0.6; } }
 
 /* Full-screen tab + landscape */
-.tab-full { position: fixed; inset: 0; z-index: 60; background: var(--bg); padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 12px max(12px, env(safe-area-inset-left)); overflow: auto; display: flex; flex-direction: column; gap: 8px; }
+.tab-full { position: fixed; inset: 0; z-index: 60; background: var(--bg); overflow: auto; }
+.tab-full.turned { overflow: hidden; }
+.tf-inner { padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 12px max(12px, env(safe-area-inset-left)); display: flex; flex-direction: column; gap: 8px; box-sizing: border-box; }
+.tf-inner.rot, .tf-inner.rot-back { position: absolute; width: 100vh; height: 100vw; overflow: auto; transform-origin: top left; }
+.tf-inner.rot { top: 0; left: 100vw; transform: rotate(90deg); }
+.tf-inner.rot-back { top: 100vh; left: 0; transform: rotate(-90deg); }
 .tab-full-bar { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .tab-full .tab { overflow: visible; line-height: 1.4; padding: 12px; }
 @media (orientation: landscape) and (min-width: 700px) {
