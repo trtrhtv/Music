@@ -103,3 +103,71 @@ export function checkKeys(q: DrillQ, keys: number[]): boolean {
   const got = new Set(keys.map(pc));
   return want.size === got.size && [...want].every((p) => got.has(p));
 }
+
+/* ───────── Every question once before any repeats ───────── */
+
+const SKIP = /##|bb|E#|B#|Fb|Cb/;
+
+/** Every note the settings allow: each staff position in the clef's range, natural or (if chosen) with ♯/♭. */
+function allNotes(clef: Clef, accidentals: boolean): DrillQ[] {
+  const [lo, hi] = RANGE[clef];
+  const out: DrillQ[] = [];
+  for (let m = lo; m <= hi; m++) {
+    const names = NATURALS.flatMap((l) => ['', '#', 'b'].map((a) => l + a))
+      .filter((n) => (accidentals || n.length === 1) && !SKIP.test(n) && pcAny(n) === pc(m));
+    for (const n of names) out.push({ kind: 'note', show: 'staff', clef, staff: [withOctave(n, m)], names: [n], midis: [m] });
+  }
+  return out;
+}
+
+/** Every chord the settings allow, in root position on the clef. */
+function allChords(clef: Clef, o: DrillOptions): DrillQ[] {
+  const roots = o.accidentals ? [...NOTE_ROOTS_PLAIN, ...CHORD_ROOTS_ACC] : NOTE_ROOTS_PLAIN;
+  const qualities = o.moreChords ? ['maj', 'min', 'dim', 'aug', 'dom7', 'maj7', 'min7'] : ['maj', 'min'];
+  const out: DrillQ[] = [];
+  for (const root of roots) for (const q of qualities) {
+    const names = spellChord(root, CHORDS[q].steps);
+    if (names.some((n) => SKIP.test(n))) continue;
+    const base = (clef === 'treble' ? 60 : 48) + pcAny(root);
+    const midis = CHORDS[q].steps.map((s) => base + s);
+    if (midis[midis.length - 1] > (clef === 'treble' ? 81 : 64)) continue;
+    out.push({ kind: 'chord', show: 'name', clef, staff: names.map((n, i) => withOctave(n, midis[i])), names, midis, symbol: root + CHORDS[q].symbol, quality: CHORDS[q].name });
+  }
+  return out;
+}
+
+export function allDrillQs(o: DrillOptions): DrillQ[] {
+  const clefs: Clef[] = o.clef === 'both' ? ['treble', 'bass'] : [o.clef];
+  return clefs.flatMap((c) => [...(o.kind !== 'chord' ? allNotes(c, o.accidentals) : []), ...(o.kind !== 'note' ? allChords(c, o) : [])]);
+}
+
+const qKey = (q: DrillQ) => `${q.clef}:${q.staff.join(',')}`;
+
+/**
+ * Draws questions like cards from a shuffled deck: every question once before any comes back,
+ * never the same one twice in a row. Notes and chords are mixed evenly when both are on.
+ */
+export function drillDeck(o: DrillOptions): () => DrillQ {
+  let deck: DrillQ[] = [];
+  let last = '';
+  return () => {
+    if (!deck.length) {
+      deck = allDrillQs(o);
+      for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
+      // Mixed notes and chords: interleave, so a long run of one kind doesn't happen.
+      if (o.kind === 'mix') {
+        const notes = deck.filter((d) => d.kind === 'note'), chords = deck.filter((d) => d.kind === 'chord');
+        deck = [];
+        while (notes.length || chords.length) {
+          if (notes.length) deck.push(notes.pop()!);
+          if (chords.length && (Math.random() < 0.5 || !notes.length)) deck.push(chords.pop()!);
+        }
+      }
+      if (deck.length > 1 && qKey(deck[0]) === last) deck.push(deck.shift()!);
+    }
+    const q = deck.shift()!;
+    last = qKey(q);
+    const show: DrillQ['show'] = q.kind === 'note' ? 'staff' : o.chordShow === 'mix' ? pick(['name', 'staff'] as const) : o.chordShow;
+    return { ...q, show };
+  };
+}

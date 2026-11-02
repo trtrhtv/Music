@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { playChord, playNote } from '../audio/synth';
 import { Keyboard, type KeyMark } from '../components/Keyboard';
 import { Staff } from '../components/Staff';
-import { KEYS, checkKeys, checkNames, makeDrillQ, type DrillOptions, type DrillQ } from '../engine/noteDrill';
-import { NATURALS, SOLFEGE } from '../theory/theory';
+import { KEYS, checkKeys, checkNames, drillDeck, type DrillOptions, type DrillQ } from '../engine/noteDrill';
+import { CHORDS, NATURALS, SOLFEGE } from '../theory/theory';
 
 /**
  * Piano note reading: see a note or a chord, write what it is (or what notes it's built from),
@@ -13,13 +13,26 @@ import { NATURALS, SOLFEGE } from '../theory/theory';
 type Steps = 'both' | 'write' | 'play';
 type Naming = 'both' | 'letters' | 'solfege';
 interface Settings extends DrillOptions { steps: Steps; /** How notes are named: letters (C), do-re-mi (דו), or both. */ naming: Naming }
-const KEY = 'notes-drill';
-const DEFAULTS: Settings = { kind: 'note', clef: 'treble', accidentals: false, moreChords: false, chordShow: 'name', steps: 'both', naming: 'both' };
+// v2: the defaults changed to notes and chords, both clefs.
+const KEY = 'notes-drill-v2';
+const DEFAULTS: Settings = { kind: 'mix', clef: 'both', accidentals: false, moreChords: false, chordShow: 'mix', steps: 'both', naming: 'both' };
 const load = (): Settings => { try { return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) ?? '{}') }; } catch { return DEFAULTS; } };
 const nice = (n: string) => n.replace(/#/g, '♯').replace(/b/g, '♭');
 /** Do-re-mi name with its sign: "F#" → "פה♯". */
 const sol = (n: string) => SOLFEGE[n[0]] + nice(n.slice(1)).replace(/\d/g, '');
 const ROLE = ['שורש', 'טרצה', 'קווינטה', 'ספטימה'];
+
+/** Four names to choose from for a chord read off the staff: the right one, the same root with another quality, and other roots. */
+function nameOptions(q: DrillQ, more: boolean): string[] {
+  const root = q.symbol!.match(/^[A-G][#b]?/)![0];
+  const quals = (more ? ['maj', 'min', 'dim', 'aug', 'dom7', 'maj7', 'min7'] : ['maj', 'min']).map((k) => CHORDS[k].symbol);
+  const others = [
+    ...quals.map((qs) => root + qs),
+    ...NATURALS.filter((l) => l !== root[0]).map((l) => l + q.symbol!.slice(root.length)),
+  ].filter((x) => x !== q.symbol);
+  const pickFrom = [...new Set(others)].sort(() => Math.random() - 0.5).slice(0, 3);
+  return [q.symbol!, ...pickFrom].sort(() => Math.random() - 0.5);
+}
 
 function Choice<T extends string | boolean>({ label, value, set, options }: { label: string; value: T; set: (v: T) => void; options: [T, string][] }) {
   return (
@@ -32,7 +45,11 @@ function Choice<T extends string | boolean>({ label, value, set, options }: { la
 
 export function NotesDrill() {
   const [cfg, setCfg] = useState<Settings>(load);
-  const [q, setQ] = useState<DrillQ>(() => makeDrillQ(load()));
+  // Questions come from a shuffled deck: every one once before any repeats.
+  const deck = useRef<() => DrillQ>(null as unknown as () => DrillQ);
+  if (!deck.current) deck.current = drillDeck(cfg);
+  const [q, setQ] = useState<DrillQ>(() => deck.current());
+  const [namePick, setNamePick] = useState<string | null>(null);
   const [phase, setPhase] = useState<'write' | 'play'>(load().steps === 'play' ? 'play' : 'write');
   const [names, setNames] = useState<string[]>([]);
   const [accNext, setAccNext] = useState<'' | '#' | 'b'>('');
@@ -45,12 +62,13 @@ export function NotesDrill() {
     const next = { ...cfg, ...patch };
     setCfg(next);
     try { localStorage.setItem(KEY, JSON.stringify(next)); } catch { /* storage unavailable */ }
+    deck.current = drillDeck(next);
     fresh(next);
   };
   function fresh(c = cfg) {
-    setQ(makeDrillQ(c));
+    setQ(deck.current());
     setPhase(c.steps === 'play' ? 'play' : 'write');
-    setNames([]); setAccNext(''); setWritten(null); setKeys([]); setPlayed(null);
+    setNames([]); setAccNext(''); setWritten(null); setKeys([]); setPlayed(null); setNamePick(null);
   }
   const hear = () => (q.kind === 'note' ? playNote(q.midis[0], { dur: 1.2 }) : playChord(q.midis, { dur: 1.6 }));
   const need = q.names.length;
@@ -79,6 +97,15 @@ export function NotesDrill() {
     hear();
   };
   const afterWrite = () => (cfg.steps === 'write' ? fresh() : setPhase('play'));
+  // A chord read off the staff: after its notes, also say what it's called.
+  const askName = q.kind === 'chord' && q.show === 'staff';
+  const options = useMemo(() => (q.kind === 'chord' ? nameOptions(q, cfg.moreChords) : []), [q, cfg.moreChords]);
+  const pickName = (n: string) => {
+    if (namePick) return;
+    setNamePick(n);
+    setScore((s) => ({ ...s, w: s.w + (n === q.symbol ? 1 : 0), wn: s.wn + 1 }));
+  };
+  const writeDone = written !== null && (!askName || namePick !== null);
 
   /** A note's name the way the player chose: letters, do-re-mi, or both. */
   // The letter part is isolated left-to-right, so "B♭" doesn't turn into "♭B" inside Hebrew text.
@@ -99,6 +126,15 @@ export function NotesDrill() {
       ...q.midis.filter((m) => !keys.includes(m)).map((m): KeyMark => ({ midi: m, kind: 'hint' })),
     ];
   const [lo, hi] = KEYS[q.clef];
+  const keyLabels = cfg.naming === 'letters' ? true : cfg.naming;
+  /** All three together: the name, how it's written, and where it is on the keys. */
+  const reveal = (withKeys: boolean) => (
+    <div className="nd-reveal">
+      <p className="small"><b>{q.kind === 'chord' ? <><bdi dir="ltr">{nice(q.symbol!)}</bdi> ({q.quality})</> : label(q.names[0])}</b> – כך זה כתוב{withKeys ? ', וכאן זה על המקלדת' : ''}:</p>
+      <Staff spec={{ clef: q.clef, notes: q.staff, chord: q.kind === 'chord' }} labels={q.names.map((n) => (cfg.naming === 'solfege' ? sol(n) : nice(n)))} />
+      {withKeys && <Keyboard from={lo} to={hi} labels={keyLabels} marks={q.midis.map((m) => ({ midi: m, kind: 'ok' as const }))} onPress={(m) => playNote(m, { dur: 0.6 })} />}
+    </div>
+  );
 
   return (
     <div className="notes-drill">
@@ -160,10 +196,24 @@ export function NotesDrill() {
           {written && (
             <div className={`feedback ${written.ok ? 'right' : 'wrong'}`}>
               <p>{written.ok ? '✓ נכון!' : written.enharmonic ? '≈ כמעט – זה אותו קליד, אבל כאן הוא כתוב בשם אחר.' : '✗ לא בדיוק.'}</p>
-              <p dir="auto">{q.kind === 'note' ? <>התו: <b>{label(q.names[0])}</b> <span className="muted" dir="ltr">({nice(q.staff[0])})</span></> : <><b dir="ltr">{nice(q.symbol!)}</b> ({q.quality}) = {chordLine}</>}</p>
+              {q.kind === 'note'
+                ? <p>התו: <b>{label(q.names[0])}</b> <span className="muted" dir="ltr">({nice(q.staff[0])})</span></p>
+                : <p>התווים: {chordLine}</p>}
+              {askName && (
+                <div className="nd-namepick">
+                  <p className="small"><b>ואיך קוראים לאקורד הזה?</b></p>
+                  <div className="nd-names" dir="ltr">
+                    {options.map((o) => (
+                      <button key={o} className={`btn ${namePick === null ? 'ghost' : o === q.symbol ? 'primary' : o === namePick ? 'bad' : 'ghost'}`} onClick={() => pickName(o)}>{nice(o)}</button>
+                    ))}
+                  </div>
+                  {namePick && <p className="small">{namePick === q.symbol ? '✓ נכון!' : '✗ לא.'} זה <bdi dir="ltr">{nice(q.symbol!)}</bdi> – {q.quality}.</p>}
+                </div>
+              )}
+              {writeDone && (cfg.steps === 'write' || q.show === 'name') && reveal(cfg.steps === 'write')}
               <div className="row tight">
                 <button className="btn ghost small" onClick={hear}>🔊 השמע</button>
-                <button className="btn primary" onClick={afterWrite}>{cfg.steps === 'write' ? 'הבא ←' : 'עכשיו על המקלדת ←'}</button>
+                <button className="btn primary" onClick={afterWrite} disabled={!writeDone}>{cfg.steps === 'write' ? 'הבא ←' : 'עכשיו על המקלדת ←'}</button>
               </div>
             </div>
           )}
@@ -179,6 +229,7 @@ export function NotesDrill() {
             : (
               <div className={`feedback ${played ? 'right' : 'wrong'}`}>
                 <p>{played ? '✓ נכון!' : '✗ לא בדיוק – הקלידים הנכונים מסומנים.'} {q.kind === 'note' ? <b>{label(q.names[0])} <span dir="ltr">{octave(q.staff[0])}</span></b> : <span>{chordLine}</span>}</p>
+                {reveal(false)}
                 <button className="btn primary" onClick={() => fresh()}>הבא ←</button>
               </div>
             )}

@@ -473,3 +473,8 @@ textarea.note { width: 100%; box-sizing: border-box; background: var(--card); co
 .nd-play { margin-top: 8px; }
 .nd-slot small, .nd-letter small { display: block; font-size: 0.75rem; font-weight: 500; color: var(--muted, #a9a3c4); }
 .nd-letter { display: flex; flex-direction: column; align-items: center; line-height: 1.15; }
+.nd-namepick { margin: 10px 0; }
+.nd-names { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.nd-names .btn { width: auto; margin: 0; font-weight: 700; }
+.nd-names .btn.bad { background: var(--bad); color: white; }
+.nd-reveal { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); }

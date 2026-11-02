@@ -43,3 +43,27 @@ describe('piano note reading drill', () => {
     expect(checkKeys(n, [76])).toBe(false); // a single note: the exact key
   });
 });
+
+describe('no repeats: every question once, like a deck of cards', () => {
+  it('goes through every note and chord once before any comes back', async () => {
+    const { allDrillQs, drillDeck } = await import('./noteDrill');
+    const o = opts({ accidentals: false, moreChords: false, chordShow: 'mix' });
+    const all = allDrillQs(o);
+    // Both clefs, notes and chords.
+    expect(new Set(all.map((q) => q.clef))).toEqual(new Set(['treble', 'bass']));
+    expect(new Set(all.map((q) => q.kind))).toEqual(new Set(['note', 'chord']));
+    const next = drillDeck(o);
+    const key = (q: { clef: string; staff: string[] }) => `${q.clef}:${q.staff.join(',')}`;
+    const round = Array.from({ length: all.length }, () => key(next()));
+    expect(new Set(round).size).toBe(all.length);
+    // Never the same twice in a row, across rounds too.
+    let prev = round[round.length - 1];
+    for (let k = 0; k < all.length * 3; k++) { const cur = key(next()); expect(cur).not.toBe(prev); prev = cur; }
+  });
+  it('mixes notes and chords through the round instead of long runs of one kind', async () => {
+    const { drillDeck } = await import('./noteDrill');
+    const next = drillDeck(opts({ accidentals: false, moreChords: false }));
+    const first20 = Array.from({ length: 20 }, () => next().kind);
+    expect(first20.filter((k) => k === 'chord').length).toBeGreaterThan(3);
+  });
+});
