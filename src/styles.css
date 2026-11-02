@@ -471,3 +471,5 @@ textarea.note { width: 100%; box-sizing: border-box; background: var(--card); co
 .nd-letters .btn { padding: 12px 0; font-size: 1.15rem; font-weight: 700; }
 .nd-letters small { font-size: 0.8rem; }
 .nd-play { margin-top: 8px; }
+.nd-slot small, .nd-letter small { display: block; font-size: 0.75rem; font-weight: 500; color: var(--muted, #a9a3c4); }
+.nd-letter { display: flex; flex-direction: column; align-items: center; line-height: 1.15; }

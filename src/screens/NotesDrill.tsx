@@ -3,7 +3,7 @@ import { playChord, playNote } from '../audio/synth';
 import { Keyboard, type KeyMark } from '../components/Keyboard';
 import { Staff } from '../components/Staff';
 import { KEYS, checkKeys, checkNames, makeDrillQ, type DrillOptions, type DrillQ } from '../engine/noteDrill';
-import { NATURALS } from '../theory/theory';
+import { NATURALS, SOLFEGE } from '../theory/theory';
 
 /**
  * Piano note reading: see a note or a chord, write what it is (or what notes it's built from),
@@ -11,11 +11,14 @@ import { NATURALS } from '../theory/theory';
  */
 
 type Steps = 'both' | 'write' | 'play';
-interface Settings extends DrillOptions { steps: Steps }
+type Naming = 'both' | 'letters' | 'solfege';
+interface Settings extends DrillOptions { steps: Steps; /** How notes are named: letters (C), do-re-mi (דו), or both. */ naming: Naming }
 const KEY = 'notes-drill';
-const DEFAULTS: Settings = { kind: 'note', clef: 'treble', accidentals: false, moreChords: false, chordShow: 'name', steps: 'both' };
+const DEFAULTS: Settings = { kind: 'note', clef: 'treble', accidentals: false, moreChords: false, chordShow: 'name', steps: 'both', naming: 'both' };
 const load = (): Settings => { try { return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) ?? '{}') }; } catch { return DEFAULTS; } };
 const nice = (n: string) => n.replace(/#/g, '♯').replace(/b/g, '♭');
+/** Do-re-mi name with its sign: "F#" → "פה♯". */
+const sol = (n: string) => SOLFEGE[n[0]] + nice(n.slice(1)).replace(/\d/g, '');
 const ROLE = ['שורש', 'טרצה', 'קווינטה', 'ספטימה'];
 
 function Choice<T extends string | boolean>({ label, value, set, options }: { label: string; value: T; set: (v: T) => void; options: [T, string][] }) {
@@ -77,7 +80,17 @@ export function NotesDrill() {
   };
   const afterWrite = () => (cfg.steps === 'write' ? fresh() : setPhase('play'));
 
-  const chordLine = q.kind === 'chord' ? q.names.map((n, i) => `${nice(n)} (${ROLE[i]})`).join(' · ') : '';
+  /** A note's name the way the player chose: letters, do-re-mi, or both. */
+  // The letter part is isolated left-to-right, so "B♭" doesn't turn into "♭B" inside Hebrew text.
+  const label = (n: string) => (
+    <span className="nd-name">
+      {cfg.naming !== 'solfege' && <bdi dir="ltr">{nice(n)}</bdi>}
+      {cfg.naming === 'both' && ' '}
+      {cfg.naming !== 'letters' && sol(n)}
+    </span>
+  );
+  const octave = (n: string) => n.match(/\d$/)?.[0] ?? '';
+  const chordLine = q.kind === 'chord' ? q.names.map((n, i) => <span key={i}>{i > 0 && ' · '}{label(n)} ({ROLE[i]})</span>) : null;
   const want = new Set(q.midis.map((m) => m % 12));
   const marks: KeyMark[] = played === null
     ? keys.map((m) => ({ midi: m, kind: 'sel' }))
@@ -96,6 +109,7 @@ export function NotesDrill() {
         <Choice label="דיאזים ובמולים" value={cfg.accidentals} set={(v) => update({ accidentals: v })} options={[[false, 'בלי'], [true, 'עם ♯ ו-♭']]} />
         <Choice label="אקורדים" value={cfg.moreChords} set={(v) => update({ moreChords: v })} options={[[false, 'מז\'ור ומינור'], [true, '+ מוקטן, מוגדל ו-7']]} />
         <Choice label="איך מוצג אקורד" value={cfg.chordShow} set={(v) => update({ chordShow: v })} options={[['name', 'שם (Dm)'], ['staff', 'תווים על החמשה'], ['mix', 'מעורב']]} />
+        <Choice label="שמות התווים" value={cfg.naming} set={(v) => update({ naming: v })} options={[['both', 'גם וגם (C דו)'], ['letters', 'אותיות (C D E)'], ['solfege', 'דו רה מי']]} />
         <Choice label="שלבים" value={cfg.steps} set={(v) => update({ steps: v })} options={[['both', 'לכתוב ואז לנגן'], ['write', 'רק לכתוב'], ['play', 'רק לנגן']]} />
       </details>
 
@@ -116,7 +130,12 @@ export function NotesDrill() {
       {phase === 'write' && (
         <div className="nd-write">
           <div className="nd-answer" dir="ltr">
-            {Array.from({ length: need }, (_, i) => <span key={i} className={`nd-slot ${names[i] ? 'full' : ''}`}>{names[i] ? nice(names[i]) : '?'}</span>)}
+            {Array.from({ length: need }, (_, i) => (
+              <span key={i} className={`nd-slot ${names[i] ? 'full' : ''}`}>
+                {!names[i] ? '?' : cfg.naming === 'solfege' ? sol(names[i]) : nice(names[i])}
+                {names[i] && cfg.naming === 'both' && <small>{sol(names[i])}</small>}
+              </span>
+            ))}
           </div>
           {!written && (
             <>
@@ -124,9 +143,14 @@ export function NotesDrill() {
                 {([['b', '♭ במול'], ['', '♮'], ['#', '♯ דיאז']] as const).map(([a, l]) => <button key={a} className={`btn small ${accNext === a ? 'primary' : 'ghost'}`} onClick={() => setAccNext(a)}>{l}</button>)}
               </div>
               <div className="nd-letters" dir="ltr">
-                {NATURALS.map((l) => <button key={l} className="btn" onClick={() => addLetter(l)}>{l}{accNext && <small>{nice(accNext)}</small>}</button>)}
+                {NATURALS.map((l) => (
+                  <button key={l} className="btn nd-letter" onClick={() => addLetter(l)}>
+                    <span>{cfg.naming === 'solfege' ? SOLFEGE[l] : l}{accNext && nice(accNext)}</span>
+                    {cfg.naming === 'both' && <small>{SOLFEGE[l]}</small>}
+                  </button>
+                ))}
               </div>
-              <p className="small muted">{q.kind === 'chord' ? `בחר ${need} תווים, מהשורש למעלה. דיאז או במול – לחץ עליו לפני האות.` : 'דיאז או במול – לחץ עליו לפני האות.'}</p>
+              <p className="small muted">{q.kind === 'chord' ? `בחר ${need} תווים, מהשורש למעלה. דיאז או במול – לחץ עליו לפני התו.` : 'דיאז או במול – לחץ עליו לפני התו.'}</p>
               <div className="row tight">
                 <button className="btn ghost" onClick={() => setNames(names.slice(0, -1))} disabled={!names.length}>⌫ מחק</button>
                 <button className="btn primary" onClick={checkWrite} disabled={names.length !== need}>בדוק</button>
@@ -136,7 +160,7 @@ export function NotesDrill() {
           {written && (
             <div className={`feedback ${written.ok ? 'right' : 'wrong'}`}>
               <p>{written.ok ? '✓ נכון!' : written.enharmonic ? '≈ כמעט – זה אותו קליד, אבל כאן הוא כתוב בשם אחר.' : '✗ לא בדיוק.'}</p>
-              <p dir="auto">{q.kind === 'note' ? <>התו: <b dir="ltr">{nice(q.staff[0])}</b></> : <><b dir="ltr">{nice(q.symbol!)}</b> ({q.quality}) = {chordLine}</>}</p>
+              <p dir="auto">{q.kind === 'note' ? <>התו: <b>{label(q.names[0])}</b> <span className="muted" dir="ltr">({nice(q.staff[0])})</span></> : <><b dir="ltr">{nice(q.symbol!)}</b> ({q.quality}) = {chordLine}</>}</p>
               <div className="row tight">
                 <button className="btn ghost small" onClick={hear}>🔊 השמע</button>
                 <button className="btn primary" onClick={afterWrite}>{cfg.steps === 'write' ? 'הבא ←' : 'עכשיו על המקלדת ←'}</button>
@@ -149,12 +173,12 @@ export function NotesDrill() {
       {phase === 'play' && (
         <div className="nd-play">
           <p className="small">{q.kind === 'note' ? 'לחץ על הקליד של התו – באוקטבה הנכונה (C4 = C האמצעי).' : 'לחץ על כל תווי האקורד (באיזו אוקטבה שתרצה), ואז "בדוק". לחיצה שנייה מבטלת.'}</p>
-          <Keyboard from={lo} to={hi} labels={played !== null} marks={marks} onPress={pressKey} />
+          <Keyboard from={lo} to={hi} labels={played === null ? false : cfg.naming === 'letters' ? true : cfg.naming} marks={marks} onPress={pressKey} />
           {played === null
             ? <button className="btn primary wide" onClick={checkPlay} disabled={!keys.length}>בדוק</button>
             : (
               <div className={`feedback ${played ? 'right' : 'wrong'}`}>
-                <p>{played ? '✓ נכון!' : '✗ לא בדיוק – הקלידים הנכונים מסומנים.'} {q.kind === 'note' ? <span dir="ltr">{nice(q.staff[0])}</span> : <span>{chordLine}</span>}</p>
+                <p>{played ? '✓ נכון!' : '✗ לא בדיוק – הקלידים הנכונים מסומנים.'} {q.kind === 'note' ? <b>{label(q.names[0])} <span dir="ltr">{octave(q.staff[0])}</span></b> : <span>{chordLine}</span>}</p>
                 <button className="btn primary" onClick={() => fresh()}>הבא ←</button>
               </div>
             )}
