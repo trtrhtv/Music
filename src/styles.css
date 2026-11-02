@@ -458,3 +458,16 @@ textarea.note { width: 100%; box-sizing: border-box; background: var(--card); co
 .tf-row { display: flex; flex-direction: column; gap: 2px; }
 .tf-bars { padding-inline-start: 4px; }
 .tab-full .tab { margin: 0; }
+
+.notes-drill .nd-opt { margin: 8px 0; }
+.nd-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px; margin: 8px 0; text-align: center; }
+.nd-prompt { font-weight: 600; margin-bottom: 6px; }
+.nd-symbol { font-size: 1.6rem; color: #cbbcff; }
+.nd-answer { display: flex; gap: 8px; justify-content: center; margin: 10px 0; }
+.nd-slot { min-width: 48px; padding: 8px 10px; border: 2px dashed var(--line); border-radius: 10px; font-size: 1.3rem; font-weight: 700; text-align: center; color: var(--muted, #a9a3c4); }
+.nd-slot.full { border-style: solid; border-color: var(--accent); color: inherit; }
+.nd-acc { justify-content: center; margin: 6px 0; }
+.nd-letters { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin: 6px 0; }
+.nd-letters .btn { padding: 12px 0; font-size: 1.15rem; font-weight: 700; }
+.nd-letters small { font-size: 0.8rem; }
+.nd-play { margin-top: 8px; }

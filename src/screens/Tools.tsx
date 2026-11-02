@@ -5,26 +5,28 @@ import { ChordDiagram } from '../components/ChordDiagram';
 import { Fretboard, type FretMark } from '../components/Fretboard';
 import { NECK_ROOTS, NECK_SETS, neckMarks } from '../theory/neckMap';
 import { Keyboard } from '../components/Keyboard';
+import { NotesDrill } from './NotesDrill';
 import { MicDenied } from '../components/MicTasks';
 import { Metronome } from '../components/RhythmTools';
 import { CHORD_SHAPES } from '../engine/guitarChords';
 import { GUITAR_TUNING, freqToMidiFloat, noteNameOct } from '../theory/theory';
 
-type Tab = 'tuner' | 'metro' | 'piano' | 'neck' | 'chords';
+type Tab = 'tuner' | 'metro' | 'piano' | 'notes' | 'neck' | 'chords';
 
-export function Tools() {
-  const [tab, setTab] = useState<Tab>('tuner');
+export function Tools({ initial }: { initial?: string }) {
+  const [tab, setTab] = useState<Tab>((['tuner', 'metro', 'piano', 'notes', 'neck', 'chords'] as Tab[]).includes(initial as Tab) ? (initial as Tab) : 'tuner');
   return (
     <div className="screen">
       <h1>🧰 כלים</h1>
       <div className="chips">
-        {([['tuner', 'מכוון'], ['metro', 'מטרונום'], ['piano', 'מקלדת'], ['neck', 'צוואר'], ['chords', 'אקורדים']] as [Tab, string][]).map(([t, l]) => (
+        {([['tuner', 'מכוון'], ['metro', 'מטרונום'], ['piano', 'מקלדת'], ['notes', 'תווים לפסנתר'], ['neck', 'צוואר'], ['chords', 'אקורדים']] as [Tab, string][]).map(([t, l]) => (
           <button key={t} className={`chip ${tab === t ? 'on' : ''}`} onClick={() => setTab(t)}>{l}</button>
         ))}
       </div>
       {tab === 'tuner' && <Tuner />}
       {tab === 'metro' && <><Metronome initial={70} /><Metronome initial={60} beats={3} /></>}
       {tab === 'piano' && <FreePiano />}
+      {tab === 'notes' && <NotesDrill />}
       {tab === 'neck' && <FreeNeck />}
       {tab === 'chords' && <ChordLib />}
     </div>

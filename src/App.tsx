@@ -99,7 +99,7 @@ export default function App() {
   else if (page === 'lesson' && arg) body = <LessonRunner key={arg} id={arg} />;
   else if (page === 'practice') body = <Practice />;
   else if (page === 'review') body = <ReviewRunner />;
-  else if (page === 'tools') body = <Tools />;
+  else if (page === 'tools') body = <Tools key={arg ?? ''} initial={arg} />;
   else if (page === 'glossary') body = <Glossary key={arg ?? ''} id={arg} />;
   else if (page === 'daily') body = <DailyView />;
   else if (page === 'plan') {
