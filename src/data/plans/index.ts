@@ -1,4 +1,5 @@
 import embellishBass from './embellish-bass.json';
+import { EMBELLISH_BASS_GUIDE, type PlanGuide } from './embellish-bass.guide';
 
 /**
  * Practice plans imported as JSON, exactly as written. Each plan is one file in this folder in
@@ -47,6 +48,20 @@ export const PLANS: { id: string; plan: PracticePlan }[] = [
   { id: 'embellish-bass', plan: embellishBass as unknown as PracticePlan },
 ];
 export const PLAN_BY_ID: Record<string, PracticePlan> = Object.fromEntries(PLANS.map((p) => [p.id, p.plan]));
+/** The app's how-to notes for a plan (optional; the plan file itself is never changed). */
+export const PLAN_GUIDES: Record<string, PlanGuide> = { 'embellish-bass': EMBELLISH_BASS_GUIDE };
+
+const escape = (w: string) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+/**
+ * The plan's own glossary terms that a text uses ("פעמה (beat)" matches "בפעמה"): whole words,
+ * with at most one Hebrew prefix letter – so "ליק" isn't found inside "קליק" (a chord root before "sus4" is fine).
+ */
+export function planTermsIn(plan: PracticePlan, text: string) {
+  return plan.glossary.filter((g) => {
+    const word = g.term.split(' (')[0];
+    return new RegExp(`(?<![\\u0590-\\u05FF])[בהולמשכ]?${escape(word)}(?![A-Za-z0-9])`).test(text);
+  });
+}
 
 /** "xx0232" → [-1, -1, 0, 2, 3, 2] (string 6 → 1). */
 export const shapeFrets = (shape: string): number[] => [...shape].map((c) => (c === 'x' ? -1 : Number(c)));

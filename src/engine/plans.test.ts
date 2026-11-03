@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import raw from '../data/plans/embellish-bass.json?raw';
-import { PLANS, shapeFrets } from '../data/plans';
+import { PLANS, PLAN_GUIDES, planTermsIn, shapeFrets } from '../data/plans';
 
 describe('imported practice plans', () => {
   it('the guitar plan file is imported unchanged', () => {
@@ -52,5 +52,22 @@ describe('the "clean" button', () => {
     expect(log[log.length - 1]).toMatchObject({ exercise_id: 'K1', clean_bpm: 60, clean_reps: 3, passed: false, note: '' });
     for (let k = 0; k < 30; k++) planClean('test', plan, ex);
     expect(bpm()).toBe(90);
+  });
+});
+
+describe('how-to notes for a plan', () => {
+  it('cover every exercise of the plan, and only those', () => {
+    for (const { id, plan } of PLANS) {
+      const g = PLAN_GUIDES[id];
+      if (!g) continue;
+      expect(Object.keys(g.exercises).sort()).toEqual(plan.exercises.map((e) => e.id).sort());
+      for (const steps of Object.values(g.exercises)) expect(steps.length).toBeGreaterThanOrEqual(3);
+    }
+  });
+  it('find the plan\'s own glossary terms in a text', () => {
+    const plan = PLANS[0].plan;
+    expect(planTermsIn(plan, 'בפעמה 1 המר-און ואז סלייד').map((t) => t.term)).toEqual(expect.arrayContaining(['פעמה (beat)', 'המר-און', 'סלייד']));
+    expect(planTermsIn(plan, 'מכה על כל קליק').map((t) => t.term)).not.toContain('ליק (lick)');
+    expect(planTermsIn(plan, 'Dsus4 ו-Dsus2').map((t) => t.term)).toEqual(expect.arrayContaining(['sus4', 'sus2']));
   });
 });

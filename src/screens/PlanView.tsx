@@ -3,7 +3,7 @@ import { ChordDiagram } from '../components/ChordDiagram';
 import { rich } from '../components/rich';
 import { Metronome, TabView, Timer } from '../components/RhythmTools';
 import { notesTab } from '../data/guitarLib';
-import { PLAN_BY_ID, exerciseOf, shapeFrets, type PlanExercise, type PracticePlan } from '../data/plans';
+import { PLAN_BY_ID, PLAN_GUIDES, exerciseOf, planTermsIn, shapeFrets, type PlanExercise, type PracticePlan } from '../data/plans';
 import { go } from '../router';
 import { planBpm, planClean, planNotClean, planProgress, useStore } from '../state/store';
 
@@ -21,6 +21,8 @@ function ExerciseCard({ planId, plan, ex }: { planId: string; plan: PracticePlan
   const [open, setOpen] = useState(false);
   const [msg, setMsg] = useState('');
   const atTarget = bpm >= ex.bpm_target;
+  const guide = PLAN_GUIDES[planId]?.exercises[ex.id];
+  const terms = planTermsIn(plan, [ex.instructions_he, ex.pass_criteria_he, ...(guide ?? [])].join(' '));
   const clean = () => {
     const raised = planClean(planId, plan, ex);
     setMsg(raised ? `🎉 ${need} פעמים נקי ברצף – עולים ל-${raised} BPM.` : streak + 1 >= need && atTarget ? `✓ ${need} פעמים נקי ב-${bpm} BPM – זה היעד של התרגיל.` : '');
@@ -39,6 +41,18 @@ function ExerciseCard({ planId, plan, ex }: { planId: string; plan: PracticePlan
         <div className="pb-body">
           <p>{rich(ex.instructions_he)}</p>
           <p className="small"><b>קריטריון מעבר:</b> {rich(ex.pass_criteria_he)}</p>
+          {guide && (
+            <details className="basics" open>
+              <summary>📘 איך עושים את זה <small className="muted">(הסבר של האפליקציה)</small></summary>
+              <ol>{guide.map((t, i) => <li key={i}>{rich(t)}</li>)}</ol>
+            </details>
+          )}
+          {terms.length > 0 && (
+            <details className="basics">
+              <summary>📖 מושגים מהתוכנית</summary>
+              <ul>{terms.map((g) => <li key={g.term}><b>{g.term}</b> – {g.def_he}</li>)}</ul>
+            </details>
+          )}
           <div className="chord-row">{ex.chords.map((c) => <ChordDiagram key={c} label={c} frets={shapeFrets(plan.chord_shapes[c])} />)}</div>
           {ex.category === 'B' && plan.bass_runs.map((r) => (
             <TabView key={`${r.from}-${r.to}`} title={`\u2066${r.from} → ${r.to}: ${r.notes.map((n) => n[2]).join(' ')}\u2069`} lines={notesTab(r.notes.map(([st, f]) => [Number(st), f] as [number, number]))} bpm={bpm} />
@@ -71,6 +85,12 @@ export function PlanView({ id }: { id: string }) {
       <h1>{plan.title_he}</h1>
       {plan.source_he && <p className="small muted">{plan.source_he}</p>}
       <div className="why-box"><b>שבוע {week.week} מתוך {plan.weeks.length}</b> · מטרה: {rich(week.goal_he)}<br /><span className="small">{rich(week.note_he)}</span></div>
+      {PLAN_GUIDES[id] && (
+        <details className="basics">
+          <summary>📘 איך עובד האימון <small className="muted">(הסבר של האפליקציה)</small></summary>
+          <ol>{PLAN_GUIDES[id].session.map((t, i) => <li key={i}>{rich(t)}</li>)}</ol>
+        </details>
+      )}
       <h3 className="section-title">אימון היום <small className="muted">({total} דק')</small></h3>
       {plan.session_template.map((b) => {
         const ids = week.blocks[b.category] ?? [];
