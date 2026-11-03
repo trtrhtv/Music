@@ -4,10 +4,11 @@ import { Timer } from '../components/RhythmTools';
 import { rich } from '../components/rich';
 import { DAILY_INTRO, dailyCats, itemFor, type DailyCat } from '../data/daily';
 import { termsIn } from '../data/terms';
+import { PLANS } from '../data/plans';
 import type { Block } from '../data/blocks';
 import { go } from '../router';
 import {
-  dailyBase, dailySetsToday, markDailySeen, setDailyLevel, startNextDailySet, today, toggleDailyCheck, useStore,
+  dailyBase, dailySetsToday, markDailySeen, planProgress, setDailyLevel, startNextDailySet, today, toggleDailyCheck, useStore,
 } from '../state/store';
 
 const HOURS: { hour: 1 | 2; title: string }[] = [
@@ -100,6 +101,12 @@ export function DailyView() {
       <h1>🎸 התרגול של היום</h1>
       <p className="muted small">יום תרגול {base + 1} · {doneIn(0)}/{cats.length} הושלמו · כ-{Math.round(cats.reduce((n, c) => n + c.min, 0) / 6) / 10} שעות</p>
       <details className="plan-intro"><summary>איך זה עובד</summary><Blocks blocks={DAILY_INTRO} /></details>
+      {PLANS.map(({ id, plan }) => (
+        <button key={id} className="lesson-row open" onClick={() => go('pp/' + id)}>
+          <span className="lr-badge">📘</span>
+          <span className="lr-title">{plan.title_he}<br /><small className="muted">שבוע {planProgress(s, id).week} מתוך {plan.weeks.length} · {plan.session_template.reduce((n, b) => n + b.minutes, 0)} דק' ביום</small></span>
+        </button>
+      ))}
 
       <DailyList set={0} day={base} />
 

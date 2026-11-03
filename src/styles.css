@@ -478,3 +478,9 @@ textarea.note { width: 100%; box-sizing: border-box; background: var(--card); co
 .nd-names .btn { width: auto; margin: 0; font-weight: 700; }
 .nd-names .btn.bad { background: var(--bad); color: white; }
 .nd-reveal { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); }
+
+.pp-block { margin: 14px 0; }
+.pp-clean { margin-top: 10px; padding: 10px; border: 1px solid var(--line); border-radius: 12px; }
+.pp-dots { display: flex; gap: 8px; justify-content: center; margin-bottom: 8px; }
+.pp-dots span { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--accent); }
+.pp-dots span.on { background: var(--ok); border-color: var(--ok); }

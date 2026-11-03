@@ -9,6 +9,7 @@ import { Practice } from './screens/Practice';
 import { Tools } from './screens/Tools';
 import { Glossary } from './screens/Glossary';
 import { DailyView } from './screens/Daily';
+import { PlanView } from './screens/PlanView';
 import { PlacementView, ProgramHome, ProgressView, CoachView, SessionView, TrackView } from './screens/Program';
 import { SongView } from './screens/Songs';
 import { ReviewRunner } from './screens/Review';
@@ -102,6 +103,7 @@ export default function App() {
   else if (page === 'tools') body = <Tools key={arg ?? ''} initial={arg} />;
   else if (page === 'glossary') body = <Glossary key={arg ?? ''} id={arg} />;
   else if (page === 'daily') body = <DailyView />;
+  else if (page === 'pp' && arg) body = <PlanView key={arg} id={arg} />;
   else if (page === 'plan') {
     body = arg === 's' && arg2 ? <SessionView key={arg2} id={arg2} /> : arg === 't' && arg2 ? <TrackView key={arg2} id={arg2 as TrackId} />
       : arg === 'placement' ? <PlacementView /> : arg === 'progress' ? <ProgressView /> : arg === 'coach' ? <CoachView /> : <ProgramHome />;
@@ -115,7 +117,7 @@ export default function App() {
       {page !== 'lesson' && page !== 'review' && (
         <nav className="tabbar">
           {NAV.map(([p, icon, label]) => (
-            <button key={p} className={(page ?? '') === p || (p === '' && page === 'track') || (p === 'daily' && (page === 'songs' || page === 'plan')) ? 'on' : ''} onClick={() => go(p)}>
+            <button key={p} className={(page ?? '') === p || (p === '' && page === 'track') || (p === 'daily' && (page === 'songs' || page === 'plan' || page === 'pp')) ? 'on' : ''} onClick={() => go(p)}>
               <span>{icon}</span><small>{label}</small>
             </button>
           ))}

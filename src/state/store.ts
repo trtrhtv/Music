@@ -3,6 +3,7 @@ import { lessonsFor } from '../data/curriculum';
 import type { Domain } from '../engine/types';
 import type { TrackId } from '../data/tracks';
 import type { DailyCatId } from '../data/daily';
+import type { PlanLogEntry, PracticePlan } from '../data/plans';
 
 export interface Profile {
   guitarExp: number; // 0..4
@@ -13,6 +14,8 @@ export interface Profile {
   hasGuitar: boolean;
   hasPiano: boolean;
 }
+
+export interface PlanProgress { week: number; bpm: Record<string, number>; streak: Record<string, number>; log: PlanLogEntry[] }
 
 export interface JournalEntry { date: string; session: string; goal: string; good: string; next: string }
 
@@ -57,6 +60,11 @@ export interface State {
    * went on to the next day's list), and which items were already seen (their intro shows once).
    */
   daily: { level: Partial<Record<DailyCatId, number>>; checks: Record<string, string[]>; sets: Record<string, number>; seen: string[] };
+  /**
+   * Imported practice plans, by plan id: the current week, each exercise's working BPM and its
+   * run of clean takes at that BPM, and the progress log (the plan's progress_log_schema).
+   */
+  plans: Record<string, PlanProgress>;
   prog: {
     placed: boolean;
     stage: Record<TrackId, number>;
@@ -87,12 +95,13 @@ const fresh = (): State => ({
   prefs: { hidePiano: false },
   review: {},
   daily: { level: {}, checks: {}, sets: {}, seen: [] },
+  plans: {},
   prog: { placed: false, stage: { tech: 1, rhythm: 1, neck: 1, finger: 1 }, passes: {}, bpm: {}, sessions: {}, journal: [], heard: [], coachSeen: '', tempo: {} },
 });
 
 /** Fills in fields added after the data was saved. */
 const withDefaults = (saved: Partial<State>): State =>
-  ({ ...fresh(), ...saved, prog: { ...fresh().prog, ...saved.prog }, prefs: { ...fresh().prefs, ...saved.prefs }, daily: { ...fresh().daily, ...saved.daily } });
+  ({ ...fresh(), ...saved, prog: { ...fresh().prog, ...saved.prog }, prefs: { ...fresh().prefs, ...saved.prefs }, daily: { ...fresh().daily, ...saved.daily }, plans: { ...saved.plans } });
 
 function load(): State {
   try {
@@ -308,6 +317,40 @@ export function setDailyLevel(cat: DailyCatId, level: number) {
 }
 export function markDailySeen(id: string) {
   update((s) => (s.daily.seen.includes(id) ? s : { ...s, daily: { ...s.daily, seen: [...s.daily.seen, id] } }));
+}
+
+/* ───────── Imported practice plans ───────── */
+
+export const planProgress = (s: State, id: string): PlanProgress => s.plans[id] ?? { week: 1, bpm: {}, streak: {}, log: [] };
+/** The BPM an exercise is practised at now: where the player got to, or the plan's bpm_start. */
+export const planBpm = (s: State, id: string, ex: { id: string; bpm_start: number }) => planProgress(s, id).bpm[ex.id] ?? ex.bpm_start;
+
+/**
+ * One clean take at the current BPM. After the plan's clean_reps_to_advance takes in a row the
+ * exercise is logged at that BPM and moves up by its bpm_step (never past bpm_target).
+ * Returns the new BPM when it went up.
+ */
+export function planClean(id: string, plan: PracticePlan, ex: { id: string; bpm_start: number; bpm_target: number; bpm_step: number }): number | null {
+  let raised: number | null = null;
+  update((s) => {
+    const p = planProgress(s, id);
+    const bpm = p.bpm[ex.id] ?? ex.bpm_start;
+    const streak = (p.streak[ex.id] ?? 0) + 1;
+    const need = plan.rules.clean_reps_to_advance;
+    if (streak < need) return { ...s, days: touchDay(s), plans: { ...s.plans, [id]: { ...p, streak: { ...p.streak, [ex.id]: streak } } } };
+    const next = Math.min(ex.bpm_target, bpm + ex.bpm_step);
+    if (next > bpm) raised = next;
+    const entry: PlanLogEntry = { date: today(), exercise_id: ex.id, clean_bpm: bpm, clean_reps: streak, passed: false, note: '' };
+    return { ...s, days: touchDay(s), plans: { ...s.plans, [id]: { ...p, bpm: { ...p.bpm, [ex.id]: next }, streak: { ...p.streak, [ex.id]: 0 }, log: [...p.log, entry] } } };
+  });
+  return raised;
+}
+/** A take that wasn't clean: the run starts again, the BPM stays. */
+export function planNotClean(id: string, exId: string) {
+  update((s) => {
+    const p = planProgress(s, id);
+    return { ...s, plans: { ...s.plans, [id]: { ...p, streak: { ...p.streak, [exId]: 0 } } } };
+  });
 }
 
 export function setHidePiano(hidePiano: boolean) {

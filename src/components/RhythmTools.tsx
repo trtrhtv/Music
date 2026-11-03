@@ -20,6 +20,8 @@ function BpmControl({ bpm, setBpm }: { bpm: number; setBpm: (n: number) => void 
 /** Stand-alone metronome. */
 export function Metronome({ initial = 70, beats = 4, onBpm }: { initial?: number; beats?: number; onBpm?: (n: number) => void }) {
   const [bpm, setBpm] = useState(initial);
+  // Follow a new starting tempo from outside (e.g. a practice plan raising the BPM), even while playing.
+  useEffect(() => setBpm(initial), [initial]);
   const [on, setOn] = useState(false);
   const [beat, setBeat] = useState(-1);
   const loop = useRef<Loop | null>(null);

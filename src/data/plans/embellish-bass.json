@@ -1,0 +1,471 @@
+{
+  "version": 1,
+  "title_he": "תוכנית תרגול גיטרה: קישוטים והליכות בס",
+  "source_he": "מבוסס על שני סרטוני הדגמה (2:48, 0:56)",
+  "string_notation": "6=low E ... 1=high e; chord shapes written string 6→1, x=muted",
+  "session_template": [
+    {
+      "block": "picking",
+      "name_he": "פריטה עם הדגשה",
+      "minutes": 5,
+      "category": "P"
+    },
+    {
+      "block": "embellish",
+      "name_he": "קישוטים",
+      "minutes": 7,
+      "category": "K"
+    },
+    {
+      "block": "bass",
+      "name_he": "הליכות בס",
+      "minutes": 5,
+      "category": "B"
+    },
+    {
+      "block": "song",
+      "name_he": "שיר",
+      "minutes": 3,
+      "category": "S"
+    }
+  ],
+  "rules": {
+    "bpm_start": 60,
+    "bpm_increment": 5,
+    "clean_reps_to_advance": 3,
+    "right_hand_never_stops": true
+  },
+  "chord_shapes": {
+    "D": "xx0232",
+    "Dsus4": "xx0233",
+    "Dsus2": "xx0230",
+    "C": "x32010",
+    "Cadd9": "x32030",
+    "G": "320003",
+    "Gsus4": "330033",
+    "Em": "022000",
+    "Am": "x02210"
+  },
+  "bass_runs": [
+    {
+      "from": "G",
+      "to": "C",
+      "notes": [
+        [
+          "6",
+          3,
+          "G"
+        ],
+        [
+          "5",
+          0,
+          "A"
+        ],
+        [
+          "5",
+          2,
+          "B"
+        ]
+      ]
+    },
+    {
+      "from": "C",
+      "to": "G",
+      "notes": [
+        [
+          "5",
+          3,
+          "C"
+        ],
+        [
+          "5",
+          2,
+          "B"
+        ],
+        [
+          "5",
+          0,
+          "A"
+        ]
+      ]
+    },
+    {
+      "from": "G",
+      "to": "Em",
+      "notes": [
+        [
+          "6",
+          3,
+          "G"
+        ],
+        [
+          "6",
+          2,
+          "F#"
+        ]
+      ]
+    },
+    {
+      "from": "D",
+      "to": "G",
+      "notes": [
+        [
+          "4",
+          0,
+          "D"
+        ],
+        [
+          "6",
+          0,
+          "E"
+        ],
+        [
+          "6",
+          2,
+          "F#"
+        ]
+      ]
+    },
+    {
+      "from": "C",
+      "to": "Am",
+      "notes": [
+        [
+          "5",
+          3,
+          "C"
+        ],
+        [
+          "5",
+          2,
+          "B"
+        ]
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "id": "P1",
+      "category": "P",
+      "name_he": "בס בפעמה 1",
+      "instructions_he": "על C, G, D: בפעמה 1 רק מיתר הבס באגודל (C: מיתר 5, G: מיתר 6, D: מיתר 4). בפעמות 2–4 פריטה קלה על מיתרים 3–1",
+      "bpm_start": 60,
+      "bpm_target": 90,
+      "bpm_step": 5,
+      "pass_criteria_he": "הבס נשמע בבירור חזק יותר, 4 תיבות על כל אקורד בלי עצירה",
+      "chords": [
+        "C",
+        "G",
+        "D"
+      ],
+      "intro_week": 1
+    },
+    {
+      "id": "P2",
+      "category": "P",
+      "name_he": "בס מתחלף",
+      "instructions_he": "כמו P1, אבל בפעמה 3 מיתר בס שני (G: 6 ואז 4, C: 5 ואז 4, D: 4 ואז 5)",
+      "bpm_start": 60,
+      "bpm_target": 90,
+      "bpm_step": 5,
+      "pass_criteria_he": "האגודל מוצא את המיתר בלי להסתכל",
+      "chords": [
+        "C",
+        "G",
+        "D"
+      ],
+      "intro_week": 2
+    },
+    {
+      "id": "P3",
+      "category": "P",
+      "name_he": "הדגשת מיתר עליון",
+      "instructions_he": "פריטה רגילה, ובפעמות 2 ו-4 מושכים באצבע את מיתר 1 או 2 חזק יותר מהשאר",
+      "bpm_start": 60,
+      "bpm_target": 80,
+      "bpm_step": 5,
+      "pass_criteria_he": "שומעים מנגינה מעל האקורד",
+      "chords": [
+        "C",
+        "G",
+        "D"
+      ],
+      "intro_week": 3
+    },
+    {
+      "id": "K1",
+      "category": "K",
+      "name_he": "קישוטי D",
+      "instructions_he": "D → Dsus4 → D → Dsus2 → D, שינוי אחד בכל פעמה",
+      "bpm_start": 60,
+      "bpm_target": 90,
+      "bpm_step": 5,
+      "pass_criteria_he": "המיתרים נשארים נקיים בכל החלפה",
+      "chords": [
+        "D",
+        "Dsus4",
+        "Dsus2"
+      ],
+      "intro_week": 1
+    },
+    {
+      "id": "K2",
+      "category": "K",
+      "name_he": "קישוטי C",
+      "instructions_he": "C → Cadd9 → C. בנוסף: המר-און בבס, מיתר 5 מפתוח לשריג 3",
+      "bpm_start": 60,
+      "bpm_target": 90,
+      "bpm_step": 5,
+      "pass_criteria_he": "ההמר-און נשמע בלי לפרוט שוב",
+      "chords": [
+        "C",
+        "Cadd9"
+      ],
+      "intro_week": 2
+    },
+    {
+      "id": "K3",
+      "category": "K",
+      "name_he": "קישוטי G",
+      "instructions_he": "G → Gsus4 → G. בנוסף: המר-און על מיתר 5 מפתוח לשריג 2",
+      "bpm_start": 60,
+      "bpm_target": 90,
+      "bpm_step": 5,
+      "pass_criteria_he": "מעבר חלק בלי הפסקה בצליל",
+      "chords": [
+        "G",
+        "Gsus4"
+      ],
+      "intro_week": 2
+    },
+    {
+      "id": "K4",
+      "category": "K",
+      "name_he": "סלייד ל-G",
+      "instructions_he": "בפעמה 1 מחליקים על מיתר 6 משריג 2 לשריג 3 ונוחתים על G. מתקדם: סלייד למעלה וחזרה באמצע התיבה",
+      "bpm_start": 60,
+      "bpm_target": 80,
+      "bpm_step": 5,
+      "pass_criteria_he": "הסלייד נוחת בדיוק על הפעמה",
+      "chords": [
+        "G"
+      ],
+      "intro_week": 2
+    },
+    {
+      "id": "K5",
+      "category": "K",
+      "name_he": "קישוט תוך פריטה רציפה",
+      "instructions_he": "K1–K4 עם מקצב קבוע (למטה-למטה-למעלה-למעלה-למטה-למעלה). קישוט בפעמה 3, חזרה בפעמה 4",
+      "bpm_start": 60,
+      "bpm_target": 90,
+      "bpm_step": 5,
+      "pass_criteria_he": "היד הימנית לא עוצרת בזמן הקישוט",
+      "chords": [
+        "C",
+        "G",
+        "D"
+      ],
+      "intro_week": 3
+    },
+    {
+      "id": "B1",
+      "category": "B",
+      "name_he": "הליכות לבד",
+      "instructions_he": "כל הליכה בנפרד (ראה bass_runs), רק תווי בס בלי אקורד, תו אחד בכל פעמה",
+      "bpm_start": 60,
+      "bpm_target": 100,
+      "bpm_step": 5,
+      "pass_criteria_he": "מנגנים את כל ה-5 בלי להסתכל על הדף",
+      "chords": [
+        "G",
+        "C",
+        "D",
+        "Em",
+        "Am"
+      ],
+      "intro_week": 2
+    },
+    {
+      "id": "B2",
+      "category": "B",
+      "name_he": "הליכה בתוך מחזור",
+      "instructions_he": "אקורד במשך 2 פעמות, הליכה בפעמות 3–4, נחיתה על האקורד הבא בפעמה 1",
+      "bpm_start": 60,
+      "bpm_target": 90,
+      "bpm_step": 5,
+      "pass_criteria_he": "הנחיתה בזמן, בלי חור בקצב",
+      "chords": [
+        "G",
+        "C",
+        "D",
+        "Em",
+        "Am"
+      ],
+      "intro_week": 3
+    },
+    {
+      "id": "S1",
+      "category": "S",
+      "name_he": "מחזור משולב",
+      "instructions_he": "G–C–D–G או שיר מוכר. סיבוב 1 רק קישוטים, סיבוב 2 רק הליכות בס, סיבוב 3 משולב. לכל היותר תוספת אחת כל 2 תיבות",
+      "bpm_start": 70,
+      "bpm_target": 100,
+      "bpm_step": 5,
+      "pass_criteria_he": "מנגנים שיר שלם עם תוספות בלי לעצור",
+      "chords": [
+        "G",
+        "C",
+        "D"
+      ],
+      "intro_week": 1
+    }
+  ],
+  "weeks": [
+    {
+      "week": 1,
+      "blocks": {
+        "P": [
+          "P1"
+        ],
+        "K": [
+          "K1"
+        ],
+        "B": [],
+        "S": [
+          "S1"
+        ]
+      },
+      "goal_he": "קישוטי D נקיים ב-80 BPM",
+      "note_he": "S1 עם קישוטי D בלבד"
+    },
+    {
+      "week": 2,
+      "blocks": {
+        "P": [
+          "P2"
+        ],
+        "K": [
+          "K2",
+          "K3",
+          "K4"
+        ],
+        "B": [
+          "B1"
+        ],
+        "S": [
+          "S1"
+        ]
+      },
+      "goal_he": "קישוט על כל אחד מ-C, G, D",
+      "note_he": "B1 רק G↔C; S1 סיבוב 1"
+    },
+    {
+      "week": 3,
+      "blocks": {
+        "P": [
+          "P3"
+        ],
+        "K": [
+          "K5"
+        ],
+        "B": [
+          "B1",
+          "B2"
+        ],
+        "S": [
+          "S1"
+        ]
+      },
+      "goal_he": "שיר שלם עם קישוטים והליכות בס בלי לעצור",
+      "note_he": "S1 מלא על שיר אמיתי"
+    }
+  ],
+  "advance_rule_he": "עוברים לשבוע הבא רק כשכל תרגילי השבוע הגיעו לקריטריון המעבר",
+  "glossary": [
+    {
+      "term": "פעמה (beat)",
+      "def_he": "הדופק של השיר"
+    },
+    {
+      "term": "תיבה (bar)",
+      "def_he": "קבוצה של פעמות, בדרך כלל 4"
+    },
+    {
+      "term": "BPM",
+      "def_he": "פעמות בדקה"
+    },
+    {
+      "term": "אקורד פתוח",
+      "def_he": "אקורד בשריגים הראשונים עם מיתרים פתוחים"
+    },
+    {
+      "term": "תו היסוד (root)",
+      "def_he": "התו שנותן לאקורד את שמו, בדרך כלל הבס"
+    },
+    {
+      "term": "סטראם",
+      "def_he": "מעבר על כמה מיתרים בבת אחת"
+    },
+    {
+      "term": "פינגרפיקינג",
+      "def_he": "נגינה על מיתרים בודדים עם האצבעות"
+    },
+    {
+      "term": "הדגשה (accent)",
+      "def_he": "תו שמנוגן חזק יותר כדי שיבלוט"
+    },
+    {
+      "term": "המר-און",
+      "def_he": "מכים אצבע על שריג גבוה יותר בלי לפרוט שוב"
+    },
+    {
+      "term": "פול-אוף",
+      "def_he": "מרימים אצבע עם משיכה קטנה, והתו הנמוך משתמע"
+    },
+    {
+      "term": "סלייד",
+      "def_he": "מחליקים אצבע לאורך המיתר וממשיכים ללחוץ"
+    },
+    {
+      "term": "sus4",
+      "def_he": "הטרצה מוחלפת בתו מעליה; מתח שרוצה לחזור"
+    },
+    {
+      "term": "sus2",
+      "def_he": "הטרצה מוחלפת בתו מתחתיה; פתוח ואוורירי"
+    },
+    {
+      "term": "add9",
+      "def_he": "מוסיפים תו בלי להוריד כלום; עשיר ורך"
+    },
+    {
+      "term": "קישוט",
+      "def_he": "שינוי קטן בתוך אקורד שמחזיקים"
+    },
+    {
+      "term": "הליכת בס",
+      "def_he": "2–4 תווי בס שמובילים מאקורד לאקורד"
+    },
+    {
+      "term": "ליק (lick)",
+      "def_he": "פראזה מלודית קצרה שלומדים בעל פה ומשתמשים בה שוב ושוב"
+    },
+    {
+      "term": "פיל (fill)",
+      "def_he": "ליק שממלא רווח ריק בשיר"
+    },
+    {
+      "term": "ריף (riff)",
+      "def_he": "פראזה שחוזרת והיא הבסיס של השיר"
+    }
+  ],
+  "progress_log_schema": {
+    "date": "YYYY-MM-DD",
+    "exercise_id": "P1",
+    "clean_bpm": 70,
+    "clean_reps": 3,
+    "passed": false,
+    "note": ""
+  }
+}

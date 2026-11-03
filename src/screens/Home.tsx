@@ -1,6 +1,7 @@
 import { LESSONS, UNIT_TITLES, lessonsFor } from '../data/curriculum';
 import { DOMAIN_ICON, DOMAIN_LABEL, LEVEL_LABEL, type Domain } from '../engine/types';
 import { dailyCats } from '../data/daily';
+import { PLANS } from '../data/plans';
 import { go } from '../router';
 import { coachDue } from '../engine/coach';
 import { lessonStatus, setHidePiano, streak, today, useStore, type State } from '../state/store';
@@ -43,6 +44,12 @@ export function Home() {
         );
       })()}
 
+      {PLANS.map(({ id, plan }) => (
+        <button key={id} className="lesson-row open" onClick={() => go('pp/' + id)}>
+          <span className="lr-badge">📘</span>
+          <span className="lr-title">{plan.title_he}<br /><small className="muted">אימון היום: {plan.session_template.map((b) => b.name_he).join(' · ')}</small></span>
+        </button>
+      ))}
       {s.prog.placed && coachDue(s, today()) && (
         <button className="lesson-row open" onClick={() => go('plan/coach')}>
           <span className="lr-badge">🎧</span>
