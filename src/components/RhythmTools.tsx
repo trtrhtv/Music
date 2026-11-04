@@ -177,7 +177,7 @@ type LockableOrientation = ScreenOrientation & { lock?: (o: string) => Promise<v
  * Android can lock the screen that way; where it can't (iPhone, or a phone with rotation locked)
  * the tab itself is turned, so you just turn the phone.
  */
-function TabFull({ lines, title, onClose, barFrom }: { lines: string[]; title?: string; onClose: () => void; barFrom?: number }) {
+export function TabFull({ lines, title, onClose, barFrom }: { lines: string[]; title?: string; onClose: () => void; barFrom?: number }) {
   const box = useRef<HTMLDivElement>(null);
   const [portrait, setPortrait] = useState(() => matchMedia('(orientation: portrait)').matches);
   const [orient, setOrient] = useState<Orient>(savedOrient);
