@@ -170,6 +170,10 @@ const PER_ROW_KEY = 'tab-per-row';
 const savedPerRow = (): Record<Orient, number> => {
   try { return { port: 2, land: 4, ...JSON.parse(localStorage.getItem(PER_ROW_KEY) ?? '{}') }; } catch { return { port: 2, land: 4 }; }
 };
+/** Auto-scroll speed: seconds the tab takes to move up by one row (remembered). */
+const SCROLL_SECS = [3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 60];
+const SCROLL_KEY = 'tab-scroll-secs';
+const savedSecs = () => { try { const n = Number(localStorage.getItem(SCROLL_KEY)); return SCROLL_SECS.includes(n) ? n : 10; } catch { return 10; } };
 type LockableOrientation = ScreenOrientation & { lock?: (o: string) => Promise<void> };
 
 /**
@@ -217,15 +221,49 @@ export function TabFull({ lines, title, onClose, barFrom }: { lines: string[]; t
   };
   const bars = lines.map((l) => l.split('|'));
   const total = bars[0].length;
+  const inner = useRef<HTMLDivElement>(null);
+  const rowsBox = useRef<HTMLDivElement>(null);
+  const [scrolling, setScrolling] = useState(false);
+  const [secs, setSecs] = useState(savedSecs);
+  const chooseSecs = (dir: 1 | -1) => {
+    const i = Math.max(0, Math.min(SCROLL_SECS.length - 1, SCROLL_SECS.indexOf(secs) + dir));
+    setSecs(SCROLL_SECS[i]);
+    try { localStorage.setItem(SCROLL_KEY, String(SCROLL_SECS[i])); } catch { /* storage unavailable */ }
+  };
   const rows: { from: number; lines: string[] }[] = [];
   for (let i = 0; i < total; i += perRow) rows.push({ from: i, lines: bars.map((b) => b.slice(i, i + perRow).join('|')) });
   // One size for every row (the widest one fits), so a short last row doesn't jump bigger.
   const widest = Math.max(...rows.flatMap((r) => r.lines.map((l) => l.length)));
   const fontSize = `min(calc((${width} - 48px) / ${(widest + 3) * 0.6}), 26px)`;
+  // Auto-scroll: moves one row every `secs` seconds; a finger can still scroll, and it carries on from there.
+  useEffect(() => {
+    if (!scrolling) return;
+    const el = rotated ? inner.current : box.current; // whichever box actually scrolls
+    const list = rowsBox.current;
+    if (!el || !list) return;
+    const atEnd = () => el.scrollTop + el.clientHeight >= el.scrollHeight - 2;
+    if (atEnd()) el.scrollTop = 0;
+    let pos = el.scrollTop;
+    let last = performance.now();
+    let raf = 0;
+    let awake: { release: () => Promise<void> } | undefined;
+    navigator.wakeLock?.request('screen').then((l) => { awake = l; }).catch(() => {});
+    const tick = (t: number) => {
+      const dt = Math.min(0.1, (t - last) / 1000);
+      last = t;
+      if (Math.abs(el.scrollTop - pos) > 3) pos = el.scrollTop; // the player moved it by hand
+      pos += (list.offsetHeight / rows.length / secs) * dt;
+      el.scrollTop = pos;
+      if (atEnd()) { setScrolling(false); return; }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => { cancelAnimationFrame(raf); awake?.release().catch(() => {}); };
+  }, [scrolling, secs, rotated, rows.length]);
   return (
     // The full-screen element itself can't be transformed (browsers force it upright), so an inner box turns.
     <div className={`tab-full ${rotated ? 'turned' : ''}`} ref={box}>
-      <div className={`tf-inner ${rotated ? (sideways ? 'rot' : 'rot-back') : ''}`}>
+      <div ref={inner} className={`tf-inner ${rotated ? (sideways ? 'rot' : 'rot-back') : ''}`}>
       <div className="tab-full-bar">
         <span className="small">{title}</span>
         <div className="row tight">
@@ -242,7 +280,14 @@ export function TabFull({ lines, title, onClose, barFrom }: { lines: string[]; t
           <button className={`btn small ${perRow >= total ? 'primary' : 'ghost'}`} onClick={() => choosePerRow(99)}>הכול</button>
         </div>
       )}
+      <div className="row tight tf-scroll">
+        <button className={`btn small ${scrolling ? 'ghost' : 'primary'}`} onClick={() => setScrolling(!scrolling)}>{scrolling ? '⏸ עצור גלילה' : '⏬ גלילה אוטומטית'}</button>
+        <button className="btn small ghost" onClick={() => chooseSecs(1)} aria-label="לאט יותר">🐢</button>
+        <span className="small">שורה כל {secs} שנ'</span>
+        <button className="btn small ghost" onClick={() => chooseSecs(-1)} aria-label="מהר יותר">🐇</button>
+      </div>
       {/* Monospace glyphs are ~0.6em wide, so the font size is the one that fits a row to the width. */}
+      <div ref={rowsBox} className="tf-rows">
       {rows.map((r) => (
         <div key={r.from} className="tf-row">
           {barFrom !== undefined && rows.length > 1 && <div className="tf-bars small muted">תיבות {barFrom + r.from}–{barFrom + Math.min(total, r.from + perRow) - 1}</div>}
@@ -251,6 +296,7 @@ export function TabFull({ lines, title, onClose, barFrom }: { lines: string[]; t
           </pre>
         </div>
       ))}
+      </div>
       </div>
     </div>
   );
