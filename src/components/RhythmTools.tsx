@@ -170,10 +170,9 @@ const PER_ROW_KEY = 'tab-per-row';
 const savedPerRow = (): Record<Orient, number> => {
   try { return { port: 2, land: 4, ...JSON.parse(localStorage.getItem(PER_ROW_KEY) ?? '{}') }; } catch { return { port: 2, land: 4 }; }
 };
-/** Auto-scroll speed: seconds the tab takes to move up by one row (remembered). */
-const SCROLL_SECS = [3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 60];
-const SCROLL_KEY = 'tab-scroll-secs';
-const savedSecs = () => { try { const n = Number(localStorage.getItem(SCROLL_KEY)); return SCROLL_SECS.includes(n) ? n : 10; } catch { return 10; } };
+/** The tempo the auto-scroll follows, when the tab doesn't come with one (remembered). */
+const SCROLL_BPM_KEY = 'tab-scroll-bpm';
+const savedBpm = (sub: number) => { try { return Number(localStorage.getItem(SCROLL_BPM_KEY)) || (sub === 3 ? 50 : 60); } catch { return sub === 3 ? 50 : 60; } };
 type LockableOrientation = ScreenOrientation & { lock?: (o: string) => Promise<void> };
 
 /**
@@ -181,7 +180,7 @@ type LockableOrientation = ScreenOrientation & { lock?: (o: string) => Promise<v
  * Android can lock the screen that way; where it can't (iPhone, or a phone with rotation locked)
  * the tab itself is turned, so you just turn the phone.
  */
-export function TabFull({ lines, title, onClose, barFrom }: { lines: string[]; title?: string; onClose: () => void; barFrom?: number }) {
+export function TabFull({ lines, title, onClose, barFrom, sub = 2, bpm: tabBpm }: { lines: string[]; title?: string; onClose: () => void; barFrom?: number; sub?: number; bpm?: number }) {
   const box = useRef<HTMLDivElement>(null);
   const [portrait, setPortrait] = useState(() => matchMedia('(orientation: portrait)').matches);
   const [orient, setOrient] = useState<Orient>(savedOrient);
@@ -224,22 +223,26 @@ export function TabFull({ lines, title, onClose, barFrom }: { lines: string[]; t
   const inner = useRef<HTMLDivElement>(null);
   const rowsBox = useRef<HTMLDivElement>(null);
   const [scrolling, setScrolling] = useState(false);
-  const [secs, setSecs] = useState(savedSecs);
-  const chooseSecs = (dir: 1 | -1) => {
-    const i = Math.max(0, Math.min(SCROLL_SECS.length - 1, SCROLL_SECS.indexOf(secs) + dir));
-    setSecs(SCROLL_SECS[i]);
-    try { localStorage.setItem(SCROLL_KEY, String(SCROLL_SECS[i])); } catch { /* storage unavailable */ }
-  };
+  const [bpm, setBpmState] = useState(() => tabBpm ?? savedBpm(sub));
+  const setBpm = (n: number) => { setBpmState(n); try { localStorage.setItem(SCROLL_BPM_KEY, String(n)); } catch { /* storage unavailable */ } };
   const rows: { from: number; lines: string[] }[] = [];
   for (let i = 0; i < total; i += perRow) rows.push({ from: i, lines: bars.map((b) => b.slice(i, i + perRow).join('|')) });
   // One size for every row (the widest one fits), so a short last row doesn't jump bigger.
   const widest = Math.max(...rows.flatMap((r) => r.lines.map((l) => l.length)));
   const fontSize = `min(calc((${width} - 48px) / ${(widest + 3) * 0.6}), 26px)`;
-  // Auto-scroll: moves one row every `secs` seconds; a finger can still scroll, and it carries on from there.
+  // How long each row takes to play: every note column is 1/sub of a beat (as in the tab player).
+  const rowSecs = rows.map((r) => (parseTab(r.lines).length / sub) * (60 / bpm));
+  const rowBeats = rows.length ? Math.round(parseTab(rows[0].lines).length / sub) : 0;
+  // Auto-scroll at the tempo: while you play a row, the one before it slides off the top, so the row
+  // you're playing is always fully on screen and the next one is right under it. A finger can still
+  // scroll; it carries on from there.
+  const durs = useRef(rowSecs);
+  durs.current = rowSecs;
   useEffect(() => {
     if (!scrolling) return;
     const el = rotated ? inner.current : box.current; // whichever box actually scrolls
     const list = rowsBox.current;
+    const bar = list?.previousElementSibling as HTMLElement | null; // the sticky scroll controls
     if (!el || !list) return;
     const atEnd = () => el.scrollTop + el.clientHeight >= el.scrollHeight - 2;
     if (atEnd()) el.scrollTop = 0;
@@ -248,18 +251,31 @@ export function TabFull({ lines, title, onClose, barFrom }: { lines: string[]; t
     let raf = 0;
     let awake: { release: () => Promise<void> } | undefined;
     navigator.wakeLock?.request('screen').then((l) => { awake = l; }).catch(() => {});
+    const speed = () => {
+      const covered = bar?.offsetHeight ?? 0;
+      // Scroll positions where each row reaches the top (just under the controls).
+      const tops = [...list.children].map((c) => list.offsetTop + (c as HTMLElement).offsetTop - covered);
+      tops.push(list.offsetTop + list.offsetHeight - covered);
+      // Before row 0 reaches the top you're playing row 0; while row k leaves, you're playing row k+1.
+      let k = -1;
+      while (k + 1 < tops.length - 1 && pos >= tops[k + 1]) k++;
+      const from = k < 0 ? 0 : tops[k];
+      const to = tops[k + 1];
+      const dur = Math.max(0.5, durs.current[Math.min(k + 1, durs.current.length - 1)] ?? 1);
+      return Math.max(0, to - from) / dur;
+    };
     const tick = (t: number) => {
       const dt = Math.min(0.1, (t - last) / 1000);
       last = t;
       if (Math.abs(el.scrollTop - pos) > 3) pos = el.scrollTop; // the player moved it by hand
-      pos += (list.offsetHeight / rows.length / secs) * dt;
+      pos += speed() * dt;
       el.scrollTop = pos;
       if (atEnd()) { setScrolling(false); return; }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => { cancelAnimationFrame(raf); awake?.release().catch(() => {}); };
-  }, [scrolling, secs, rotated, rows.length]);
+  }, [scrolling, rotated]);
   return (
     // The full-screen element itself can't be transformed (browsers force it upright), so an inner box turns.
     <div className={`tab-full ${rotated ? 'turned' : ''}`} ref={box}>
@@ -282,9 +298,9 @@ export function TabFull({ lines, title, onClose, barFrom }: { lines: string[]; t
       )}
       <div className="row tight tf-scroll">
         <button className={`btn small ${scrolling ? 'ghost' : 'primary'}`} onClick={() => setScrolling(!scrolling)}>{scrolling ? '⏸ עצור גלילה' : '⏬ גלילה אוטומטית'}</button>
-        <button className="btn small ghost" onClick={() => chooseSecs(1)} aria-label="לאט יותר">🐢</button>
-        <span className="small">שורה כל {secs} שנ'</span>
-        <button className="btn small ghost" onClick={() => chooseSecs(-1)} aria-label="מהר יותר">🐇</button>
+        <BpmControl bpm={bpm} setBpm={setBpm} />
+        {rows.length > 1 && <span className="small muted">= שורה ({Math.min(perRow, total)} תיבות{rowBeats ? `, ${rowBeats} פעמות` : ''}) כל {Math.round(rowSecs[0] * 10) / 10} שנ'</span>}
+        {rows.length > 1 && !scrolling && <span className="small muted tf-scroll-how">שים את הקצב שבו אתה מנגן (כמו במטרונום), והגלילה תזוז בדיוק לפיו: בזמן שאתה מנגן שורה, השורה הקודמת יוצאת למעלה – כך השורה שאתה מנגן תמיד גלויה, והבאה מתחתיה.</span>}
       </div>
       {/* Monospace glyphs are ~0.6em wide, so the font size is the one that fits a row to the width. */}
       <div ref={rowsBox} className="tf-rows">
@@ -334,7 +350,7 @@ export function TabView({ lines, title, sub = 2, bpm: initialBpm, barFrom }: { l
       </div>
       {checking && melody && <NoteCheck notes={melody} onClose={() => setChecking(false)} />}
       <pre className="tab" dir="ltr">{text}</pre>
-      {full && <TabFull lines={lines} title={title} barFrom={barFrom} onClose={() => setFull(false)} />}
+      {full && <TabFull lines={lines} title={title} barFrom={barFrom} sub={sub} bpm={bpm} onClose={() => setFull(false)} />}
     </figure>
   );
 }

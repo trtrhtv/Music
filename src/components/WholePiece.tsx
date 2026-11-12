@@ -11,7 +11,7 @@ export function WholePieceButton() {
         <span className="lr-badge">🎼</span>
         <span className="lr-title">Romanza – היצירה המלאה<br /><small className="muted">כל 32 התיבות במסך מלא · אחרי 32 חוזרים ל-1 ומסיימים ב-16</small></span>
       </button>
-      {open && <TabFull lines={ROMANZA_ALL} title="Romanza – תיבות 1–32 (אחרי 32 חוזרים ל-1 ומסיימים ב-16)" barFrom={1} onClose={() => setOpen(false)} />}
+      {open && <TabFull lines={ROMANZA_ALL} title="Romanza – תיבות 1–32 (אחרי 32 חוזרים ל-1 ומסיימים ב-16)" barFrom={1} sub={3} onClose={() => setOpen(false)} />}
     </>
   );
 }
