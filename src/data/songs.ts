@@ -94,8 +94,12 @@ export const ROMANZA_CHUNKS: { bars: [number, number]; title: string; lines: str
   { bars: [29, 32], title: 'תיבות 29–32 (29–30: הברה בסריג 2; ב-31 הבס יורד בכל פעמה)', lines: romTabB(29, 31).map((l, i) => l + '|' + ROMANZA_B_END[i].slice(1)) },
 ];
 
-/** The whole of Romanza in one tab: part A (1–16) and part B (17–32); then A again to bar 16. */
-export const ROMANZA_ALL: string[] = Array.from({ length: 6 }, (_, k) => ROMANZA_CHUNKS.map((c) => c.lines[k]).join('|'));
+/** The whole of Romanza written out in playing order: part A (1–16), part B (17–32), and part A again. */
+const PLAY_ORDER = [...ROMANZA_CHUNKS, ...ROMANZA_CHUNKS.slice(0, 4)];
+export const ROMANZA_ALL: string[] = Array.from({ length: 6 }, (_, k) => PLAY_ORDER.map((c) => c.lines[k]).join('|'));
+/** The bar number of each bar of ROMANZA_ALL (1–32, then 1–16 again). */
+export const ROMANZA_ALL_BARS: number[] = PLAY_ORDER.flatMap((c) => Array.from({ length: c.bars[1] - c.bars[0] + 1 }, (_, i) => c.bars[0] + i));
+export const ROMANZA_ALL_TITLE = 'כל היצירה – חלק A (תיבות 1–16), חלק B (17–32), ושוב חלק A (1–16)';
 
 export const SONGS: Song[] = [
   {
@@ -103,9 +107,9 @@ export const SONGS: Song[] = [
     how: 'ארפג\'ים בשלישיות, 3/4',
     blocks: [
       p('יצירה במשקל 3/4: כל פעמה היא **שלישייה** – המנגינה על מיתר 1 (אצבע a), ואחריה מיתר 2 (m) ומיתר 3 (i). על הפעמה הראשונה האגודל מנגן בס יחד עם המנגינה.'),
-      p('היצירה בנויה משני חלקים: **חלק A במי מינור** (תיבות 1–16, כהה ועצוב) ו**חלק B במי מז\'ור** (תיבות 17–32, בהיר). אחרי חלק B חוזרים לחלק A, ומסיימים בתיבה 16. שני החלקים כתובים כאן בטאב.'),
+      p('היצירה בנויה משני חלקים: **חלק A במי מינור** (תיבות 1–16, כהה ועצוב) ו**חלק B במי מז\'ור** (תיבות 17–32, בהיר). אחרי חלק B חוזרים לחלק A, ומסיימים בתיבה 16. בטאב "כל היצירה" הכול כתוב ברצף, כולל החזרה לחלק A – אפשר לנגן מההתחלה עד הסוף בלי לקפוץ.'),
       { t: 'tab', sub: 3, title: 'יד ימין על מיתרים פתוחים – בס+a, m, i', lines: tabFrom([[[6, 0], [1, 0]], [[2, 0]], [[3, 0]], [[1, 0]], [[2, 0]], [[3, 0]], [[1, 0]], [[2, 0]], [[3, 0]]], 3) },
-      { t: 'tab', sub: 3, title: 'כל היצירה – תיבות 1–32 (אחרי 32 חוזרים ל-1 ומסיימים ב-16)', lines: ROMANZA_ALL, barFrom: 1 },
+      { t: 'tab', sub: 3, title: ROMANZA_ALL_TITLE, lines: ROMANZA_ALL, bars: ROMANZA_ALL_BARS },
       ...ROMANZA_CHUNKS.slice(0, 4).map((c) => ({ t: 'tab' as const, sub: 3, title: c.title, lines: c.lines, barFrom: c.bars[0] })),
       { t: 'h', text: 'חלק B – מי מז\'ור' },
       p('אותה תבנית של יד ימין: מנגינה, ואחריה שני תווים פנימיים. ההבדל: בתיבות 19–20 **המנגינה עוברת למיתר 2**, והתווים הפנימיים יורדים למיתרים 3 ו-4 – אז האצבעות של יד ימין זזות מיתר אחד למטה (a על מיתר 2, m על 3, i על 4).'),

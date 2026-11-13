@@ -87,10 +87,14 @@ describe('every exercise is spelled out', () => {
 });
 
 describe('the whole of Romanza in one tab', () => {
-  it('has all 32 bars on every string', async () => {
-    const { ROMANZA_ALL } = await import('../data/songs');
+  it('is written out in playing order: A (1–16), B (17–32), A again (1–16)', async () => {
+    const { ROMANZA_ALL, ROMANZA_ALL_BARS, ROMANZA_CHUNKS } = await import('../data/songs');
+    expect(ROMANZA_ALL_BARS).toEqual([...Array.from({ length: 32 }, (_, i) => i + 1), ...Array.from({ length: 16 }, (_, i) => i + 1)]);
+    // The return to A is the same music as the first A.
+    const partA = Array.from({ length: 6 }, (_, k) => ROMANZA_CHUNKS.slice(0, 4).map((c) => c.lines[k]).join('|'));
+    ROMANZA_ALL.forEach((l, k) => { expect(l.startsWith(partA[k])).toBe(true); expect(l.endsWith(partA[k])).toBe(true); });
     expect(ROMANZA_ALL).toHaveLength(6);
-    for (const l of ROMANZA_ALL) expect(l.split('|')).toHaveLength(32);
+    for (const l of ROMANZA_ALL) expect(l.split('|')).toHaveLength(48);
     expect(new Set(ROMANZA_ALL.map((l) => l.length)).size).toBe(1);
   });
 });

@@ -180,7 +180,15 @@ type LockableOrientation = ScreenOrientation & { lock?: (o: string) => Promise<v
  * Android can lock the screen that way; where it can't (iPhone, or a phone with rotation locked)
  * the tab itself is turned, so you just turn the phone.
  */
-export function TabFull({ lines, title, onClose, barFrom, sub = 2, bpm: tabBpm }: { lines: string[]; title?: string; onClose: () => void; barFrom?: number; sub?: number; bpm?: number }) {
+/** "תיבות 29–32 · ↩ שוב מההתחלה: 1–2" – a row's bar numbers, split where the music jumps back. */
+function barsLabel(nums: number[], first: boolean) {
+  const runs: number[][] = [];
+  for (const n of nums) { const r = runs[runs.length - 1]; if (r && n === r[r.length - 1] + 1) r.push(n); else runs.push([n]); }
+  const span = (r: number[]) => (r.length > 1 ? `${r[0]}–${r[r.length - 1]}` : `${r[0]}`);
+  return runs.map((r, i) => (i === 0 && (first || r[0] !== 1) ? `תיבות ${span(r)}` : `${i === 0 ? '' : ' · '}↩ חוזרים להתחלה: תיבות ${span(r)}`)).join('');
+}
+
+export function TabFull({ lines, title, onClose, barFrom, bars: barNums, sub = 2, bpm: tabBpm }: { lines: string[]; title?: string; onClose: () => void; barFrom?: number; bars?: number[]; sub?: number; bpm?: number }) {
   const box = useRef<HTMLDivElement>(null);
   const [portrait, setPortrait] = useState(() => matchMedia('(orientation: portrait)').matches);
   const [orient, setOrient] = useState<Orient>(savedOrient);
@@ -220,6 +228,7 @@ export function TabFull({ lines, title, onClose, barFrom, sub = 2, bpm: tabBpm }
   };
   const bars = lines.map((l) => l.split('|'));
   const total = bars[0].length;
+  const nums = barNums ?? (barFrom !== undefined ? Array.from({ length: total }, (_, i) => barFrom + i) : undefined);
   const inner = useRef<HTMLDivElement>(null);
   const rowsBox = useRef<HTMLDivElement>(null);
   const [scrolling, setScrolling] = useState(false);
@@ -306,7 +315,7 @@ export function TabFull({ lines, title, onClose, barFrom, sub = 2, bpm: tabBpm }
       <div ref={rowsBox} className="tf-rows">
       {rows.map((r) => (
         <div key={r.from} className="tf-row">
-          {barFrom !== undefined && rows.length > 1 && <div className="tf-bars small muted">תיבות {barFrom + r.from}–{barFrom + Math.min(total, r.from + perRow) - 1}</div>}
+          {nums && rows.length > 1 && <div className="tf-bars small muted">{barsLabel(nums.slice(r.from, r.from + perRow), r.from === 0)}</div>}
           <pre className="tab" dir="ltr" style={{ fontSize }}>
             {r.lines.map((l, k) => `${TAB_NAMES[k]}|${l}|`).join('\n')}
           </pre>
@@ -318,7 +327,7 @@ export function TabFull({ lines, title, onClose, barFrom, sub = 2, bpm: tabBpm }
   );
 }
 
-export function TabView({ lines, title, sub = 2, bpm: initialBpm, barFrom }: { lines: string[]; title?: string; sub?: number; bpm?: number; barFrom?: number }) {
+export function TabView({ lines, title, sub = 2, bpm: initialBpm, barFrom, bars }: { lines: string[]; title?: string; sub?: number; bpm?: number; barFrom?: number; bars?: number[] }) {
   const [full, setFull] = useState(false);
   const [bpm, setBpm] = useState(initialBpm ?? (sub === 3 ? 50 : 60));
   const [step, setStep] = useState(-1);
@@ -350,7 +359,7 @@ export function TabView({ lines, title, sub = 2, bpm: initialBpm, barFrom }: { l
       </div>
       {checking && melody && <NoteCheck notes={melody} onClose={() => setChecking(false)} />}
       <pre className="tab" dir="ltr">{text}</pre>
-      {full && <TabFull lines={lines} title={title} barFrom={barFrom} sub={sub} bpm={bpm} onClose={() => setFull(false)} />}
+      {full && <TabFull lines={lines} title={title} barFrom={barFrom} bars={bars} sub={sub} bpm={bpm} onClose={() => setFull(false)} />}
     </figure>
   );
 }

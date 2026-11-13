@@ -1,7 +1,7 @@
 import type { Rhythm } from '../audio/rhythm';
 import { p, tip, type Block } from './blocks';
 import { CH, STRUMS, notesTab, tabFrom } from './guitarLib';
-import { ROMANZA_ALL, ROMANZA_CHUNKS } from './songs';
+import { ROMANZA_ALL, ROMANZA_ALL_BARS, ROMANZA_ALL_TITLE, ROMANZA_CHUNKS } from './songs';
 import {
   BLUES12, CHROMATIC, G_MAJOR, LADDER, PAMI, PENTA, PIMA, SPIDER, TRAVIS_AM, TRAVIS_C, TRAVIS_G, figureOnStrings, run,
 } from './tracks';
@@ -29,7 +29,7 @@ export interface DailyCat { id: DailyCatId; icon: string; title: string; min: nu
 
 /* ───────── helpers ───────── */
 const tab = (title: string, lines: string[], sub?: number, barFrom?: number): Block => ({ t: 'tab', title, lines, sub, barFrom });
-const WHOLE_ROMANZA = tab('כל היצירה – תיבות 1–32 (אחרי 32 חוזרים ל-1 ומסיימים ב-16)', ROMANZA_ALL, 3, 1);
+const WHOLE_ROMANZA: Block = { t: 'tab', title: ROMANZA_ALL_TITLE, lines: ROMANZA_ALL, sub: 3, bars: ROMANZA_ALL_BARS };
 const metro = (bpm: number): Block => ({ t: 'metronome', bpm });
 const chords = (...names: (string | [string, number[]])[]): Block => ({ t: 'chords', items: names.map((n) => (typeof n === 'string' ? { name: n, frets: CH[n] } : { name: n[0], frets: n[1] })) });
 const strum = (r: Rhythm, name: string, names: string[], bpm: number, note?: string): Block => ({ t: 'strum', name, rhythm: r, bpm, chords: names.map((n) => CH[n] ?? EXTRA[n]), chordNames: names, note });

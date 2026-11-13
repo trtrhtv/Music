@@ -18,7 +18,7 @@ export type Block =
   | { t: 'see'; ids: string[] }
   /** Guitar tab, 6 lines from high e to low E. */
   /** `sub` = notes per beat when played back (2 = eighths, 3 = triplets). */
-  | { t: 'tab'; lines: string[]; title?: string; sub?: number; bpm?: number; /** Number of the first bar: full screen then labels each row with its bars. */ barFrom?: number }
+  | { t: 'tab'; lines: string[]; title?: string; sub?: number; bpm?: number; /** Number of the first bar: full screen then labels each row with its bars. */ barFrom?: number; /** Or the number of every bar, for a tab that repeats bars (1–32, then 1–16). */ bars?: number[] }
   /** Playable strum pattern; chords are fret voicings (6→1) cycled per bar. */
   | { t: 'strum'; name: string; rhythm: Rhythm; bpm?: number; chords?: number[][]; chordNames?: string[]; note?: string }
   | { t: 'metronome'; bpm?: number; beats?: number }
