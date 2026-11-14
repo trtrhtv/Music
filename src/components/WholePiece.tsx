@@ -22,7 +22,7 @@ export function WholePieceButton() {
     <>
       <button className="lesson-row open" onClick={() => setOpen(true)}>
         <span className="lr-badge">🎼</span>
-        <span className="lr-title">Romanza – היצירה המלאה<br /><small className="muted">במסך מלא, ברצף מההתחלה עד הסוף: A, A, B, B, A (80 תיבות)</small></span>
+        <span className="lr-title">Romanza – היצירה המלאה<br /><small className="muted">במסך מלא, ברצף מההתחלה עד הסוף: A, A, B, B, A, A (96 תיבות)</small></span>
       </button>
       {open && <TabFull lines={ROMANZA_ALL} title={`Romanza – ${ROMANZA_ALL_TITLE}`} bars={ROMANZA_ALL_BARS} sub={3} onClose={() => setOpen(false)} />}
     </>

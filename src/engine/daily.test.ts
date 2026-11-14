@@ -87,12 +87,12 @@ describe('every exercise is spelled out', () => {
 });
 
 describe('the whole of Romanza in one tab', () => {
-  it('is written out in playing order: A, A, B, B, A', async () => {
+  it('is written out in playing order: A, A, B, B, A, A', async () => {
     const { ROMANZA_ALL, ROMANZA_ALL_BARS, ROMANZA_CHUNKS } = await import('../data/songs');
     const run = (a: number, z: number) => Array.from({ length: z - a + 1 }, (_, i) => a + i);
-    expect(ROMANZA_ALL_BARS).toEqual([...run(1, 16), ...run(1, 16), ...run(17, 32), ...run(17, 32), ...run(1, 16)]);
+    expect(ROMANZA_ALL_BARS).toEqual([...run(1, 16), ...run(1, 16), ...run(17, 32), ...run(17, 32), ...run(1, 16), ...run(1, 16)]);
     expect(ROMANZA_ALL).toHaveLength(6);
-    for (const l of ROMANZA_ALL) expect(l.split('|')).toHaveLength(80);
+    for (const l of ROMANZA_ALL) expect(l.split('|')).toHaveLength(96);
     expect(new Set(ROMANZA_ALL.map((l) => l.length)).size).toBe(1);
     // Every bar is the same music as that bar in its 4-bar chunk.
     const bar = (n: number) => { const c = ROMANZA_CHUNKS.find((x) => n >= x.bars[0] && n <= x.bars[1])!; return c.lines.map((l) => l.split('|')[n - c.bars[0]]); };

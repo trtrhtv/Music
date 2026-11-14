@@ -95,16 +95,16 @@ export const ROMANZA_CHUNKS: { bars: [number, number]; title: string; lines: str
 ];
 
 /**
- * The whole of Romanza written out in playing order, as the full editions have it: part A twice,
- * part B twice, and part A once more to the end (A A B B A – checked against the versions on classtab.org).
+ * The whole of Romanza written out in playing order, as the full editions have it: every part is
+ * repeated – A A B B A A (JG Music Lessons; the classtab.org versions agree on the parts and repeats).
  */
 const A_PART = ROMANZA_CHUNKS.slice(0, 4);
 const B_PART = ROMANZA_CHUNKS.slice(4);
-const PLAY_ORDER = [...A_PART, ...A_PART, ...B_PART, ...B_PART, ...A_PART];
+const PLAY_ORDER = [...A_PART, ...A_PART, ...B_PART, ...B_PART, ...A_PART, ...A_PART];
 export const ROMANZA_ALL: string[] = Array.from({ length: 6 }, (_, k) => PLAY_ORDER.map((c) => c.lines[k]).join('|'));
-/** The bar number of each bar of ROMANZA_ALL (1–16, 1–16, 17–32, 17–32, 1–16). */
+/** The bar number of each bar of ROMANZA_ALL (1–16, 1–16, 17–32, 17–32, 1–16, 1–16). */
 export const ROMANZA_ALL_BARS: number[] = PLAY_ORDER.flatMap((c) => Array.from({ length: c.bars[1] - c.bars[0] + 1 }, (_, i) => c.bars[0] + i));
-export const ROMANZA_ALL_TITLE = 'כל היצירה ברצף – חלק A פעמיים, חלק B פעמיים, ושוב חלק A';
+export const ROMANZA_ALL_TITLE = 'כל היצירה ברצף – A, A, B, B, A, A (96 תיבות)';
 
 export const SONGS: Song[] = [
   {
@@ -112,7 +112,7 @@ export const SONGS: Song[] = [
     how: 'ארפג\'ים בשלישיות, 3/4',
     blocks: [
       p('יצירה במשקל 3/4: כל פעמה היא **שלישייה** – המנגינה על מיתר 1 (אצבע a), ואחריה מיתר 2 (m) ומיתר 3 (i). על הפעמה הראשונה האגודל מנגן בס יחד עם המנגינה.'),
-      p('היצירה בנויה משני חלקים: **חלק A במי מינור** (תיבות 1–16, כהה ועצוב) ו**חלק B במי מז\'ור** (תיבות 17–32, בהיר). בביצוע המלא מנגנים כל חלק פעמיים, ובסוף חוזרים לחלק A פעם אחת: **A, A, B, B, A**. בטאב "כל היצירה" הכול כתוב ברצף, כולל כל החזרות – אפשר לנגן מההתחלה עד הסוף בלי לקפוץ.'),
+      p('היצירה בנויה משני חלקים: **חלק A במי מינור** (תיבות 1–16, כהה ועצוב) ו**חלק B במי מז\'ור** (תיבות 17–32, בהיר). בביצוע המלא כל חלק מנגנים פעמיים, וגם החזרה לחלק A בסוף היא פעמיים: **A, A, B, B, A, A**. בטאב "כל היצירה" הכול כתוב ברצף, כולל כל החזרות – אפשר לנגן מההתחלה עד הסוף בלי לקפוץ.'),
       { t: 'tab', sub: 3, title: 'יד ימין על מיתרים פתוחים – בס+a, m, i', lines: tabFrom([[[6, 0], [1, 0]], [[2, 0]], [[3, 0]], [[1, 0]], [[2, 0]], [[3, 0]], [[1, 0]], [[2, 0]], [[3, 0]]], 3) },
       { t: 'tab', sub: 3, title: ROMANZA_ALL_TITLE, lines: ROMANZA_ALL, bars: ROMANZA_ALL_BARS },
       ...ROMANZA_CHUNKS.slice(0, 4).map((c) => ({ t: 'tab' as const, sub: 3, title: c.title, lines: c.lines, barFrom: c.bars[0] })),
@@ -123,6 +123,7 @@ export const SONGS: Song[] = [
       tip('הטאב כאן נכתב לפי תווי היצירה (נחלת הכלל) ונבדק תיבה-תיבה מול המהדורה של Werner ומול הגרסאות ב-classtab.org. את האצבוע של יד שמאל (איזו אצבע על כל תו) – כדאי לקחת מה-PDF.'),
     ],
     sources: [
+      { label: 'JG Music Lessons – המבנה המלא A A B B A A', url: 'https://jgmusiclessons.com/spanish-romance-romanza-guitar-arrangement' },
       { label: 'classtab.org – כמה גרסאות מלאות (טאב טקסט)', url: 'https://www.classtab.org/anon_romance_de_amor.txt' },
       { label: 'Werner Guitar Editions – PDF', url: 'https://wernerguitareditions.com/products/spanish-romance-for-guitar-pdf' },
       { label: 'This is Classical Guitar – PDF + שיעור', url: 'https://www.thisisclassicalguitar.com/spanish-romance-tab-free-pdf/' },
