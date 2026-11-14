@@ -180,12 +180,13 @@ type LockableOrientation = ScreenOrientation & { lock?: (o: string) => Promise<v
  * Android can lock the screen that way; where it can't (iPhone, or a phone with rotation locked)
  * the tab itself is turned, so you just turn the phone.
  */
-/** "תיבות 29–32 · ↩ שוב מההתחלה: 1–2" – a row's bar numbers, split where the music jumps back. */
-function barsLabel(nums: number[], first: boolean) {
+/** "תיבות 15–16 · ↩ חוזרים להתחלה: תיבות 1–2" – a row's bar numbers, split where the music jumps back. */
+function barsLabel(nums: number[], jump: boolean) {
   const runs: number[][] = [];
   for (const n of nums) { const r = runs[runs.length - 1]; if (r && n === r[r.length - 1] + 1) r.push(n); else runs.push([n]); }
   const span = (r: number[]) => (r.length > 1 ? `${r[0]}–${r[r.length - 1]}` : `${r[0]}`);
-  return runs.map((r, i) => (i === 0 && (first || r[0] !== 1) ? `תיבות ${span(r)}` : `${i === 0 ? '' : ' · '}↩ חוזרים להתחלה: תיבות ${span(r)}`)).join('');
+  const back = (r: number[]) => (r[0] === 1 ? '↩ חוזרים להתחלה' : `↩ חוזרים לתיבה ${r[0]}`);
+  return runs.map((r, i) => (i === 0 && !jump ? `תיבות ${span(r)}` : `${i === 0 ? '' : ' · '}${back(r)}: תיבות ${span(r)}`)).join('');
 }
 
 export function TabFull({ lines, title, onClose, barFrom, bars: barNums, sub = 2, bpm: tabBpm }: { lines: string[]; title?: string; onClose: () => void; barFrom?: number; bars?: number[]; sub?: number; bpm?: number }) {
@@ -315,7 +316,7 @@ export function TabFull({ lines, title, onClose, barFrom, bars: barNums, sub = 2
       <div ref={rowsBox} className="tf-rows">
       {rows.map((r) => (
         <div key={r.from} className="tf-row">
-          {nums && rows.length > 1 && <div className="tf-bars small muted">{barsLabel(nums.slice(r.from, r.from + perRow), r.from === 0)}</div>}
+          {nums && rows.length > 1 && <div className="tf-bars small muted">{barsLabel(nums.slice(r.from, r.from + perRow), r.from > 0 && nums[r.from] !== nums[r.from - 1] + 1)}</div>}
           <pre className="tab" dir="ltr" style={{ fontSize }}>
             {r.lines.map((l, k) => `${TAB_NAMES[k]}|${l}|`).join('\n')}
           </pre>
