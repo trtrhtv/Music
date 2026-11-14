@@ -351,7 +351,7 @@ export function TabFull({ lines, title, onClose, barFrom, bars: barNums, sub = 2
   );
 }
 
-export function TabView({ lines, title, sub = 2, bpm: initialBpm, barFrom, bars }: { lines: string[]; title?: string; sub?: number; bpm?: number; barFrom?: number; bars?: number[] }) {
+export function TabView({ lines, title, sub = 2, bpm: initialBpm, barFrom, bars, beats }: { lines: string[]; title?: string; sub?: number; bpm?: number; barFrom?: number; bars?: number[]; beats?: number }) {
   const [full, setFull] = useState(false);
   const [bpm, setBpm] = useState(initialBpm ?? (sub === 3 ? 50 : 60));
   const [step, setStep] = useState(-1);
@@ -383,7 +383,7 @@ export function TabView({ lines, title, sub = 2, bpm: initialBpm, barFrom, bars 
       </div>
       {checking && melody && <NoteCheck notes={melody} onClose={() => setChecking(false)} />}
       <pre className="tab" dir="ltr">{text}</pre>
-      {full && <TabFull lines={lines} title={title} barFrom={barFrom} bars={bars} sub={sub} bpm={bpm} onClose={() => setFull(false)} />}
+      {full && <TabFull lines={lines} title={title} barFrom={barFrom} bars={bars} sub={sub} bpm={bpm} beatsPerBar={beats} onClose={() => setFull(false)} />}
     </figure>
   );
 }

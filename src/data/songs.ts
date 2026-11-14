@@ -1,5 +1,6 @@
 import { list, p, tip, type Block } from './blocks';
 import { tabFrom } from './guitarLib';
+import { PD_PIECES } from './pieces';
 
 /**
  * Pieces for the fingerstyle track. Chords were cross-checked across several chord sites
@@ -114,7 +115,7 @@ export const SONGS: Song[] = [
       p('יצירה במשקל 3/4: כל פעמה היא **שלישייה** – המנגינה על מיתר 1 (אצבע a), ואחריה מיתר 2 (m) ומיתר 3 (i). על הפעמה הראשונה האגודל מנגן בס יחד עם המנגינה.'),
       p('היצירה בנויה משני חלקים: **חלק A במי מינור** (תיבות 1–16, כהה ועצוב) ו**חלק B במי מז\'ור** (תיבות 17–32, בהיר). בביצוע המלא כל חלק מנגנים פעמיים, וגם החזרה לחלק A בסוף היא פעמיים: **A, A, B, B, A, A**. בטאב "כל היצירה" הכול כתוב ברצף, כולל כל החזרות – אפשר לנגן מההתחלה עד הסוף בלי לקפוץ.'),
       { t: 'tab', sub: 3, title: 'יד ימין על מיתרים פתוחים – בס+a, m, i', lines: tabFrom([[[6, 0], [1, 0]], [[2, 0]], [[3, 0]], [[1, 0]], [[2, 0]], [[3, 0]], [[1, 0]], [[2, 0]], [[3, 0]]], 3) },
-      { t: 'tab', sub: 3, title: ROMANZA_ALL_TITLE, lines: ROMANZA_ALL, bars: ROMANZA_ALL_BARS },
+      { t: 'tab', sub: 3, beats: 3, title: ROMANZA_ALL_TITLE, lines: ROMANZA_ALL, bars: ROMANZA_ALL_BARS },
       ...ROMANZA_CHUNKS.slice(0, 4).map((c) => ({ t: 'tab' as const, sub: 3, title: c.title, lines: c.lines, barFrom: c.bars[0] })),
       { t: 'h', text: 'חלק B – מי מז\'ור' },
       p('אותה תבנית של יד ימין: מנגינה, ואחריה שני תווים פנימיים. ההבדל: בתיבות 19–20 **המנגינה עוברת למיתר 2**, והתווים הפנימיים יורדים למיתרים 3 ו-4 – אז האצבעות של יד ימין זזות מיתר אחד למטה (a על מיתר 2, m על 3, i על 4).'),
@@ -129,6 +130,7 @@ export const SONGS: Song[] = [
       { label: 'This is Classical Guitar – PDF + שיעור', url: 'https://www.thisisclassicalguitar.com/spanish-romance-tab-free-pdf/' },
     ],
   },
+  ...PD_PIECES,
 ];
 
 export const SONG_BY_ID: Record<string, Song> = Object.fromEntries(SONGS.map((s) => [s.id, s]));

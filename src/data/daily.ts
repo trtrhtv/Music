@@ -29,7 +29,7 @@ export interface DailyCat { id: DailyCatId; icon: string; title: string; min: nu
 
 /* ───────── helpers ───────── */
 const tab = (title: string, lines: string[], sub?: number, barFrom?: number): Block => ({ t: 'tab', title, lines, sub, barFrom });
-const WHOLE_ROMANZA: Block = { t: 'tab', title: ROMANZA_ALL_TITLE, lines: ROMANZA_ALL, sub: 3, bars: ROMANZA_ALL_BARS };
+const WHOLE_ROMANZA: Block = { t: 'tab', title: ROMANZA_ALL_TITLE, lines: ROMANZA_ALL, sub: 3, beats: 3, bars: ROMANZA_ALL_BARS };
 const metro = (bpm: number): Block => ({ t: 'metronome', bpm });
 const chords = (...names: (string | [string, number[]])[]): Block => ({ t: 'chords', items: names.map((n) => (typeof n === 'string' ? { name: n, frets: CH[n] } : { name: n[0], frets: n[1] })) });
 const strum = (r: Rhythm, name: string, names: string[], bpm: number, note?: string): Block => ({ t: 'strum', name, rhythm: r, bpm, chords: names.map((n) => CH[n] ?? EXTRA[n]), chordNames: names, note });

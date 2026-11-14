@@ -1,5 +1,5 @@
 import { Blocks } from '../components/Blocks';
-import { SONG_BY_ID } from '../data/songs';
+import { SONGS, SONG_BY_ID } from '../data/songs';
 import { go } from '../router';
 
 export function SongView({ id }: { id: string }) {
@@ -20,6 +20,23 @@ export function SongView({ id }: { id: string }) {
       <h3 className="section-title">מקורות וטאב מלא</h3>
       <Blocks blocks={[{ t: 'links', items: s.sources }]} />
       <p className="muted small">מילים וטאבים מלאים של שירים מוגנים בזכויות יוצרים – לכן הם בקישורים ולא כאן.</p>
+    </div>
+  );
+}
+
+/** All the full pieces in the app. */
+export function SongList() {
+  return (
+    <div className="screen">
+      <button className="back" onClick={() => go('daily')}>→ לגיטרה</button>
+      <h1>🎼 יצירות מלאות</h1>
+      <p className="muted small">כל יצירה כתובה כאן במלואה, לפי סדר הנגינה (עם כל החזרות). בכל אחת: מסך מלא, גלילה לפי הקצב והשמעה.</p>
+      {SONGS.map((x) => (
+        <button key={x.id} className="lesson-row open" onClick={() => go('songs/' + x.id)}>
+          <span className="lr-badge">🎼</span>
+          <span className="lr-title">{x.title}<br /><small className="muted">{x.artist} · {x.how}</small></span>
+        </button>
+      ))}
     </div>
   );
 }
