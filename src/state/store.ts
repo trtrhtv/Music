@@ -17,6 +17,8 @@ export interface Profile {
 
 export interface PlanProgress { week: number; bpm: Record<string, number>; streak: Record<string, number>; log: PlanLogEntry[] }
 
+/** A tab the player pasted in ("my tabs"): kept only on this device, never part of the app's content. */
+export interface MyTab { id: string; title: string; text: string; bpm: number; beats: number; added: string }
 export interface JournalEntry { date: string; session: string; goal: string; good: string; next: string }
 
 /** One microphone check of the guitar program: what was heard, where, and how well (0–1). */
@@ -65,6 +67,8 @@ export interface State {
    * run of clean takes at that BPM, and the progress log (the plan's progress_log_schema).
    */
   plans: Record<string, PlanProgress>;
+  /** The player's own pasted tabs. */
+  myTabs: MyTab[];
   prog: {
     placed: boolean;
     stage: Record<TrackId, number>;
@@ -96,12 +100,13 @@ const fresh = (): State => ({
   review: {},
   daily: { level: {}, checks: {}, sets: {}, seen: [] },
   plans: {},
+  myTabs: [],
   prog: { placed: false, stage: { tech: 1, rhythm: 1, neck: 1, finger: 1 }, passes: {}, bpm: {}, sessions: {}, journal: [], heard: [], coachSeen: '', tempo: {} },
 });
 
 /** Fills in fields added after the data was saved. */
 const withDefaults = (saved: Partial<State>): State =>
-  ({ ...fresh(), ...saved, prog: { ...fresh().prog, ...saved.prog }, prefs: { ...fresh().prefs, ...saved.prefs }, daily: { ...fresh().daily, ...saved.daily }, plans: { ...saved.plans } });
+  ({ ...fresh(), ...saved, prog: { ...fresh().prog, ...saved.prog }, prefs: { ...fresh().prefs, ...saved.prefs }, daily: { ...fresh().daily, ...saved.daily }, plans: { ...saved.plans }, myTabs: saved.myTabs ?? [] });
 
 function load(): State {
   try {
@@ -361,8 +366,25 @@ export function resetProgram() {
   update((s) => ({ ...s, prog: fresh().prog }));
 }
 
+/** Starts everything over – except the player's own tabs, which aren't progress. */
 export function resetAll() {
-  update(() => fresh());
+  update((s) => ({ ...fresh(), myTabs: s.myTabs }));
+}
+
+export function saveMyTab(t: Omit<MyTab, 'id' | 'added'> & { id?: string }): string {
+  const id = t.id ?? `t${Date.now().toString(36)}`;
+  update((s) => {
+    const old = s.myTabs.find((x) => x.id === id);
+    const tab: MyTab = { ...t, id, added: old?.added ?? today() };
+    return { ...s, myTabs: old ? s.myTabs.map((x) => (x.id === id ? tab : x)) : [...s.myTabs, tab] };
+  });
+  return id;
+}
+export function deleteMyTab(id: string) {
+  update((s) => ({ ...s, myTabs: s.myTabs.filter((x) => x.id !== id) }));
+}
+export function setMyTabBpm(id: string, bpm: number) {
+  update((s) => ({ ...s, myTabs: s.myTabs.map((x) => (x.id === id ? { ...x, bpm } : x)) }));
 }
 
 export type LessonStatus = 'passed' | 'known' | 'open' | 'locked';

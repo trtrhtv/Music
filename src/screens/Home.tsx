@@ -2,7 +2,7 @@ import { LESSONS, UNIT_TITLES, lessonsFor } from '../data/curriculum';
 import { DOMAIN_ICON, DOMAIN_LABEL, LEVEL_LABEL, type Domain } from '../engine/types';
 import { dailyCats } from '../data/daily';
 import { PLANS } from '../data/plans';
-import { WholePieceButton } from '../components/WholePiece';
+import { MyTabsButton, WholePieceButton } from '../components/WholePiece';
 import { go } from '../router';
 import { coachDue } from '../engine/coach';
 import { lessonStatus, setHidePiano, streak, today, useStore, type State } from '../state/store';
@@ -46,6 +46,7 @@ export function Home() {
       })()}
 
       <WholePieceButton />
+      <MyTabsButton />
       {PLANS.map(({ id, plan }) => (
         <button key={id} className="lesson-row open" onClick={() => go('pp/' + id)}>
           <span className="lr-badge">📘</span>

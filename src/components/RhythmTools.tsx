@@ -4,7 +4,7 @@ import { audio, output } from '../audio/synth';
 import { TabPlayer, parseTab } from '../audio/tabPlayer';
 import { NoteCheck } from './NoteCheck';
 
-function BpmControl({ bpm, setBpm }: { bpm: number; setBpm: (n: number) => void }) {
+export function BpmControl({ bpm, setBpm }: { bpm: number; setBpm: (n: number) => void }) {
   const clamp = (n: number) => Math.max(30, Math.min(220, Math.round(n)));
   return (
     <div className="bpm-ctl" dir="ltr">
@@ -189,7 +189,25 @@ function barsLabel(nums: number[], jump: boolean) {
   return runs.map((r, i) => (i === 0 && !jump ? `תיבות ${span(r)}` : `${i === 0 ? '' : ' · '}${back(r)}: תיבות ${span(r)}`)).join('');
 }
 
-export function TabFull({ lines, title, onClose, barFrom, bars: barNums, sub = 2, bpm: tabBpm }: { lines: string[]; title?: string; onClose: () => void; barFrom?: number; bars?: number[]; sub?: number; bpm?: number }) {
+/** Cuts a line aligned with a tab (its chord names) at the tab's bar lines. */
+export function splitLike(line: string, tabLine: string): string[] {
+  const out: string[] = [];
+  let at = 0;
+  for (const b of tabLine.split('|')) { out.push(line.slice(at, at + b.length).padEnd(b.length)); at += b.length + 1; }
+  return out;
+}
+
+export function TabFull({ lines, title, onClose, barFrom, bars: barNums, sub = 2, bpm: tabBpm, chordLine, sections, beatsPerBar, onBpm }: {
+  lines: string[]; title?: string; onClose: () => void; barFrom?: number; bars?: number[]; sub?: number; bpm?: number;
+  /** Chord names, column-aligned with the tab: shown above each row. */
+  chordLine?: string;
+  /** Section names ("Chorus") by the bar they start at. */
+  sections?: Record<number, string>;
+  /** For tabs whose spacing isn't one column per note (pasted ones): bar length in beats, for the scroll timing. */
+  beatsPerBar?: number;
+  /** Called when the tempo is changed here (to keep it with the tab). */
+  onBpm?: (n: number) => void;
+}) {
   const box = useRef<HTMLDivElement>(null);
   const [portrait, setPortrait] = useState(() => matchMedia('(orientation: portrait)').matches);
   const [orient, setOrient] = useState<Orient>(savedOrient);
@@ -234,15 +252,18 @@ export function TabFull({ lines, title, onClose, barFrom, bars: barNums, sub = 2
   const rowsBox = useRef<HTMLDivElement>(null);
   const [scrolling, setScrolling] = useState(false);
   const [bpm, setBpmState] = useState(() => tabBpm ?? savedBpm(sub));
-  const setBpm = (n: number) => { setBpmState(n); try { localStorage.setItem(SCROLL_BPM_KEY, String(n)); } catch { /* storage unavailable */ } };
+  const setBpm = (n: number) => { setBpmState(n); onBpm?.(n); try { localStorage.setItem(SCROLL_BPM_KEY, String(n)); } catch { /* storage unavailable */ } };
   const rows: { from: number; lines: string[] }[] = [];
   for (let i = 0; i < total; i += perRow) rows.push({ from: i, lines: bars.map((b) => b.slice(i, i + perRow).join('|')) });
+  const chordBars = chordLine?.trim() ? splitLike(chordLine, lines[0]) : null;
+  const rowChords = (from: number) => chordBars!.slice(from, from + perRow).join(' ').replace(/\s+$/, '');
   // One size for every row (the widest one fits), so a short last row doesn't jump bigger.
   const widest = Math.max(...rows.flatMap((r) => r.lines.map((l) => l.length)));
   const fontSize = `min(calc((${width} - 48px) / ${(widest + 3) * 0.6}), 26px)`;
   // How long each row takes to play: every note column is 1/sub of a beat (as in the tab player).
-  const rowSecs = rows.map((r) => (parseTab(r.lines).length / sub) * (60 / bpm));
-  const rowBeats = rows.length ? Math.round(parseTab(rows[0].lines).length / sub) : 0;
+  const beatsIn = (r: { from: number; lines: string[] }) => (beatsPerBar ? Math.min(perRow, total - r.from) * beatsPerBar : parseTab(r.lines).length / sub);
+  const rowSecs = rows.map((r) => beatsIn(r) * (60 / bpm));
+  const rowBeats = rows.length ? Math.round(beatsIn(rows[0])) : 0;
   // Auto-scroll at the tempo: while you play a row, the one before it slides off the top, so the row
   // you're playing is always fully on screen and the next one is right under it. A finger can still
   // scroll; it carries on from there.
@@ -317,7 +338,9 @@ export function TabFull({ lines, title, onClose, barFrom, bars: barNums, sub = 2
       {rows.map((r) => (
         <div key={r.from} className="tf-row">
           {nums && rows.length > 1 && <div className="tf-bars small muted">{barsLabel(nums.slice(r.from, r.from + perRow), r.from > 0 && nums[r.from] !== nums[r.from - 1] + 1)}</div>}
+          {sections && Object.entries(sections).filter(([b]) => +b >= r.from && +b < r.from + perRow).map(([b, name]) => <div key={b} className="tf-section">{`\u2066${name}\u2069${+b > r.from ? ` · מתיבה ${+b + 1}` : ''}`}</div>)}
           <pre className="tab" dir="ltr" style={{ fontSize }}>
+            {chordBars && <b className="tab-chords">{`  ${rowChords(r.from)}\n`}</b>}
             {r.lines.map((l, k) => `${TAB_NAMES[k]}|${l}|`).join('\n')}
           </pre>
         </div>

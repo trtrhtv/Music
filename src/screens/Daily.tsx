@@ -5,7 +5,7 @@ import { rich } from '../components/rich';
 import { DAILY_INTRO, dailyCats, itemFor, type DailyCat } from '../data/daily';
 import { termsIn } from '../data/terms';
 import { PLANS } from '../data/plans';
-import { WholePieceButton } from '../components/WholePiece';
+import { MyTabsButton, WholePieceButton } from '../components/WholePiece';
 import type { Block } from '../data/blocks';
 import { go } from '../router';
 import {
@@ -103,6 +103,7 @@ export function DailyView() {
       <p className="muted small">יום תרגול {base + 1} · {doneIn(0)}/{cats.length} הושלמו · כ-{Math.round(cats.reduce((n, c) => n + c.min, 0) / 6) / 10} שעות</p>
       <details className="plan-intro"><summary>איך זה עובד</summary><Blocks blocks={DAILY_INTRO} /></details>
       <WholePieceButton />
+      <MyTabsButton />
       {PLANS.map(({ id, plan }) => (
         <button key={id} className="lesson-row open" onClick={() => go('pp/' + id)}>
           <span className="lr-badge">📘</span>
